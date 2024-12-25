@@ -1,8 +1,10 @@
 glfw
-glm
+pyglm
 PyOpenGL
 vulkan
 PySDL2
 pysdl2-dll
 pygame
 numpy
+freetype-py
+pillow

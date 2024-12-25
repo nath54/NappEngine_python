@@ -731,6 +731,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self.draw_filled_rect(x, y, width, height, fill_color)
+
+        #
         # TODO
 
 
