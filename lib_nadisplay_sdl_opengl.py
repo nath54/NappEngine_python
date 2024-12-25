@@ -85,20 +85,13 @@ class ND_Display_SDL_OPENGL(ND_Display):
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
+        super().__init__(main_app=main_app, WindowClass=WindowClass)
+        #
         self.main_not_threading: bool = False
         self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
-        self.WindowClass: Type[ND_Window] = WindowClass
-        #
-        self.main_app: ND_MainApp = main_app
-        #
-        self.font_names: dict[str, str] = {}
         self.ttf_fonts: dict[str, dict[int, sdlttf.TTF_OpenFont]] = {}
-        self.default_font: str = "FreeSans"
-        #
-        self.windows: dict[int, Optional[ND_Window]] = {}
-        self.thread_create_window: Lock = Lock()
         #
 
 
@@ -110,41 +103,6 @@ class ND_Display_SDL_OPENGL(ND_Display):
     #
     def wait_time_msec(self, delay_in_msec: float) -> None:
         sdl2.SDL_Delay(int(delay_in_msec))
-
-
-    #
-    def load_system_fonts(self) -> None:
-        """Scans system directories for fonts and adds them to the font_names dictionary."""
-
-        #
-        font_dirs = []
-
-        #
-        if os.name == "nt":  # Windows
-            font_dirs.append("C:/Windows/Fonts/")
-        elif os.name == "posix":  # macOS, Linux
-            if "darwin" in os.uname().sysname.lower():  # macOS
-                font_dirs.extend([
-                    "/Library/Fonts/",
-                    "/System/Library/Fonts/",
-                    os.path.expanduser("~/Library/Fonts/")
-                ])
-            else:  # Linux
-                font_dirs.extend([
-                    "/usr/share/fonts/",
-                    "/usr/local/share/fonts/",
-                    os.path.expanduser("~/.fonts/")
-                ])
-
-        # Scan directories for .ttf and .otf files
-        for font_dir in font_dirs:
-            if os.path.exists(font_dir):
-                for root, _, files in os.walk(font_dir):
-                    for file in files:
-                        if file.endswith((".ttf", ".otf")):
-                            font_path = os.path.join(root, file)
-                            font_name = os.path.splitext(file)[0]  # Use file name without extension as font name
-                            self.font_names[font_name] = font_path
 
 
     #
@@ -186,12 +144,6 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
 
     #
-    def add_font(self, font_path: str, font_name: str) -> None:
-        #
-        self.font_names[font_name] = font_path
-
-
-    #
     def get_font(self, font: str, font_size: int) -> Optional[sdlttf.TTF_OpenFont]:
         #
         if font not in self.ttf_fonts:
@@ -211,15 +163,6 @@ class ND_Display_SDL_OPENGL(ND_Display):
                 return None
         #
         return self.ttf_fonts[font][font_size]
-
-
-    #
-    def update_display(self) -> None:
-        #
-        for window in self.windows.values():
-            #
-            if window is not None:
-                window.update_display()
 
 
     #

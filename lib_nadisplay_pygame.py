@@ -28,23 +28,14 @@ class ND_Display_Pygame(ND_Display):
 
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
-        # TODO: super()
-        # super().__init__()
+        #
+        super().__init__(main_app=main_app, WindowClass=WindowClass)
         #
         self.main_not_threading: bool = True
         self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
-        self.WindowClass: Type[ND_Window] = WindowClass
-        #
-        self.main_app: ND_MainApp = main_app
-        #
-        self.font_names: dict[str, str] = {}
         self.pygame_fonts: dict[str, dict[int, pygame.font.Font]] = {}
-        self.default_font: str = "FreeSans"
-        #
-        self.windows: dict[int, Optional[ND_Window]] = {}
-        self.thread_create_window: Lock = Lock()
         #
         self.shader_program: int = -1
         self.shader_program_textures: int = -1
@@ -60,44 +51,6 @@ class ND_Display_Pygame(ND_Display):
     #
     def wait_time_msec(self, delay_in_msec: float) -> None:
         pygame.time.delay(int(delay_in_msec))
-
-
-    #
-    def load_system_fonts(self) -> None:
-        """Scans system directories for fonts and adds them to the font_names dictionary."""
-
-        #
-        font_dirs = []
-
-        #
-        if os.name == "nt":  # Windows
-            font_dirs.append("C:/Windows/Fonts/")
-        elif os.name == "posix":  # macOS, Linux
-            if "darwin" in os.uname().sysname.lower():  # macOS
-                font_dirs.extend([
-                    "/Library/Fonts/",
-                    "/System/Library/Fonts/",
-                    os.path.expanduser("~/Library/Fonts/")
-                ])
-            else:  # Linux
-                font_dirs.extend([
-                    "/usr/share/fonts/",
-                    "/usr/local/share/fonts/",
-                    os.path.expanduser("~/.fonts/")
-                ])
-
-        # Scan directories for .ttf and .otf files
-        for font_dir in font_dirs:
-            if os.path.exists(font_dir):
-                for root, _, files in os.walk(font_dir):
-                    for file in files:
-                        if file.endswith((".ttf", ".otf")):
-                            font_path = os.path.join(root, file)
-                            font_name = os.path.splitext(file)[0]  # Use file name without extension as font name
-                            self.font_names[font_name] = font_path
-
-        #
-        # print(f"DEBUG | system fonts added : {', '.join(self.font_names.keys())}")
 
 
     #
@@ -135,12 +88,6 @@ class ND_Display_Pygame(ND_Display):
 
 
     #
-    def add_font(self, font_path: str, font_name: str) -> None:
-        #
-        self.font_names[font_name] = font_path
-
-
-    #
     def get_font(self, font: str, font_size: int) -> Optional[pygame.font.Font]:
         #
         if font not in self.pygame_fonts:
@@ -161,20 +108,6 @@ class ND_Display_Pygame(ND_Display):
                 return None
         #
         return self.pygame_fonts[font][font_size]
-
-
-    #
-    def update_display(self) -> None:
-
-        #
-        if not pygame.display.get_init():
-            return
-
-        #
-        for window in list(self.windows.values()):
-            #
-            if window is not None:
-                window.update_display()
 
 
     #
