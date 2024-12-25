@@ -939,6 +939,8 @@ class ND_Display:
         self.shader_program_textures: int = -1
         #
         self.mutex_display: Lock = Lock()
+        #
+        self.initialized: bool = False
 
     #
     def get_time_msec(self) -> float:
@@ -1071,10 +1073,31 @@ class ND_Window:
         self.state: Optional[str] = init_state
 
         #
+        self.clip_rect_stack: list[ND_Rect] = []
+        #
         self.scenes: dict[str, ND_Scene] = {}
 
         #
         self.next_texture_id: int = 0
+
+    #
+    def push_to_clip_rect_stack(self, x: int, y: int, w: int, h: int) -> None:
+        #
+        self.clip_rect_stack.append(ND_Rect(x, y, w, y))
+
+    #
+    def get_top_of_clip_rect_stack(self) -> Optional[ND_Rect]:
+        #
+        if self.clip_rect_stack:
+            return self.clip_rect_stack[-1]
+        #
+        return None
+
+    #
+    def remove_top_of_clip_rect_stack(self) -> None:
+        #
+        if self.clip_rect_stack:
+            self.clip_rect_stack.pop(-1)
 
     #
     def destroy_window(self) -> None:

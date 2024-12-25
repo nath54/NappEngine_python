@@ -257,9 +257,9 @@ class ND_Display_GLFW_OPENGL(ND_Display):
         #
         super().__init__(main_app=main_app, WindowClass=WindowClass)
         #
-        self.main_not_threading: bool = False
+        self.main_not_threading: bool = True
         self.events_thread_in_main_thread: bool = True
-        self.display_thread_in_main_thread: bool = False
+        self.display_thread_in_main_thread: bool = True
         #
         self.fonts_renderers: dict[str, dict[int, Optional[FontRenderer]]] = {}
         #
@@ -302,6 +302,9 @@ class ND_Display_GLFW_OPENGL(ND_Display):
         self.load_system_fonts()
 
         #
+        self.initialized = True
+
+        #
         # print(f"System fonts availables: {self.font_names.keys()}")
 
 
@@ -326,6 +329,10 @@ class ND_Display_GLFW_OPENGL(ND_Display):
 
     #
     def get_font(self, font: str, font_size: int) -> Optional[FontRenderer]:
+        #
+        if not self.initialized:
+            return None
+
         #
         if font not in self.fonts_renderers:
             self.fonts_renderers[font] = {}
@@ -471,18 +478,30 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def set_title(self, new_title: str) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
@@ -501,12 +520,19 @@ class ND_Window_GLFW_OPENGL(ND_Window):
             mode (int): 0, 1, or 2 (see above)
         """
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
 
     #
     def blit_texture(self, texture, dst_rect: ND_Rect) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         # Bind the OpenGL texture
         gl.glBindTexture(gl.GL_TEXTURE_2D, texture)
@@ -543,6 +569,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if font_name is None:
             font_name = self.display.default_font
         #
@@ -556,6 +586,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
+
+        #
+        if not self.display.initialized:
+            return -1
 
         # Chargement de l'image
         # image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
@@ -590,6 +624,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformations = ND_Transformations()) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if texture_id not in self.sdl_textures:
@@ -649,6 +687,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def _create_opengl_texture_from_surface(self, surface) -> int:
 
         #
+        if not self.display.initialized:
+            return -1
+
+        #
         gl_texture = gl.glGenTextures(1)
         gl.glBindTexture(gl.GL_TEXTURE_2D, gl_texture)
 
@@ -682,6 +724,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
 
         #
+        if not self.display.initialized:
+            return
+
+        #
         gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
         gl.glBegin(gl.GL_POINTS)
         gl.glVertex2f(x, y)
@@ -690,6 +736,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
@@ -703,6 +753,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
 
         #
+        if not self.display.initialized:
+            return
+
+        #
         gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
         gl.glBegin(gl.GL_LINES)
         gl.glVertex2f(x, y1)
@@ -714,6 +768,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
 
         #
+        if not self.display.initialized:
+            return
+
+        #
         gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
         gl.glBegin(gl.GL_LINES)
         gl.glVertex2f(x1, y1)
@@ -723,6 +781,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # Set the color for the line
         gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
@@ -775,6 +837,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
 
         #
+        if not self.display.initialized:
+            return
+
+        #
         gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
         # You would implement the corner drawing using triangle fans here.
         # For now, just drawing the filled rectangle part
@@ -785,6 +851,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
@@ -800,6 +870,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
 
         #
+        if not self.display.initialized:
+            return
+
+        #
         gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
         gl.glBegin(gl.GL_QUADS)
         gl.glVertex2f(x, y)
@@ -811,6 +885,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color, steps: int = 1) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
@@ -827,6 +905,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color, steps: int = 1) -> None:
 
         #
+        if not self.display.initialized:
+            return
+
+        #
         gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
         gl.glBegin(gl.GL_TRIANGLE_FAN)
         gl.glVertex2f(x, y)  # Center of the circle
@@ -840,6 +922,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # Set the color using SDL_Color (normalize to 0-1 for OpenGL)
         gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
@@ -860,6 +946,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # Set the color using SDL_Color (normalize to 0-1 for OpenGL)
         gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
@@ -884,6 +974,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
         gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
 
@@ -903,6 +997,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
         gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
@@ -927,6 +1025,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
         gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
 
@@ -950,6 +1052,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # Set the color using the SDL_Color (normalize the values to 0-1 for OpenGL)
         gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
 
@@ -968,6 +1074,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # Set the color using the SDL_Color (normalize the values to 0-1 for OpenGL)
         gl.glColor4f(filled_color.r / 255.0, filled_color.g / 255.0, filled_color.b / 255.0, filled_color.a / 255.0)
 
@@ -985,6 +1095,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
@@ -1010,6 +1124,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
@@ -1033,6 +1151,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if texture_id not in self.sdl_textures:
             return
         #
@@ -1050,6 +1172,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < nb_interpolations:
             return
 
@@ -1058,20 +1184,51 @@ class ND_Window_GLFW_OPENGL(ND_Window):
 
 
     #
-    def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+    def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
 
         # Apply OpenGL viewport or scissor test for clipping
         gl.glEnable(gl.GL_SCISSOR_TEST)
-        gl.glScissor(x, self.height - (y + width), width, height)  # OpenGL's Y axis is inverted
+        gl.glScissor(x, self.height - (y + w), w, h)  # OpenGL's Y axis is inverted
+
+
+    #
+    def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+
+        #
+        self.push_to_clip_rect_stack(x, y, width, height)
+
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        self.apply_area_drawing_constraint(x, y, width, height)
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
         #
-        gl.glDisable(gl.GL_SCISSOR_TEST)
+        self.remove_top_of_clip_rect_stack()
+        #
+        if not self.display.initialized:
+            return
+        #
+        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
+        #
+        if new_clip_rect is None:
+            #
+            gl.glDisable(gl.GL_SCISSOR_TEST)
+        else:
+            #
+            self.apply_area_drawing_constraint(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h)
+
 
     #
     def update_display(self) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         # sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)

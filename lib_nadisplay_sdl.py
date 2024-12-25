@@ -184,6 +184,10 @@ class ND_EventsManager_SDL(ND_EventsManager):
     def poll_next_event(self) -> Optional[nd_event.ND_Event]:
 
         #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return None
+
+        #
         sdl_event: sdl2.SDL_Event = sdl2.SDL_Event()
 
         # If no events are polled
@@ -320,6 +324,9 @@ class ND_EventsManager_SDL(ND_EventsManager):
     #
     def get_mouse_position(self) -> ND_Point:
         #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return ND_Point(-1, -1)
+        #
         mouse_x, mouse_y = ctypes.c_int(0), ctypes.c_int(0)
         #
         sdl2.mouse.SDL_GetMouseState(ctypes.byref(mouse_x), ctypes.byref(mouse_y))
@@ -329,6 +336,9 @@ class ND_EventsManager_SDL(ND_EventsManager):
 
     #
     def get_global_mouse_position(self) -> ND_Point:
+        #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return ND_Point(-1, -1)
         #
         mouse_x, mouse_y = ctypes.c_int(0), ctypes.c_int(0)
         #

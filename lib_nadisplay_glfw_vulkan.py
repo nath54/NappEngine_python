@@ -9,7 +9,7 @@ import ctypes
 import glfw  # type: ignore
 import vulkan as vk  # type: ignore
 
-from lib_nadisplay_rects import ND_Point
+from lib_nadisplay_rects import ND_Point, ND_Rect
 from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
@@ -25,9 +25,9 @@ class ND_Display_GLFW_VULKAN(ND_Display):
         #
         super().__init__(main_app=main_app, WindowClass=WindowClass)
         #
-        self.main_not_threading: bool = False
+        self.main_not_threading: bool = True
         self.events_thread_in_main_thread: bool = True
-        self.display_thread_in_main_thread: bool = False
+        self.display_thread_in_main_thread: bool = True
         #
         self.ttf_fonts: dict[str, dict[int, object]] = {}
         #
@@ -61,6 +61,9 @@ class ND_Display_GLFW_VULKAN(ND_Display):
         self.load_system_fonts()
 
         #
+        self.initialized = True
+
+        #
         # print(f"System fonts availables: {self.font_names.keys()}")
 
 
@@ -85,6 +88,10 @@ class ND_Display_GLFW_VULKAN(ND_Display):
 
     #
     def get_font(self, font: str, font_size: int) -> Optional[object]:
+        #
+        if not self.initialized:
+            return None
+
         #
         if font not in self.ttf_fonts:
             self.ttf_fonts[font] = {}
@@ -229,18 +236,30 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
     #
     def set_title(self, new_title: str) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
@@ -259,18 +278,30 @@ class ND_Window_GLFW_VULKAN(ND_Window):
             mode (int): 0, 1, or 2 (see above)
         """
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         return
 
 
     #
     def blit_texture(self, texture, dst_rect) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
+
+        #
+        if not self.display.initialized:
+            return -1
 
         #
         if font_name is None:
@@ -309,6 +340,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if font_name is None:
             font_name = self.display.default_font
         #
@@ -319,6 +354,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
+
+        #
+        if not self.display.initialized:
+            return -1
 
         # Chargement de l'image
         # image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
@@ -350,6 +389,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformations = ND_Transformations()) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if texture_id not in self.sdl_textures:
@@ -390,6 +433,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def _create_vulkan_texture_from_surface(self, surface) -> int:
 
+        #
+        if not self.display.initialized:
+            return -1
+
         # TODO
         pass
 
@@ -399,12 +446,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -413,12 +468,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -427,12 +490,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -441,12 +512,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -455,12 +534,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -469,12 +556,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -483,12 +578,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -497,12 +600,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         # TODO
         pass
@@ -511,12 +622,20 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
@@ -532,6 +651,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
@@ -545,6 +668,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if texture_id not in self.sdl_textures:
             return
         #
@@ -557,6 +684,10 @@ class ND_Window_GLFW_VULKAN(ND_Window):
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < nb_interpolations:
             return
 
@@ -566,18 +697,36 @@ class ND_Window_GLFW_VULKAN(ND_Window):
 
     #
     def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+        #
+        self.push_to_clip_rect_stack(x, y, width, height)
+        #
+        if not self.display.initialized:
+            return
+
         # TODO
         pass
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
+        #
+        self.remove_top_of_clip_rect_stack()
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
+
         # TODO
         pass
 
 
     #
     def update_display(self) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         #
         # sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)

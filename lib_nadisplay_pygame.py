@@ -65,6 +65,9 @@ class ND_Display_Pygame(ND_Display):
         self.load_system_fonts()
 
         #
+        self.initialized = True
+
+        #
         # print(f"System fonts availables: {self.font_names.keys()}")
 
 
@@ -89,6 +92,9 @@ class ND_Display_Pygame(ND_Display):
 
     #
     def get_font(self, font: str, font_size: int) -> Optional[pygame.font.Font]:
+        #
+        if not self.initialized:
+            return None
         #
         if font not in self.pygame_fonts:
             self.pygame_fonts[font] = {}
@@ -261,12 +267,20 @@ class ND_Window_Pygame(ND_Window):
     #
     def set_title(self, new_title: str) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         with self.mutex_display:
             pygame.display.set_caption(new_title)
 
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         self.base_width, self.base_height = new_width, new_height
         self.width, self.height = new_width, new_height
@@ -279,6 +293,10 @@ class ND_Window_Pygame(ND_Window):
 
     #
     def update_size(self, new_w: int, new_h: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         self.width, self.height = new_w, new_h
         self.base_width, self.base_height = new_w, new_h
@@ -302,6 +320,10 @@ class ND_Window_Pygame(ND_Window):
         Args:
             mode (int): 0, 1, or 2 (see above)
         """
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if mode == 1:
@@ -332,6 +354,10 @@ class ND_Window_Pygame(ND_Window):
     def blit_texture(self, surface: pygame.Surface, dst_rect: ND_Rect) -> None:
         # Copy the texture into the window display buffer thanks to the renderer
 
+        #
+        if not self.display.initialized:
+            return
+
         # Get surface size
         surf_width: int
         surf_height: int
@@ -351,6 +377,10 @@ class ND_Window_Pygame(ND_Window):
 
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
+
+        #
+        if not self.display.initialized:
+            return -1
 
         #
         if font_name is None:
@@ -382,6 +412,10 @@ class ND_Window_Pygame(ND_Window):
     #
     def prepare_image_to_render(self, img_path: str) -> int:
 
+        #
+        if not self.display.initialized:
+            return -1
+
         # Chargement de l'image
         image_surface: Optional[pygame.Surface] = pygame.image.load(img_path)
 
@@ -407,6 +441,10 @@ class ND_Window_Pygame(ND_Window):
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int = -1, height: int = -1, transformations: ND_Transformations = ND_Transformations()) -> None:
         #
         # TODO: add Transformations
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if texture_id not in self.pygame_surfaces:
@@ -438,6 +476,10 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if font_name is None:
             font_name = self.display.default_font
         #
@@ -453,11 +495,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         pygame.draw.rect(self.pygame_screen, color=pycl(color), rect=pygame.Rect(x, y, 1, 1))
 
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         self.draw_line(x1, x2, y, y, color)
 
@@ -465,11 +515,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         self.draw_line(x, x, y1, y2, color)
 
 
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         pygame.draw.line(self.pygame_screen, pycl(color), (x1, y1), (x2, y2))
 
@@ -477,11 +535,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         pygame.draw.line(self.pygame_screen, pycl(color), (x1, y1), (x2, y2), line_thickness)
 
 
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_thickness: int=1) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         pygame.draw.rect(self.pygame_screen, pycl(fill_color), (x, y, width, height), 0, radius)
@@ -491,11 +557,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, line_color: ND_Color, border_thickness: int=1) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         pygame.draw.rect(self.pygame_screen, pycl(line_color), (x, y, width, height), border_thickness)
 
 
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         pygame.draw.rect(self.pygame_screen, pycl(fill_color), (x, y, width, height))
 
@@ -503,11 +577,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, line_color: ND_Color, border_thickness: int=1) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         pygame.draw.circle(self.pygame_screen, pycl(line_color), (x, y), radius, border_thickness)
 
 
     #
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         pygame.draw.circle(self.pygame_screen, pycl(fill_color), (x, y), radius)
 
@@ -515,11 +597,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, line_color: ND_Color, border_thickness: int = 1) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         pygame.draw.ellipse(self.pygame_screen, pycl(line_color), (x-rx, y-ry, x+rx, y+rx), border_thickness)
 
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         pygame.draw.ellipse(self.pygame_screen, pycl(fill_color), (x-rx, y-ry, x+rx, y+rx))
 
@@ -527,11 +617,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color, line_thickness: int = 1) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         pygame.draw.arc(self.pygame_screen, pycl(color), (x-radius, y-radius, x+radius, y+radius), angle_start, angle_end, line_thickness)
 
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, line_color: ND_Color, line_thickness: int = 1) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         self.draw_arc(x, y, radius, angle_start, angle_end, line_color, line_thickness)
 
@@ -541,11 +639,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         self.draw_arc(x, y, radius, angle_start, angle_end, fill_color, -1)
 
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, line_color: ND_Color, border_thickness: int = 1) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         self.draw_unfilled_polygon([x1, x2, x3], [y1, y2, y3], line_color, border_thickness)
 
@@ -553,11 +659,19 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         self.draw_filled_polygon([x1, x2, x3], [y1, y2, y3], fill_color)
 
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, border_thickness: int = 1) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
@@ -573,6 +687,10 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
@@ -585,6 +703,10 @@ class ND_Window_Pygame(ND_Window):
 
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         if texture_id not in self.pygame_surfaces:
             return
@@ -623,6 +745,10 @@ class ND_Window_Pygame(ND_Window):
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < nb_interpolations:
             return
 
@@ -635,12 +761,33 @@ class ND_Window_Pygame(ND_Window):
 
     #
     def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+        #
+        self.push_to_clip_rect_stack(x, y, width, height)
+
+        #
+        if not self.display.initialized:
+            return
+
         self.pygame_screen.set_clip(pygame.Rect(x, y, width, height))
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
-        self.pygame_screen.set_clip(None)
+        #
+        self.remove_top_of_clip_rect_stack()
+
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
+
+        #
+        if new_clip_rect is None:
+            self.pygame_screen.set_clip(None)
+        else:
+            self.pygame_screen.set_clip(pygame.Rect(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h))
 
 
     #
@@ -853,6 +1000,9 @@ class ND_EventsManager_Pygame(ND_EventsManager):
 
     #
     def poll_next_event(self) -> Optional[nd_event.ND_Event]:
+        #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return None
 
         #
         pygame_event: pygame.event.Event = pygame.event.poll()
@@ -986,11 +1136,19 @@ class ND_EventsManager_Pygame(ND_EventsManager):
     #
     def get_mouse_position(self) -> ND_Point:
         #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return ND_Point(-1, -1)
+
+        #
         return ND_Point(*(pygame.mouse.get_pos()))
 
 
     #
     def get_global_mouse_position(self) -> ND_Point:
+        #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return ND_Point(-1, -1)
+
         #
         return ND_Point(*(pygame.mouse.get_pos()))
 

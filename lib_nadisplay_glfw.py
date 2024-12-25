@@ -40,15 +40,27 @@ class ND_EventsManager_GLFW(ND_EventsManager):
 
     #
     def poll_next_event(self) -> Optional[nd_event.ND_Event]:
+        #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return None
+        #
         return None
 
     #
     def get_mouse_position(self) -> ND_Point:
+        #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return ND_Point(-1, -1)
+
         # TODO
         return ND_Point(0, 0)
 
     #
     def get_global_mouse_position(self) -> ND_Point:
+        #
+        if self.main_app.display is None or not self.main_app.display.initialized:
+            return ND_Point(-1, -1)
+
         # TODO
         return ND_Point(0, 0)
 

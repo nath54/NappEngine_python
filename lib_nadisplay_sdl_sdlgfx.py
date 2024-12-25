@@ -59,6 +59,8 @@ class ND_Display_SDL_SDLGFX(ND_Display):
         # Init system fonts
         self.load_system_fonts()
 
+        self.initialized = True
+
         #
         # print(f"System fonts availables: {self.font_names.keys()}")
 
@@ -96,6 +98,9 @@ class ND_Display_SDL_SDLGFX(ND_Display):
     #
     def get_font(self, font: str, font_size: int) -> Optional[sdlttf.TTF_OpenFont]:
         #
+        if not self.initialized:
+            return None
+        #
         if font not in self.ttf_fonts:
             self.ttf_fonts[font] = {}
         #
@@ -120,6 +125,10 @@ class ND_Display_SDL_SDLGFX(ND_Display):
 
     #
     def get_focused_window_id(self) -> int:
+        #
+        if not self.initialized:
+            return -1
+
         # Get the focused window
         focused_window: Optional[object] = sdl2.SDL_GetKeyboardFocus()
 
@@ -193,9 +202,6 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
         #
         super().__init__(display=display, window_id=window_id, init_state=init_state)
-
-        #
-        self.clip_rect_stack: list[sdl2.SDL_Rect] = []
 
         #
         if isinstance(size, str):
@@ -273,11 +279,17 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def set_title(self, new_title: str) -> None:
         #
+        if not self.display.initialized:
+            return
+        #
         sdl2.SDL_SetWindowTitle(self.sdl_window, new_title.encode('utf-8'))
 
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
+        #
+        if not self.display.initialized:
+            return
         #
         sdl2.SDL_SetWindowPosition(self.sdl_window, new_x, new_y)
         #
@@ -286,6 +298,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
+        #
+        if not self.display.initialized:
+            return
         #
         sdl2.SDL_SetWindowSize(self.sdl_window, new_width, new_height)
         #
@@ -308,6 +323,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
             mode (int): 0, 1, or 2 (see above)
         """
 
+        #
+        if not self.display.initialized:
+            return
+
         if mode == 0:
             sdl2.SDL_SetWindowFullscreen(self.sdl_window, 0)
         elif mode == 1:
@@ -318,6 +337,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def blit_texture(self, texture, dst_rect) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         # Copy the texture into the window display buffer thanks to the renderer
         sdl2.SDL_RenderCopy(self.renderer, texture, None, dst_rect)
 
@@ -326,6 +349,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
         #
         return -1
+        #
+        if not self.display.initialized:
+            return
+
         #
         if font_name is None:
             font_name = self.display.default_font
@@ -371,6 +398,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
+        #
+        if not self.display.initialized:
+            return -1
 
         #
         # return -1
@@ -410,6 +440,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformations = ND_Transformations()) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         #
         if texture_id not in self.sdl_textures:
@@ -465,6 +498,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def render_part_of_prepared_texture(self, texture_id: int, x: int, y: int, w: int, h: int, src_x: int, src_y: int, src_w: int, src_h: int, transformations: ND_Transformations = ND_Transformations()) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if texture_id not in self.sdl_textures:
@@ -553,8 +590,9 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
-        # return  # There are other parts of the code that cause malloc / realloc errors, because still getting without rendering any text
-        #
+        if not self.display.initialized:
+            return
+
         if font_name is None:
             font_name = self.display.default_font
         #
@@ -577,7 +615,7 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         # tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
         # self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
 
-        # TODO: render directly text instead of creating texture, and etc...
+        # DONE: render directly text instead of creating texture, and etc...
         surface: sdl2.SDL_Surface = sdlttf.TTF_RenderUTF8_Blended(font, txt.encode("utf-8"), to_sdl_color(font_color))
         #
         if not surface:
@@ -599,6 +637,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def get_text_size_with_font(self, txt: str, font_size: int, font_name: Optional[str] = None) -> ND_Point:
+        #
+        if not self.display.initialized:
+            return ND_Point(0, 0)
+
         #
         if font_name is None:
             font_name = self.display.default_font
@@ -628,6 +670,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def get_count_of_renderable_chars_fitting_given_width(self, txt: str, given_width: int, font_size: int, font_name: Optional[str] = None) -> tuple[int, int]:
         #
+        if not self.display.initialized:
+            return 0, 0
+
+        #
         if font_name is None:
             font_name = self.display.default_font
         #
@@ -655,11 +701,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.pixelRGBA(self.renderer, x, y, color.r, color.g, color.b, color.a)
 
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.hlineRGBA(self.renderer, x1, x2, y, color.r, color.g, color.b, color.a)
 
@@ -667,11 +721,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.vlineRGBA(self.renderer, x, y1, y2, color.r, color.g, color.b, color.a)
 
 
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.lineRGBA(self.renderer, x1, x2, y1, y2, color.r, color.g, color.b, color.a)
 
@@ -679,11 +741,18 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.thickLineRGBA(self.renderer, x1, y1, x2, y2, line_thickness, color.r, color.g, color.b, color.a)
 
 
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         # Draw filled rounded rectangle
         sdlgfx.roundedBoxRGBA(self.renderer, x, y, x + width, y + height, radius, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
@@ -695,11 +764,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, line_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.rectangleRGBA(self.renderer, x, y, x+width, y+height, line_color.r, line_color.g, line_color.b, line_color.a)
 
 
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.boxRGBA(self.renderer, x, y, x+width, y+height, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
@@ -707,11 +784,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, line_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.CircleRGBA(self.renderer, x, y, radius, line_color.r, line_color.g, line_color.b, line_color.a)
 
 
     #
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.filledCircleRGBA(self.renderer, x, y, radius, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
@@ -719,11 +804,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, line_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.ellipseRGBA(self.renderer, x, y, rx, ry, line_color.r, line_color.g, line_color.b, line_color.a)
 
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.filledEllipseRGBA(self.renderer, x, y, rx, ry, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
@@ -731,11 +824,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.arcRGBA(self.renderer, x, y, radius, angle_start, angle_end, color.r, color.g, color.b, color.a)
 
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, line_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.pieRGBA(self.renderer, x, y, radius, angle_start, angle_end, line_color.r, line_color.g, line_color.b, line_color.a)
 
@@ -743,11 +844,19 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.filledPieRGBA(self.renderer, x, y, radius, angle_start, angle_end, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, line_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdlgfx.trigonRGBA(self.renderer, x1, y1, x2, y2, x3, y3, line_color.r, line_color.g, line_color.b, line_color.a)
 
@@ -755,11 +864,18 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdlgfx.filledTrigonRGBA(self.renderer, x1, y1, x2, y2, x3, y3, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
@@ -784,6 +900,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
@@ -801,6 +921,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if texture_id not in self.sdl_textures:
             return
         #
@@ -814,6 +938,10 @@ class ND_Window_SDL_SDLGFX(ND_Window):
 
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         if len(x_coords) != len(y_coords) or len(x_coords) < nb_interpolations:
             return
@@ -830,24 +958,32 @@ class ND_Window_SDL_SDLGFX(ND_Window):
     #
     def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
 
-        # Define a clipping area
-        clip_rect: sdl2.SDL_Rect = sdl2.SDL_Rect(x, y, width, height)
+        #
+        self.push_to_clip_rect_stack(x, y, width, height)
 
         #
-        self.clip_rect_stack.append(clip_rect)
+        if not self.display.initialized:
+            return
 
         # Enable clipping area
-        sdl2.SDL_RenderSetClipRect(self.renderer, clip_rect)
+        sdl2.SDL_RenderSetClipRect(self.renderer, sdl2.SDL_Rect(x, y, width, height))
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
 
         #
-        self.clip_rect_stack.pop(-1)
+        self.remove_top_of_clip_rect_stack()
 
         #
-        if not self.clip_rect_stack:
+        if not self.display.initialized:
+            return
+
+        #
+        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
+
+        #
+        if new_clip_rect is None:
 
             # Reset clipping (disable clipping by passing None)
             sdl2.SDL_RenderSetClipRect(self.renderer, None)
@@ -855,11 +991,15 @@ class ND_Window_SDL_SDLGFX(ND_Window):
         else:
 
             # If there was another clip rect
-            sdl2.SDL_RenderSetClipRect(self.renderer, self.clip_rect_stack[-1])
+            sdl2.SDL_RenderSetClipRect(self.renderer, sdl2.SDL_Rect(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h))
 
 
     #
     def update_display(self) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         # print(f"DEBUG | update window {self.window_id} that has current state {self.state}.")

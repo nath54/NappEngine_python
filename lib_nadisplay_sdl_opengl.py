@@ -87,7 +87,7 @@ class ND_Display_SDL_OPENGL(ND_Display):
         #
         super().__init__(main_app=main_app, WindowClass=WindowClass)
         #
-        self.main_not_threading: bool = False
+        self.main_not_threading: bool = True
         self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
@@ -122,6 +122,9 @@ class ND_Display_SDL_OPENGL(ND_Display):
         # Load system fonts
         self.load_system_fonts()
 
+        #
+        self.initialized = True
+
 
     #
     def destroy_display(self) -> None:
@@ -146,6 +149,10 @@ class ND_Display_SDL_OPENGL(ND_Display):
     #
     def get_font(self, font: str, font_size: int) -> Optional[sdlttf.TTF_OpenFont]:
         #
+        if not self.initialized:
+            return None
+
+        #
         if font not in self.ttf_fonts:
             self.ttf_fonts[font] = {}
         #
@@ -167,6 +174,10 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
     #
     def get_focused_window_id(self) -> int:
+        #
+        if not self.initialized:
+            return -1
+
         # Get the focused window
         focused_window: Optional[object] = sdl2.SDL_GetKeyboardFocus()
 
@@ -290,7 +301,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDisable(gl.GL_DEPTH_TEST)  # Disable depth test
         gl.glDisable(gl.GL_CULL_FACE)   #
 
-        if not self.gl_context:
+        if self.gl_context is None:
             print(f"ERROR: GL context is invalid : {self.gl_context} !!!")
 
         # sdl_or_glfw_window_id is int and has been initialized to -1 in parent class
@@ -345,17 +356,29 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def set_title(self, new_title: str) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdl2.SDL_SetWindowTitle(self.sdl_window, new_title.encode('utf-8'))
 
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         sdl2.SDL_SetWindowPosition(self.sdl_window, new_x, new_y)
 
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         sdl2.SDL_SetWindowSize(self.sdl_window, new_width, new_height)
 
@@ -374,6 +397,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
             mode (int): 0, 1, or 2 (see above)
         """
 
+        #
+        if not self.display.initialized:
+            return
+
         if mode == 0:
             sdl2.SDL_SetWindowFullscreen(self.sdl_window, 0)
         elif mode == 1:
@@ -390,6 +417,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
         :param texture_id: texture ID.
         :param dst_rect: Destination rectangle where the texture will be drawn (x, y, width, height).
         """
+
+        #
+        if not self.display.initialized:
+            return
 
         if texture_id not in self.gl_textures:
             return
@@ -456,6 +487,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
 
         #
+        if not self.display.initialized:
+            return -1
+
+        #
         if font_name is None:
             font_name = self.display.default_font
 
@@ -482,6 +517,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def prepare_image_to_render(self, img_path: str) -> int:
 
+        #
+        if not self.display.initialized:
+            return -1
+
         # Chargement de l'image
         image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
 
@@ -499,6 +538,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformations = ND_Transformations()) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         if texture_id not in self.gl_textures:
@@ -529,6 +572,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def _create_opengl_texture_from_surface(self, surface: sdl2.SDL_Surface) -> int:
+        #
+        if not self.display.initialized:
+            return -1
+
         # Generate OpenGL texture
         gl_texture_id: int = gl.glGenTextures(1)
         gl.glBindTexture(gl.GL_TEXTURE_2D, gl_texture_id)
@@ -563,20 +610,62 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
+        if not self.display.initialized:
+            return
+
+        #
         if font_name is None:
             font_name = self.display.default_font
         #
-        tid: str = f"{txt}_|||_{font_name}_|||_{font_size}_|||_{font_color}"
+        # tid: str = f"{txt}_|||_{font_name}_|||_{font_size}_|||_{font_color}"
+        # #
+        # if tid not in self.prepared_font_textures:
+        #     self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font_name, font_size=font_size)
+        # #
+        # tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
+        # self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
+
+        # No texture cache, calcul it each time
+
+        # Get font
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+
+        # Do nothing if not font got
+        if font is None:
+            return
+
         #
-        if tid not in self.prepared_font_textures:
-            self.prepared_font_textures[tid] = self.prepare_text_to_render(text=txt, color=font_color, font_name=font_name, font_size=font_size)
-        #
-        tsize: ND_Point = self.get_prepared_texture_size(self.prepared_font_textures[tid])
-        self.render_prepared_texture(self.prepared_font_textures[tid], x, y, tsize.x, tsize.y)
+        color_sdl: sdl2.SDL_Color = to_sdl_color(font_color)
+
+        # Create rendered text surface
+        surface = sdlttf.TTF_RenderText_Blended(font, txt.encode('utf-8'), color_sdl)
+
+        # Generate OpenGL texture
+        gl_texture_id: int = gl.glGenTextures(1)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, gl_texture_id)
+
+        width = surface.contents.w
+        height = surface.contents.h
+
+        # Convert SDL surface into a format OpenGL can use (RGBA)
+        surface_pixels = ctypes.cast(surface.contents.pixels, ctypes.POINTER(ctypes.c_ubyte))
+
+        # Upload the pixel data from the SDL_Surface to the OpenGL texture
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width, height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, surface_pixels)
+
+        # Set texture parameters
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+
+
+
 
 
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -613,6 +702,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -647,6 +739,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -679,6 +775,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -713,6 +813,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -763,6 +867,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -816,6 +924,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -850,6 +962,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
         #
         if self.shader_program <= 0:
             print(f"Error: shader program hasn't been initialized (={self.shader_program}).")
@@ -900,6 +1016,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -937,6 +1057,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -976,6 +1100,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1012,6 +1140,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -1050,6 +1182,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1086,6 +1222,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -1124,6 +1264,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1160,6 +1304,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -1199,6 +1347,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1237,6 +1389,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1273,6 +1429,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1308,6 +1468,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         if self.shader_program_textures <= 0:
             print("Error: shader program hasn't been initialized.")
@@ -1359,6 +1523,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
 
+        #
+        if not self.display.initialized:
+            return
+
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
@@ -1395,21 +1563,49 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
 
     #
-    def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+    def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
 
         # Apply OpenGL viewport or scissor test for clipping
         gl.glEnable(gl.GL_SCISSOR_TEST)
-        gl.glScissor(x, self.height - (y + width), width, height)  # OpenGL's Y axis is inverted
+        gl.glScissor(x, self.height - (y + w), w, h)  # OpenGL's Y axis is inverted
+
+
+    #
+    def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+        #
+        self.push_to_clip_rect_stack(x, y, width, height)
+        #
+        if not self.display.initialized:
+            return
+        #
+        self.apply_area_drawing_constraint(x, y, width, height)
+
 
 
     #
     def disable_area_drawing_constraints(self) -> None:
         #
-        gl.glDisable(gl.GL_SCISSOR_TEST)
+        self.remove_top_of_clip_rect_stack()
+        #
+        if not self.display.initialized:
+            return
+        #
+        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
+        #
+        if new_clip_rect is None:
+            #
+            gl.glDisable(gl.GL_SCISSOR_TEST)
+        else:
+            #
+            self.apply_area_drawing_constraint(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h)
 
 
     #
     def update_display(self) -> None:
+
+        #
+        if not self.display.initialized:
+            return
 
         #
         sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
