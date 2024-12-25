@@ -1,0 +1,8 @@
+glfw
+glm
+PyOpenGL
+vulkan
+PySDL2
+pysdl2-dll
+pygame
+numpy
