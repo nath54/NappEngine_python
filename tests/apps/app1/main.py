@@ -14,6 +14,7 @@ from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass
 # from lib_nadisplay_pygame import ND_Display_Pygame as DisplayClass, ND_Window_Pygame as WindowClass, ND_EventsManager_Pygame as EventsManagerClass  # Working a little
 
 from scene_main_menu import create_main_menu_scene
+from scene_tests_menu import create_tests_menu_scene
 
 
 #
@@ -47,7 +48,9 @@ if __name__ == "__main__":
     if win is None:
         exit(1)
 
-
+    #
     create_main_menu_scene(win)
+    create_tests_menu_scene(win)
 
+    #
     app.run()

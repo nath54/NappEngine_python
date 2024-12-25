@@ -5,15 +5,6 @@ from lib_nadisplay_rects import ND_Point, ND_Rect, ND_Position_Margins, ND_Posit
 import lib_nadisplay as nd
 
 
-
-#
-def on_bt_click_quit(elt: nd.ND_Clickable) -> None:
-    #
-    win: nd.ND_Window = elt.window
-    #
-    win.main_app.quit()
-
-
 #
 def create_main_menu_scene(win: nd.ND_Window) -> None:
     #
@@ -67,11 +58,22 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("main_menu_title", game_title)
 
     #
+    bt_tests: nd.ND_Button = nd.ND_Button(
+        window=win,
+        elt_id="bt_tests",
+        position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
+        onclick=lambda _: win.set_state("tests_menu"),
+        text="Tests",
+        font_size=35
+    )
+    bts_container.add_element(bt_tests)
+
+    #
     bt_quit: nd.ND_Button = nd.ND_Button(
         window=win,
         elt_id="bt_quit",
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
-        onclick=on_bt_click_quit,
+        onclick=lambda _: win.main_app.quit(),
         text="Quit",
         font_size=35
     )
