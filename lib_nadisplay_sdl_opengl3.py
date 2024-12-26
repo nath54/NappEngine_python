@@ -21,6 +21,8 @@ import OpenGL.GL as gl  # type: ignore
 # from OpenGL.GLUT import glutInit, glutCreateWindow, glutInitDisplayMode, GLUT_RGB, glutInitWindowSize
 
 import ctypes
+import freetype  # type: ignore
+import glm
 
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_colors import ND_Transformations
@@ -79,6 +81,140 @@ FRAGMENT_SHADER_TEXTURES_SRC: str = """
 """
 
 
+
+
+class FontRenderer:
+    def __init__(self, font_path: str) -> None:
+        self.shader_program = None
+        self.characters: dict = {}
+        self.vao: int = 0
+        self.vbo: int = 0
+        self.init_shader()
+        self.load_font(font_path)
+
+    def init_shader(self) -> None:
+        vertex_shader_source: str = """
+            #version 330 core
+            layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
+            out vec2 TexCoords;
+
+            uniform mat4 projection;
+
+            void main()
+            {
+                gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
+                TexCoords = vertex.zw;
+            }
+        """
+
+        fragment_shader_source: str = """
+            #version 330 core
+            in vec2 TexCoords;
+            out vec4 color;
+
+            uniform sampler2D text;
+            uniform vec3 textColor;
+
+            void main()
+            {
+                vec4 sampled = texture(text, TexCoords);
+                color = vec4(textColor, 1.0) * sampled;
+            }
+        """
+
+        vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
+        gl.glShaderSource(vertex_shader, vertex_shader_source)
+        gl.glCompileShader(vertex_shader)
+
+        fragment_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
+        gl.glShaderSource(fragment_shader, fragment_shader_source)
+        gl.glCompileShader(fragment_shader)
+
+        self.shader_program = gl.glCreateProgram()
+        gl.glAttachShader(self.shader_program, vertex_shader)
+        gl.glAttachShader(self.shader_program, fragment_shader)
+        gl.glLinkProgram(self.shader_program)
+
+        gl.glDeleteShader(vertex_shader)
+        gl.glDeleteShader(fragment_shader)
+
+    def load_font(self, font_path: str) -> None:
+        # Load font characters using FreeType and store textures.
+        face = freetype.Face(font_path)
+        face.set_char_size(48 * 64)
+
+        for c in range(128):
+            face.load_char(chr(c))
+            glyph = face.glyph
+
+            texture_id = gl.glGenTextures(1)
+            gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
+            gl.glTexImage2D(
+                gl.GL_TEXTURE_2D, 0, gl.GL_RED,
+                glyph.bitmap.width, glyph.bitmap.rows,
+                0, gl.GL_RED, gl.GL_UNSIGNED_BYTE, glyph.bitmap.buffer
+            )
+
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+
+            self.characters[chr(c)] = {
+                'texture_id': texture_id,
+                'size': (glyph.bitmap.width, glyph.bitmap.rows),
+                'bearing': (glyph.bitmap_left, glyph.bitmap_top),
+                'advance': glyph.advance.x >> 6
+            }
+
+        self.vao = gl.glGenVertexArrays(1)
+        self.vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(self.vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
+        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 4 * 4, None)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+    def render_text(self, text: str, x: int, y: int, scale: int, color) -> None:
+        gl.glUseProgram(self.shader_program)
+        gl.glUniform3f(gl.glGetUniformLocation(self.shader_program, "textColor"), *color)
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+        gl.glBindVertexArray(self.vao)
+
+        for char in text:
+            ch = self.characters[char]
+
+            xpos = x + ch['bearing'][0] * scale
+            ypos = y - (ch['size'][1] - ch['bearing'][1]) * scale
+
+            w = ch['size'][0] * scale
+            h = ch['size'][1] * scale
+
+            vertices = np.array([
+                xpos,     ypos + h,   0.0, 0.0,
+                xpos,     ypos,       0.0, 1.0,
+                xpos + w, ypos,       1.0, 1.0,
+                xpos,     ypos + h,   0.0, 0.0,
+                xpos + w, ypos,       1.0, 1.0,
+                xpos + w, ypos + h,   1.0, 0.0
+            ], dtype=np.float32)
+
+            gl.glBindTexture(gl.GL_TEXTURE_2D, ch['texture_id'])
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+            gl.glBufferSubData(gl.GL_ARRAY_BUFFER, 0, vertices.nbytes, vertices)
+
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
+
+            x += (ch['advance'] * scale)
+
+        gl.glBindVertexArray(0)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
+
+
 #
 class ND_Display_SDL_OPENGL(ND_Display):
 
@@ -91,7 +227,7 @@ class ND_Display_SDL_OPENGL(ND_Display):
         self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
-        self.ttf_fonts: dict[str, dict[int, sdlttf.TTF_OpenFont]] = {}
+        self.ttf_fonts: dict[str, FontRenderer] = {}
         #
 
 
@@ -147,29 +283,27 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
 
     #
-    def get_font(self, font: str, font_size: int) -> Optional[sdlttf.TTF_OpenFont]:
+    def get_font(self, font: str, font_size: int) -> Optional[FontRenderer]:
         #
         if not self.initialized:
             return None
 
         #
         if font not in self.ttf_fonts:
-            self.ttf_fonts[font] = {}
-        #
-        if font_size < 8:
-            font_size = 8
-        #
-        if font_size not in self.ttf_fonts[font]:
+
+            #
+            if font not in self.font_names:
+                return None
+
             #
             font_path: str = self.font_names[font]
             #
-            if (font_path.endswith(".ttf") or font_path.endswith(".otf")) and os.path.exists(font_path):
-
-                self.ttf_fonts[font][font_size] = sdlttf.TTF_OpenFont(font_path.encode(encoding="utf-8"), font_size)
-            else:
+            if not (font_path.endswith(".ttf") or font_path.endswith(".otf")) or not os.path.exists(font_path):
                 return None
+            #
+            self.ttf_fonts[font] = FontRenderer(font_path)
         #
-        return self.ttf_fonts[font][font_size]
+        return self.ttf_fonts[font]
 
 
     #
@@ -412,25 +546,46 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
         """
-        Renders a 2D texture onto a quad using VBOs and a shader program.
-
-        :param texture_id: texture ID.
-        :param dst_rect: Destination rectangle where the texture will be drawn (x, y, width, height).
+        Renders a texture using OpenGL shaders.
         """
-
-        #
-        if not self.display.initialized:
-            return
-
         if texture_id not in self.gl_textures:
+            print("Texture ID not found.")
             return
 
-        if self.shader_program_textures <= 0:
-            print("Error: Shader program for textures hasn't been initialized !")
-            return
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.gl_textures[texture_id])
 
-        #
-        # TODO
+        vertices = np.array([
+            # Position       # Texture Coords
+            dst_rect.x, dst_rect.y, 0.0, 1.0,  # Top-left corner
+            dst_rect.x + dst_rect.w, dst_rect.y, 1.0, 1.0,  # Top-right corner
+            dst_rect.x + dst_rect.w, dst_rect.y + dst_rect.h, 1.0, 0.0,  # Bottom-right corner
+            dst_rect.x, dst_rect.y + dst_rect.h, 0.0, 0.0   # Bottom-left corner
+        ], dtype=np.float32)
+
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        # Position attribute
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 4 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
+
+        # Texture coordinate attribute
+        gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
+        gl.glEnableVertexAttribArray(1)
+
+        gl.glUseProgram(self.shader_program_textures)
+        gl.glDrawArrays(gl.GL_TRIANGLE_FAN, 0, 4)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
 
     #
@@ -520,28 +675,41 @@ class ND_Window_SDL_OPENGL(ND_Window):
                 del self.gl_textures[texture_id]
 
 
-    #
     def _create_opengl_texture_from_surface(self, surface: sdl2.SDL_Surface) -> int:
+        """
+        Converts an SDL_Surface to an OpenGL texture and returns the texture ID.
+        """
+
         #
         if not self.display.initialized:
             return -1
 
-        #
-        # TODO
+        # Ensure SDL_Surface is valid
+        if not surface or not surface.contents:
+            print("Invalid SDL_Surface provided.")
+            return -1
 
-        # Generate a unique texture ID
-        texture_id: int = -1
-        # with self.mutex_sdl_textures:
-        #     texture_id = self.next_texture_id
-        #     self.next_texture_id += 1
+        width, height = surface.contents.w, surface.contents.h
 
-        #     # Store both OpenGL and SDL textures
-        #     self.gl_textures[texture_id] = gl_texture_id
-        #     self.sdl_textures_surfaces[texture_id] = surface
-        #     self.textures_dimensions[texture_id] = (width, height)
+        # Generate an OpenGL texture ID
+        texture_id = gl.glGenTextures(1)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
 
+        # Upload pixel data to OpenGL
+        gl.glTexImage2D(
+            gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width, height, 0,
+            gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, ctypes.c_void_p(surface.contents.pixels)
+        )
+
+        # Set texture parameters
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+
+        # Unbind the texture and return the ID
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
         return texture_id
-
 
 
     #
@@ -554,154 +722,166 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if font_name is None:
             font_name = self.display.default_font
 
+        #
+        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size))
+
+        #
+        if font_renderer is None:
+            return
+
         # No texture cache, calcul it each time
 
-        #
-        # TODO
+        font_renderer.render_text(txt, x, y, font_size, font_color)
 
 
 
 
 
-    #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
-        #
+        """
+        Draw a single pixel on the screen at (x, y).
+        """
         if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
+            print("Display not initialized.")
             return
 
         gl.glUseProgram(self.shader_program)
+        gl.glPointSize(1)
 
-        vertices = np.array([
-            [x, y],
-        ], dtype=np.float32)
+        # Set color uniform
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
 
-        colors = np.array([
-            [color.r, color.g, color.b, color.a],
-        ], dtype=np.float32)
+        vertices = np.array([x, y], dtype=np.float32)
 
-        # Create VBOs
-        vbo_vertices = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
 
-        vbo_colors = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_colors)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, colors.nbytes, colors, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
 
-        # Set attributes
-        gl.glEnableVertexAttribArray(0)  # Position
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-        gl.glEnableVertexAttribArray(1)  # Color
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_colors)
-        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-        # Draw
         gl.glDrawArrays(gl.GL_POINTS, 0, 1)
 
-        # Cleanup
-        gl.glDisableVertexAttribArray(0)
-        gl.glDisableVertexAttribArray(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glDeleteBuffers(1, [vbo_vertices])
-        gl.glDeleteBuffers(1, [vbo_colors])
+        gl.glBindVertexArray(0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
 
-    #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
         """
-        Draws a horizontal line.
-
-        Args:
-            x1 (int): Starting X-coordinate.
-            x2 (int): Ending X-coordinate.
-            y (int): Y-coordinate.
-            color (ND_Color): Line color.
+        Draw a horizontal line between (x1, y) and (x2, y).
         """
-
-        #
         if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
+            print("Display not initialized.")
             return
 
         gl.glUseProgram(self.shader_program)
 
+        # Set color uniform
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+
         vertices = np.array([
-            [x1, y],
-            [x2, y]
+            x1, y,  # Start point
+            x2, y   # End point
         ], dtype=np.float32)
 
-        colors = np.array([
-            [color.r, color.g, color.b, color.a],
-            [color.r, color.g, color.b, color.a],
-        ], dtype=np.float32)
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
 
-        # Create VBOs
-        vbo_vertices = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
 
-        vbo_colors = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_colors)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, colors.nbytes, colors, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
 
-        # Set attributes
-        gl.glEnableVertexAttribArray(0)  # Position
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-        gl.glEnableVertexAttribArray(1)  # Color
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_colors)
-        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-        # Draw
         gl.glDrawArrays(gl.GL_LINES, 0, 2)
 
-        # Cleanup
-        gl.glDisableVertexAttribArray(0)
-        gl.glDisableVertexAttribArray(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glDeleteBuffers(1, [vbo_vertices])
-        gl.glDeleteBuffers(1, [vbo_colors])
+        gl.glBindVertexArray(0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
 
 
-    #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
-
-        #
+        """
+        Draw a vertical line between (x, y1) and (x, y2).
+        """
         if not self.display.initialized:
+            print("Display not initialized.")
             return
 
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
+        gl.glUseProgram(self.shader_program)
 
-        #
-        # TODO
+        # Set color uniform
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+
+        vertices = np.array([
+            x, y1,  # Start point
+            x, y2   # End point
+        ], dtype=np.float32)
+
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
+
+        gl.glDrawArrays(gl.GL_LINES, 0, 2)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
 
-    #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
-
-        #
+        """
+        Draw a straight line between (x1, y1) and (x2, y2).
+        """
         if not self.display.initialized:
+            print("Display not initialized.")
             return
 
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
+        gl.glUseProgram(self.shader_program)
 
-        #
-        # TODO
+        # Set color uniform
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+
+        vertices = np.array([
+            x1, y1,  # Start point
+            x2, y2   # End point
+        ], dtype=np.float32)
+
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
+
+        gl.glDrawArrays(gl.GL_LINES, 0, 2)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
 
     #
@@ -737,23 +917,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         # TODO
 
 
-    #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        # TODO
-
-
-    #
-    def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
@@ -764,48 +928,70 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         gl.glUseProgram(self.shader_program)
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *outline_color.to_float_tuple())
 
         vertices = np.array([
-            [x, y],
-            [x + width, y],
-            [x + width, y + height],
-            [x, y + height]
+            x, y,  # Bottom-left
+            x + width, y,  # Bottom-right
+            x + width, y + height,  # Top-right
+            x, y + height,  # Top-left
+            x, y  # Back to bottom-left
         ], dtype=np.float32)
 
-        colors = np.array([
-            [fill_color.r, fill_color.g, fill_color.b, fill_color.a],
-            [fill_color.r, fill_color.g, fill_color.b, fill_color.a],
-            [fill_color.r, fill_color.g, fill_color.b, fill_color.a],
-            [fill_color.r, fill_color.g, fill_color.b, fill_color.a]
-        ], dtype=np.float32)
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
 
-        # Create VBOs
-        vbo_vertices = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-
-        vbo_colors = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_colors)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, colors.nbytes, colors, gl.GL_STATIC_DRAW)
-
-        # Set attributes
-        gl.glEnableVertexAttribArray(0)  # Position
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_vertices)
         gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glEnableVertexAttribArray(0)
 
-        gl.glEnableVertexAttribArray(1)  # Color
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_colors)
-        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glDrawArrays(gl.GL_LINE_LOOP, 0, 5)
 
-        # Draw
-        gl.glDrawArrays(gl.GL_TRIANGLE_FAN, 0, 4)
-
-        # Cleanup
-        gl.glDisableVertexAttribArray(0)
-        gl.glDisableVertexAttribArray(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glDeleteBuffers(1, [vbo_vertices])
-        gl.glDeleteBuffers(1, [vbo_colors])
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
+
+    def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        if self.shader_program <= 0:
+            print(f"Error: shader program hasn't been initialized (={self.shader_program}).")
+            return
+
+
+        gl.glUseProgram(self.shader_program)
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *fill_color.to_float_tuple())
+
+        vertices = np.array([
+            x, y,  # Bottom-left
+            x + width, y,  # Bottom-right
+            x + width, y + height,  # Top-right
+            x, y + height  # Top-left
+        ], dtype=np.float32)
+
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glEnableVertexAttribArray(0)
+
+        gl.glDrawArrays(gl.GL_QUADS, 0, 4)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
 
 
 

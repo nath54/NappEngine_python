@@ -43,6 +43,10 @@ class ND_Color:
     def __repr__(self) -> str:
         return f"ND_Color({self.r}, {self.g}, {self.b}, {self.a})"
 
+    #
+    def to_float_tuple(self) -> tuple[float, float, float, float]:
+        return (float(self.r)/255.0, float(self.g)/255.0, float(self.b)/255.0, float(self.a)/255.0)
+
 
 #
 class ND_Transformations:
