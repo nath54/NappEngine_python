@@ -460,6 +460,12 @@ class ND_Window_SDL_OPENGL(ND_Window):
         self.shader_program_textures: int = create_and_validate_gl_shader_program(
                                             VERTEX_SHADER_TEXTURES_SRC, FRAGMENT_SHADER_TEXTURES_SRC)
 
+    def _ensure_context(self):
+        """Ensure the OpenGL context is current."""
+        if not self.gl_context:
+            raise RuntimeError("No valid OpenGL context.")
+        sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
+
 
     #
     def destroy_window(self) -> None:
@@ -551,6 +557,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if texture_id not in self.gl_textures:
             print("Texture ID not found.")
             return
+
+        #
+        self._ensure_context()
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.gl_textures[texture_id])
 
@@ -689,6 +698,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             print("Invalid SDL_Surface provided.")
             return -1
 
+        #
+        self._ensure_context()
+
         width, height = surface.contents.w, surface.contents.h
 
         # Generate an OpenGL texture ID
@@ -729,6 +741,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if font_renderer is None:
             return
 
+        #
+        self._ensure_context()
+
         # No texture cache, calcul it each time
 
         font_renderer.render_text(txt, x, y, font_size, font_color)
@@ -744,6 +759,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if not self.display.initialized:
             print("Display not initialized.")
             return
+
+        #
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
         gl.glPointSize(1)
@@ -779,6 +797,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if not self.display.initialized:
             print("Display not initialized.")
             return
+
+        #
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
 
@@ -818,6 +839,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             print("Display not initialized.")
             return
 
+        #
+        self._ensure_context()
+
         gl.glUseProgram(self.shader_program)
 
         # Set color uniform
@@ -854,6 +878,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if not self.display.initialized:
             print("Display not initialized.")
             return
+
+        #
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
 
@@ -896,6 +923,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -909,6 +939,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
+
+        #
+        self._ensure_context()
 
         #
         self.draw_filled_rect(x, y, width, height, fill_color)
@@ -926,6 +959,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print(f"Error: shader program hasn't been initialized (={self.shader_program}).")
             return
+
+        #
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *outline_color.to_float_tuple())
@@ -964,6 +1000,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print(f"Error: shader program hasn't been initialized (={self.shader_program}).")
             return
+
+        #
+        self._ensure_context()
 
 
         gl.glUseProgram(self.shader_program)
@@ -1007,6 +1046,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1020,6 +1062,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
+
+        #
+        self._ensure_context()
 
         #
         # TODO
@@ -1037,6 +1082,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1050,6 +1098,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
+
+        #
+        self._ensure_context()
 
         #
         # TODO
@@ -1067,6 +1118,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1080,6 +1134,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
+
+        #
+        self._ensure_context()
 
         #
         # TODO
@@ -1097,6 +1154,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1112,6 +1172,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1125,6 +1188,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if self.shader_program <= 0:
             print("Error: shader program hasn't been initialized.")
             return
+
+        #
+        self._ensure_context()
 
         #
         # TODO
@@ -1145,6 +1211,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1161,6 +1230,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
+
+        #
+        self._ensure_context()
 
         #
         # TODO
@@ -1181,6 +1253,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_context()
+
+        #
         # TODO
 
 
@@ -1197,6 +1272,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         if len(x_coords) != 4 or len(y_coords) != 4:
             raise ValueError("Bezier curve requires exactly 4 control points.")
+
+        #
+        self._ensure_context()
 
         #
         # TODO
@@ -1217,6 +1295,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         if not self.display.initialized:
             return
+
+        #
+        self._ensure_context()
         #
         self.apply_area_drawing_constraint(x, y, width, height)
 
@@ -1229,6 +1310,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         if not self.display.initialized:
             return
+
+        #
+        self._ensure_context()
         #
         new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
         #
