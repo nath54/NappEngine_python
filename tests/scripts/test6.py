@@ -3,9 +3,9 @@ import OpenGL.GLU as glu  # type: ignore
 from OpenGL.GL import shaders
 import glfw  # type: ignore
 import freetype  # type: ignore
-import glm
-import numpy as np
-from PIL import Image
+import glm  # type: ignore
+import numpy as np  # type: ignore
+from PIL import Image  # type: ignore
 import math
 import time
 

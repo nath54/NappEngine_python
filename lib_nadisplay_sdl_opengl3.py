@@ -1,5 +1,4 @@
 
-
 from typing import Optional, Any, Callable, cast, Type
 from threading import Lock
 
@@ -8,6 +7,7 @@ import os
 import numpy as np  # type: ignore
 
 import sdl2  # type: ignore
+import sdl2.video  # type: ignore
 import sdl2.sdlttf as sdlttf  # type: ignore
 import sdl2.sdlimage as sdlimage  # type: ignore
 
@@ -81,17 +81,54 @@ FRAGMENT_SHADER_TEXTURES_SRC: str = """
 """
 
 
+def log_opengl_context_info():
+    # Retrieve OpenGL context information
+    vendor = gl.glGetString(gl.GL_VENDOR)
+    renderer = gl.glGetString(gl.GL_RENDERER)
+    version = gl.glGetString(gl.GL_VERSION)
+    glsl_version = gl.glGetString(gl.GL_SHADING_LANGUAGE_VERSION)
 
+    # Log the information
+    print(f"OpenGL Vendor: {vendor}")
+    print(f"OpenGL Renderer: {renderer}")
+    print(f"OpenGL Version: {version}")
+    print(f"GLSL Version: {glsl_version}")
 
+    # Check for errors
+    error = gl.glGetError()
+    if error != gl.GL_NO_ERROR:
+        print(f"OpenGL Error: {error}")
+
+def log_opengl_context_attributes():
+    # Retrieve OpenGL context attributes
+    major_version = gl.glGetIntegerv(gl.GL_MAJOR_VERSION)
+    minor_version = gl.glGetIntegerv(gl.GL_MINOR_VERSION)
+    context_flags = gl.glGetIntegerv(gl.GL_CONTEXT_FLAGS)
+    context_profile_mask = gl.glGetIntegerv(gl.GL_CONTEXT_PROFILE_MASK)
+
+    # Log the information
+    print(f"OpenGL Major Version: {major_version}")
+    print(f"OpenGL Minor Version: {minor_version}")
+    print(f"OpenGL Context Flags: {context_flags}")
+    print(f"OpenGL Context Profile Mask: {context_profile_mask}")
+
+    # Check for errors
+    error = gl.glGetError()
+    if error != gl.GL_NO_ERROR:
+        print(f"OpenGL Error: {error}")
+
+#
 class FontRenderer:
-    def __init__(self, font_path: str) -> None:
+    #
+    def __init__(self, font_path: str, window: "ND_Window_SDL_OPENGL") -> None:
         self.shader_program = None
         self.characters: dict = {}
         self.vao: int = 0
         self.vbo: int = 0
         self.init_shader()
-        self.load_font(font_path)
+        self.load_font(font_path, window)
 
+    #
     def init_shader(self) -> None:
         vertex_shader_source: str = """
             #version 330 core
@@ -138,8 +175,14 @@ class FontRenderer:
         gl.glDeleteShader(vertex_shader)
         gl.glDeleteShader(fragment_shader)
 
-    def load_font(self, font_path: str) -> None:
+    #
+    def load_font(self, font_path: str, window: "ND_Window_SDL_OPENGL") -> None:
         # Load font characters using FreeType and store textures.
+
+        #
+        window._ensure_context()
+
+        #
         face = freetype.Face(font_path)
         face.set_char_size(48 * 64)
 
@@ -172,15 +215,16 @@ class FontRenderer:
 
         gl.glBindVertexArray(self.vao)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
-        gl.glEnableVertexAttribArray(0)
-        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 4 * 4, None)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
+        # gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
+        # gl.glEnableVertexAttribArray(0)
+        # gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 4 * 4, None)
+        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        # gl.glBindVertexArray(0)
 
+    #
     def render_text(self, text: str, x: int, y: int, scale: int, color) -> None:
         gl.glUseProgram(self.shader_program)
-        gl.glUniform3f(gl.glGetUniformLocation(self.shader_program, "textColor"), *color)
+        gl.glUniform3f(gl.glGetUniformLocation(self.shader_program, "textColor"), color.r, color.g, color.b)
         gl.glActiveTexture(gl.GL_TEXTURE0)
         gl.glBindVertexArray(self.vao)
 
@@ -214,10 +258,8 @@ class FontRenderer:
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
 
-
 #
 class ND_Display_SDL_OPENGL(ND_Display):
-
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
@@ -230,16 +272,13 @@ class ND_Display_SDL_OPENGL(ND_Display):
         self.ttf_fonts: dict[str, FontRenderer] = {}
         #
 
-
     #
     def get_time_msec(self) -> float:
         return sdl2.SDL_GetTicks()
 
-
     #
     def wait_time_msec(self, delay_in_msec: float) -> None:
         sdl2.SDL_Delay(int(delay_in_msec))
-
 
     #
     def init_display(self) -> None:
@@ -260,7 +299,7 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
         #
         self.initialized = True
-
+        print("Display initialized successfully.")
 
     #
     def destroy_display(self) -> None:
@@ -281,9 +320,8 @@ class ND_Display_SDL_OPENGL(ND_Display):
         sdlttf.TTF_Quit()
         sdl2.SDL_Quit()
 
-
     #
-    def get_font(self, font: str, font_size: int) -> Optional[FontRenderer]:
+    def get_font(self, font: str, font_size: int, window: "ND_Window_SDL_OPENGL") -> Optional[FontRenderer]: # type: ignore
         #
         if not self.initialized:
             return None
@@ -301,10 +339,9 @@ class ND_Display_SDL_OPENGL(ND_Display):
             if not (font_path.endswith(".ttf") or font_path.endswith(".otf")) or not os.path.exists(font_path):
                 return None
             #
-            self.ttf_fonts[font] = FontRenderer(font_path)
+            self.ttf_fonts[font] = FontRenderer(font_path, window)
         #
         return self.ttf_fonts[font]
-
 
     #
     def get_focused_window_id(self) -> int:
@@ -322,7 +359,6 @@ class ND_Display_SDL_OPENGL(ND_Display):
             return window_id
         else:
             return -1  # Indicate that no window is focused
-
 
     #
     def create_window(self, window_params: dict[str, Any], error_if_win_id_not_available: bool = False) -> int:
@@ -351,7 +387,6 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
         #
         return win_id
-
 
     #
     def destroy_window(self, win_id: int) -> None:
@@ -416,6 +451,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
                                     self.height,
                                     sdl2.SDL_WINDOW_OPENGL
         )
+        #
+        if not self.sdl_window:
+            raise UserWarning("Window creation failed:", sdl2.SDL_GetError())
+        print("SDL2 window created successfully.")
 
         #
         x_c, y_c, w_c, h_c = ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0)
@@ -431,12 +470,22 @@ class ND_Window_SDL_OPENGL(ND_Window):
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
         self.gl_context: Optional[sdl2.SDL_GL_Context] = sdl2.SDL_GL_CreateContext(self.sdl_window)
+        #
+        if not self.gl_context:
+            raise UserWarning("OpenGL context creation failed:", sdl2.SDL_GetError())
+        print("OpenGL context created successfully.")
+        #
+        # Make the context current
+        if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
+            raise UserWarning("Failed to make OpenGL context current:", sdl2.SDL_GetError())
+        print("OpenGL context made current.")
+        #
         sdl2.SDL_GL_SetSwapInterval(1)  # Enable vsync
         gl.glDisable(gl.GL_DEPTH_TEST)  # Disable depth test
         gl.glDisable(gl.GL_CULL_FACE)   #
 
         if self.gl_context is None:
-            print(f"ERROR: GL context is invalid : {self.gl_context} !!!")
+            raise UserWarning(f"ERROR: GL context is invalid : {self.gl_context} !!!")
 
         # sdl_or_glfw_window_id is int and has been initialized to -1 in parent class
         self.sdl_or_glfw_window_id = sdl2.SDL_GetWindowID(self.sdl_window)
@@ -455,17 +504,41 @@ class ND_Window_SDL_OPENGL(ND_Window):
         # Compile shaders and create a program
         self.shader_program: int = create_and_validate_gl_shader_program(
                                     VERTEX_SHADER_SRC, FRAGMENT_SHADER_SRC)
+        if self.shader_program <= 0:
+            raise UserWarning("Failed to create shader program.")
+        print("Shader program created successfully.")
 
         # Compile shaders and create a program for textures
         self.shader_program_textures: int = create_and_validate_gl_shader_program(
                                             VERTEX_SHADER_TEXTURES_SRC, FRAGMENT_SHADER_TEXTURES_SRC)
+        if self.shader_program_textures <= 0:
+            raise UserWarning("Failed to create texture shader program.")
+        print("Shader program created successfully.")
 
-    def _ensure_context(self):
+
+    #
+    def _ensure_shaderProgram_base(self) -> None:
+        #
+        gl.glUseProgram(self.shader_program)
+
+    #
+    def _ensure_shaderProgram_textures(self) -> None:
+        #
+        gl.glUseProgram(self.shader_program_textures)
+
+    #
+    def _ensure_context(self) -> None:
         """Ensure the OpenGL context is current."""
         if not self.gl_context:
+            print("No OpenGL context available.")
             raise RuntimeError("No valid OpenGL context.")
-        sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
-
+        if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
+            print("Failed to make OpenGL context current:", sdl2.SDL_GetError())
+            raise RuntimeError("Failed to make OpenGL context current.")
+        print("\nOpenGL context is current.\n")
+        #
+        log_opengl_context_info()
+        log_opengl_context_attributes()
 
     #
     def destroy_window(self) -> None:
@@ -478,20 +551,17 @@ class ND_Window_SDL_OPENGL(ND_Window):
         sdl2.SDL_GL_DeleteContext(self.gl_context)
         sdl2.SDL_DestroyWindow(self.sdl_window)
 
-
     #
     def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
         #
         if (state not in self.display_states) or (state in self.display_states and erase_if_state_already_exists):
             self.display_states[state] = state_display_function
 
-
     #
     def remove_display_state(self, state: str) -> None:
         #
         if state in self.display_states:
             del self.display_states[state]
-
 
     #
     def set_title(self, new_title: str) -> None:
@@ -502,7 +572,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         sdl2.SDL_SetWindowTitle(self.sdl_window, new_title.encode('utf-8'))
 
-
     #
     def set_position(self, new_x: int, new_y: int) -> None:
         #
@@ -512,7 +581,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         sdl2.SDL_SetWindowPosition(self.sdl_window, new_x, new_y)
 
-
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
@@ -521,7 +589,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         sdl2.SDL_SetWindowSize(self.sdl_window, new_width, new_height)
-
 
     #
     def set_fullscreen(self, mode: int) -> None:
@@ -548,7 +615,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         elif mode == 2:
             sdl2.SDL_SetWindowFullscreen(self.sdl_window, sdl2.SDL_WINDOW_FULLSCREEN)
 
-
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
         """
@@ -560,6 +626,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_textures()
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.gl_textures[texture_id])
 
@@ -596,7 +663,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
 
@@ -605,11 +671,14 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return -1
 
         #
+        self._ensure_shaderProgram_textures()
+
+        #
         if font_name is None:
             font_name = self.display.default_font
 
         # Get font
-        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size)
+        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size, self)  # type: ignore
 
         # Do nothing if not font got
         if font is None:
@@ -627,13 +696,15 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         return texture_id
 
-
     #
     def prepare_image_to_render(self, img_path: str) -> int:
 
         #
         if not self.display.initialized:
             return -1
+
+        #
+        self._ensure_shaderProgram_textures()
 
         # Chargement de l'image
         image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
@@ -649,7 +720,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         return texture_id
 
-
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformations = ND_Transformations()) -> None:
 
@@ -662,20 +732,26 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self.blit_texture(texture_id, ND_Rect(x, y, width, height))
+        self._ensure_shaderProgram_textures()
 
+        #
+        self.blit_texture(texture_id, ND_Rect(x, y, width, height))
 
     #
     def get_prepared_texture_size(self, texture_id: int) -> ND_Point:
+        #
+        self._ensure_shaderProgram_textures()
         #
         if texture_id not in self.textures_dimensions:
             return ND_Point(0, 0)
         #
         return ND_Point(*self.textures_dimensions[texture_id])
 
-
     #
     def destroy_prepared_texture(self, texture_id: int) -> None:
+        #
+        self._ensure_shaderProgram_textures()
+        #
         with self.mutex_sdl_textures:
             if texture_id in self.gl_textures:
                 gl.glDeleteTextures(1, [self.gl_textures[texture_id]])
@@ -683,7 +759,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
                 del self.sdl_textures_surfaces[texture_id]
                 del self.gl_textures[texture_id]
 
-
+    #
     def _create_opengl_texture_from_surface(self, surface: sdl2.SDL_Surface) -> int:
         """
         Converts an SDL_Surface to an OpenGL texture and returns the texture ID.
@@ -692,6 +768,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         if not self.display.initialized:
             return -1
+
+        #
+        self._ensure_shaderProgram_textures()
 
         # Ensure SDL_Surface is valid
         if not surface or not surface.contents:
@@ -723,7 +802,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
         return texture_id
 
-
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
@@ -731,11 +809,14 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
+        self._ensure_shaderProgram_textures()
+
+        #
         if font_name is None:
             font_name = self.display.default_font
 
         #
-        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size))
+        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size, self))  # type: ignore
 
         #
         if font_renderer is None:
@@ -748,10 +829,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         font_renderer.render_text(txt, x, y, font_size, font_color)
 
-
-
-
-
+    #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
         """
         Draw a single pixel on the screen at (x, y).
@@ -762,6 +840,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         gl.glUseProgram(self.shader_program)
         gl.glPointSize(1)
@@ -789,7 +868,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
+    #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
         """
         Draw a horizontal line between (x1, y) and (x2, y).
@@ -800,6 +879,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         gl.glUseProgram(self.shader_program)
 
@@ -829,8 +909,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
-
+    #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
         """
         Draw a vertical line between (x, y1) and (x, y2).
@@ -841,6 +920,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         gl.glUseProgram(self.shader_program)
 
@@ -870,7 +950,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
+    #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
         """
         Draw a straight line between (x1, y1) and (x2, y2).
@@ -881,6 +961,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         gl.glUseProgram(self.shader_program)
 
@@ -910,7 +991,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
 
@@ -924,10 +1004,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
@@ -942,6 +1022,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         self.draw_filled_rect(x, y, width, height, fill_color)
@@ -949,7 +1030,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         # TODO
 
-
+    #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
@@ -962,6 +1043,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         gl.glUseProgram(self.shader_program)
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *outline_color.to_float_tuple())
@@ -990,7 +1072,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
+    #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
         if not self.display.initialized:
@@ -1003,6 +1085,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
 
         gl.glUseProgram(self.shader_program)
@@ -1031,9 +1114,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
-
-
-
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color) -> None:
 
@@ -1047,10 +1127,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color) -> None:
@@ -1065,10 +1145,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
@@ -1083,10 +1163,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
@@ -1101,10 +1181,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
@@ -1119,10 +1199,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
@@ -1137,10 +1217,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
@@ -1155,10 +1235,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
@@ -1173,10 +1253,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
@@ -1191,10 +1271,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
@@ -1212,10 +1292,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
@@ -1233,10 +1313,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
@@ -1254,10 +1334,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
@@ -1275,10 +1355,10 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
 
         #
         # TODO
-
 
     #
     def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
@@ -1286,7 +1366,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         # TODO
         pass
-
 
     #
     def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
@@ -1298,10 +1377,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
         #
         self.apply_area_drawing_constraint(x, y, width, height)
-
-
 
     #
     def disable_area_drawing_constraints(self) -> None:
@@ -1313,6 +1391,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
         #
         self._ensure_context()
+        self._ensure_shaderProgram_base()
         #
         new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
         #
@@ -1322,7 +1401,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
         else:
             #
             self.apply_area_drawing_constraint(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h)
-
 
     #
     def update_display(self) -> None:
