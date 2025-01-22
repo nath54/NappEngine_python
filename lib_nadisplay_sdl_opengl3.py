@@ -54,19 +54,19 @@ from lib_nadisplay_opengl import create_and_validate_gl_shader_program
 BASE_PATH: str = "../../../"
 
 # Vertex shader source code for basic rendering
-with open(f"{BASE_PATH}shaders/basic_rendering_vertex.vert", "r", encoding="utf-8") as f:
+with open(f"{BASE_PATH}gl_shaders/basic_rendering_vertex.vert", "r", encoding="utf-8") as f:
     VERTEX_SHADER_SRC: str = f.read()
 
 # Fragment shader source code for basic rendering
-with open(f"{BASE_PATH}shaders/basic_rendering_fragment.frag", "r", encoding="utf-8") as f:
+with open(f"{BASE_PATH}gl_shaders/basic_rendering_fragment.frag", "r", encoding="utf-8") as f:
     FRAGMENT_SHADER_SRC: str = f.read()
 
 # Vertex shader for rendering with textures
-with open(f"{BASE_PATH}shaders/texture_rendering_vertex.vert", "r", encoding="utf-8") as f:
+with open(f"{BASE_PATH}gl_shaders/texture_rendering_vertex.vert", "r", encoding="utf-8") as f:
     VERTEX_SHADER_TEXTURES_SRC: str = f.read()
 
 # Fragment shader for rendering with textures
-with open(f"{BASE_PATH}shaders/texture_rendering_fragment.frag", "r", encoding="utf-8") as f:
+with open(f"{BASE_PATH}gl_shaders/texture_rendering_fragment.frag", "r", encoding="utf-8") as f:
     FRAGMENT_SHADER_TEXTURES_SRC: str = f.read()
 
 
@@ -124,11 +124,11 @@ class FontRenderer:
     def init_shader(self) -> None:
 
         # Vertex shader source code for font rendering
-        with open(f"{BASE_PATH}shaders/font_rendering_vertex.vert", "r", encoding="utf-8") as f:
+        with open(f"{BASE_PATH}gl_shaders/font_rendering_vertex.vert", "r", encoding="utf-8") as f:
             vertex_shader_source: str = f.read()
 
         # Fragment shader source code for font rendering
-        with open(f"{BASE_PATH}shaders/font_rendering_fragment.frag", "r", encoding="utf-8") as f:
+        with open(f"{BASE_PATH}gl_shaders/font_rendering_fragment.frag", "r", encoding="utf-8") as f:
             fragment_shader_source: str = f.read()
 
         # Compile shaders
