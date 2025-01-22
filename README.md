@@ -76,5 +76,5 @@ The documentation hasn't been started yet, but there will be one well writen and
 
 ## Example of projects using the NappEngine:
 
-- A snake game: `https://github.com/nath54/Snaky`
+- A snake game: [https://github.com/nath54/Snaky](https://github.com/nath54/Snaky)
 
