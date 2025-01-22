@@ -18,8 +18,6 @@ import math
 import ctypes
 from vulkan import vkCreateWin32SurfaceKHR, VkWin32SurfaceCreateInfoKHR  # Import platform-specific calls
 
-import sys
-sys.path.insert(0, "../../")
 from vulkan_protocols import VkImageProtocol, VkInstanceProtocol, VkDeviceProtocol, VkSwapchainProtocol, VkDeviceMemoryProtocol
 
 # Setup the VulkanRenderer class

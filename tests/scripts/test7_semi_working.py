@@ -16,8 +16,6 @@ import time
 import math
 import ctypes
 
-import sys
-sys.path.insert(0, "../../")
 from vulkan_protocols import VkImageProtocol, VkInstanceProtocol, VkDeviceProtocol, VkSwapchainProtocol, VkDeviceMemoryProtocol
 
 # Path to the font file
