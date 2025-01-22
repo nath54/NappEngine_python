@@ -2,7 +2,7 @@
 
 ## Description
 
-The goal of this project is to create a full python library to help people to easily create apps or games directly with Python, and to prepare the C++ implementation of this project that will aim to better performances and the ability to export any app / or game created with it into the most device / platform possible (Linux computer, windows computer, MAC computers, Android mobiles, IOS mobiles, Android VR headsets, ...).
+The goal of this project is to create a full python app engine/library to help people to easily create apps or games directly with Python, and to prepare the C++ implementation of this app engine/library that will aim to better performances and the ability to export any app / or game created with it into the most device / platform possible (Linux computer, windows computer, MAC computers, Android mobiles, IOS mobiles, Android VR headsets, ...).
 
 ## Project Organisation
 
