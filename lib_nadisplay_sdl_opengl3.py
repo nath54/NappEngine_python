@@ -119,6 +119,8 @@ class FontRenderer:
         #
         self.window: ND_Window_SDL_OPENGL = window
         #
+        self.init_shader()
+        #
         self.load_font(font_path)  # Load font
 
     # Initialize the shaders for font rendering
@@ -150,6 +152,9 @@ class FontRenderer:
 
     # Load font using FreeType and prepare for rendering
     def load_font(self, font_path: str) -> None:
+
+        # Use program
+        gl.glUseProgram(self.shader_program)
 
         # Ensure OpenGL context is active
         self.window._ensure_context()
@@ -205,12 +210,20 @@ class FontRenderer:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
         gl.glEnableVertexAttribArray(0)
+
+        gl.glBindVertexArray(self.vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
         gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        # gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
 
     # Render text on the screen
     def render_text(self, text: str, x: int, y: int, scale: int, color: ND_Color) -> None:
+
+        # Use program
+        gl.glUseProgram(self.shader_program)
 
         # Ensure OpenGL context is active
         self.window._ensure_context()
@@ -561,6 +574,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
             print("Failed to make OpenGL context current:", sdl2.SDL_GetError())
             raise RuntimeError("Failed to make OpenGL context current.")
+        if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
+            raise RuntimeError("No current OpenGL program bound.")
         print("\nOpenGL context is current.\n")
         #
         log_opengl_context_info()
@@ -651,8 +666,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_textures()
+        self._ensure_context()
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.gl_textures[texture_id])
 
@@ -865,8 +880,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
         gl.glPointSize(1)
@@ -904,8 +919,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
 
@@ -945,8 +960,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
 
@@ -986,8 +1001,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
 
@@ -1029,8 +1044,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1047,8 +1062,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         self.draw_filled_rect(x, y, width, height, fill_color)
@@ -1068,8 +1083,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         gl.glUseProgram(self.shader_program)
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *outline_color.to_float_tuple())
@@ -1110,8 +1125,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
 
         gl.glUseProgram(self.shader_program)
@@ -1152,8 +1167,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1170,8 +1185,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1188,8 +1203,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1206,8 +1221,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1224,8 +1239,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1242,8 +1257,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1260,8 +1275,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1278,8 +1293,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1296,8 +1311,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1317,8 +1332,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1338,8 +1353,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1359,8 +1374,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1380,8 +1395,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             raise ValueError("Bezier curve requires exactly 4 control points.")
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
 
         #
         # TODO
@@ -1402,8 +1417,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
         #
         self.apply_area_drawing_constraint(x, y, width, height)
 
@@ -1416,8 +1431,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        self._ensure_context()
         self._ensure_shaderProgram_base()
+        self._ensure_context()
         #
         new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
         #
