@@ -70,3 +70,11 @@ Currently, there are the following usable classes for creating apps and games wi
 
 A lot of new element classes are planned to be added in the future.
 
+### Documentation
+
+The documentation hasn't been started yet, but there will be one well writen and easy to use when the project will be at a state where people can start to use it, that is not really currently the case.
+
+## Example of projects using the NappEngine:
+
+- A snake game: `https://github.com/nath54/Snaky`
+
