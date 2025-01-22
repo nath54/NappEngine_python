@@ -1,11 +1,19 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import OpenGL.GL as gl  # type: ignore
-import OpenGL.GLU as glu  # type: ignore
+# import OpenGL.GLU as glu  # type: ignore
 from OpenGL.GL import shaders
 import glfw  # type: ignore
 import freetype  # type: ignore
 import glm  # type: ignore
 import numpy as np  # type: ignore
-from PIL import Image  # type: ignore
+# from PIL import Image  # type: ignore
 import math
 import time
 

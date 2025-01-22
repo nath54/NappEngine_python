@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import glfw  # type: ignore
 import OpenGL.GL as gl  # type: ignore
 import freetype  # type: ignore

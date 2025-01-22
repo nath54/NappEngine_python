@@ -1,3 +1,10 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
 
 
 from typing import Optional, Any, Callable, cast, Type

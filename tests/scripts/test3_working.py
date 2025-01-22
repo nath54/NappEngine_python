@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import glfw
 from OpenGL.GL import *
 import numpy as np

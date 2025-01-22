@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import vulkan as vk  # type: ignore
 import glfw  # type: ignore
 import freetype  # type: ignore

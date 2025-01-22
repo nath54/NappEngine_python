@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import sys
 import sdl2
 import sdl2.ext

@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import sdl2  # type: ignore
 import sdl2.ext  # type: ignore
 import sdl2.sdlttf as sdlttf  # type: ignore

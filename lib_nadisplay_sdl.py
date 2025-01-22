@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 
 from typing import Optional
 from lib_nadisplay_colors import ND_Color

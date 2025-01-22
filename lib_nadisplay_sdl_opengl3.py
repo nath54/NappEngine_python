@@ -1,29 +1,48 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
 
+File Description:
+...
+
+"""
+
+
+# Import necessary modules for type hints and threading
 from typing import Optional, Any, Callable, cast, Type
 from threading import Lock
 
+# Import operating system utilities
 import os
 
+# Import NumPy for numerical operations
 import numpy as np  # type: ignore
 
+# Import SDL2 libraries for graphics rendering and font handling
 import sdl2  # type: ignore
 import sdl2.video  # type: ignore
 import sdl2.sdlttf as sdlttf  # type: ignore
 import sdl2.sdlimage as sdlimage  # type: ignore
 
-# To improve speed for non development code:
-#
-#   import OpenGL
-#   OpenGL.ERROR_LCHECKING = False
-#   OpenGL.ERROR_LOGGING = False
+# To optimize speed in production, OpenGL error checking and logging can be disabled
+# import OpenGL
+# OpenGL.ERROR_CHECKING = False
+# OpenGL.ERROR_LOGGING = False
 
+# Import OpenGL functionalities for rendering
 import OpenGL.GL as gl  # type: ignore
+from OpenGL.GL import shaders
+
+# Optionally, GLUT can be used for window management and other utilities
 # from OpenGL.GLUT import glutInit, glutCreateWindow, glutInitDisplayMode, GLUT_RGB, glutInitWindowSize
 
+# Import ctypes for low-level operations
 import ctypes
+# Import FreeType for font loading and rendering
 import freetype  # type: ignore
+# Import GLM for mathematical operations (e.g., vectors, matrices)
 import glm
 
+# Import lib_nadisplay functions
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
@@ -31,165 +50,124 @@ from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_sdl import to_sdl_color, get_display_info
 from lib_nadisplay_opengl import create_and_validate_gl_shader_program
 
-
 #
-VERTEX_SHADER_SRC: str = """
-    #version 330 core
-    layout (location = 0) in vec2 position;
-    layout (location = 1) in vec4 color;
-    out vec4 frag_color;
-    void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
-        frag_color = color;
-    }
-"""
+BASE_PATH: str = "../../../"
 
-#
-FRAGMENT_SHADER_SRC: str = """
-    #version 330 core
-    in vec4 frag_color;
-    out vec4 out_color;
-    void main() {
-        out_color = frag_color;
+# Vertex shader source code for basic rendering
+with open(f"{BASE_PATH}shaders/basic_rendering_vertex.vert", "r", encoding="utf-8") as f:
+    VERTEX_SHADER_SRC: str = f.read()
 
-    }
-"""
+# Fragment shader source code for basic rendering
+with open(f"{BASE_PATH}shaders/basic_rendering_fragment.frag", "r", encoding="utf-8") as f:
+    FRAGMENT_SHADER_SRC: str = f.read()
 
-#
-VERTEX_SHADER_TEXTURES_SRC: str = """
-    #version 330 core
-    layout (location = 0) in vec2 position;  // Position of the vertex
-    layout (location = 1) in vec2 texCoord;  // Texture coordinates
-    out vec2 fragTexCoord;  // Output to fragment shader
+# Vertex shader for rendering with textures
+with open(f"{BASE_PATH}shaders/texture_rendering_vertex.vert", "r", encoding="utf-8") as f:
+    VERTEX_SHADER_TEXTURES_SRC: str = f.read()
 
-    void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
-        fragTexCoord = texCoord;  // Pass texture coordinates to fragment shader
-    }
-"""
-
-#
-FRAGMENT_SHADER_TEXTURES_SRC: str = """
-    #version 330 core
-    in vec2 fragTexCoord;  // Input from vertex shader
-    out vec4 outColor;     // Output color
-    uniform sampler2D textureSampler;  // The texture sampler
-
-    void main() {
-        outColor = texture(textureSampler, fragTexCoord);  // Sample the texture
-    }
-"""
+# Fragment shader for rendering with textures
+with open(f"{BASE_PATH}shaders/texture_rendering_fragment.frag", "r", encoding="utf-8") as f:
+    FRAGMENT_SHADER_TEXTURES_SRC: str = f.read()
 
 
+# Log information about the current OpenGL context
 def log_opengl_context_info():
-    # Retrieve OpenGL context information
-    vendor = gl.glGetString(gl.GL_VENDOR)
-    renderer = gl.glGetString(gl.GL_RENDERER)
-    version = gl.glGetString(gl.GL_VERSION)
-    glsl_version = gl.glGetString(gl.GL_SHADING_LANGUAGE_VERSION)
+    vendor = gl.glGetString(gl.GL_VENDOR)  # Get GPU vendor
+    renderer = gl.glGetString(gl.GL_RENDERER)  # Get GPU renderer
+    version = gl.glGetString(gl.GL_VERSION)  # Get OpenGL version
+    glsl_version = gl.glGetString(gl.GL_SHADING_LANGUAGE_VERSION)  # Get GLSL version
 
-    # Log the information
     print(f"OpenGL Vendor: {vendor}")
     print(f"OpenGL Renderer: {renderer}")
     print(f"OpenGL Version: {version}")
     print(f"GLSL Version: {glsl_version}")
 
-    # Check for errors
-    error = gl.glGetError()
+    error = gl.glGetError()  # Check for OpenGL errors
     if error != gl.GL_NO_ERROR:
         print(f"OpenGL Error: {error}")
 
-def log_opengl_context_attributes():
-    # Retrieve OpenGL context attributes
-    major_version = gl.glGetIntegerv(gl.GL_MAJOR_VERSION)
-    minor_version = gl.glGetIntegerv(gl.GL_MINOR_VERSION)
-    context_flags = gl.glGetIntegerv(gl.GL_CONTEXT_FLAGS)
-    context_profile_mask = gl.glGetIntegerv(gl.GL_CONTEXT_PROFILE_MASK)
 
-    # Log the information
+# Log detailed attributes of the OpenGL context
+def log_opengl_context_attributes():
+    major_version = gl.glGetIntegerv(gl.GL_MAJOR_VERSION)  # OpenGL major version
+    minor_version = gl.glGetIntegerv(gl.GL_MINOR_VERSION)  # OpenGL minor version
+    context_flags = gl.glGetIntegerv(gl.GL_CONTEXT_FLAGS)  # Context flags
+    context_profile_mask = gl.glGetIntegerv(gl.GL_CONTEXT_PROFILE_MASK)  # Profile mask
+
     print(f"OpenGL Major Version: {major_version}")
     print(f"OpenGL Minor Version: {minor_version}")
     print(f"OpenGL Context Flags: {context_flags}")
     print(f"OpenGL Context Profile Mask: {context_profile_mask}")
 
-    # Check for errors
-    error = gl.glGetError()
+    error = gl.glGetError()  # Check for OpenGL errors
     if error != gl.GL_NO_ERROR:
         print(f"OpenGL Error: {error}")
 
-#
+
+# Class for rendering fonts using OpenGL
 class FontRenderer:
-    #
+    # Initialize the font renderer
     def __init__(self, font_path: str, window: "ND_Window_SDL_OPENGL") -> None:
-        self.shader_program = None
-        self.characters: dict = {}
-        self.vao: int = 0
-        self.vbo: int = 0
-        self.init_shader()
-        self.load_font(font_path, window)
+        self.shader_program: int = 0  # OpenGL shader program
+        self.shader_projection: int = 0  # OpenGL shader projection matrix
+        self.projection = glm.ortho(0, 640, 640, 0, -100000, 100000)
+        self.characters: dict = {}  # Dictionary to store font character data
+        self.vao: int = 0  # Vertex Array Object ID
+        self.vbo: int = 0  # Vertex Buffer Object ID
+        self.init_shader()  # Initialize shaders
+        #
+        self.window: ND_Window_SDL_OPENGL = window
+        #
+        self.load_font(font_path)  # Load font
 
-    #
+    # Initialize the shaders for font rendering
     def init_shader(self) -> None:
-        vertex_shader_source: str = """
-            #version 330 core
-            layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
-            out vec2 TexCoords;
 
-            uniform mat4 projection;
+        # Vertex shader source code for font rendering
+        with open(f"{BASE_PATH}shaders/font_rendering_vertex.vert", "r", encoding="utf-8") as f:
+            vertex_shader_source: str = f.read()
 
-            void main()
-            {
-                gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
-                TexCoords = vertex.zw;
-            }
-        """
+        # Fragment shader source code for font rendering
+        with open(f"{BASE_PATH}shaders/font_rendering_fragment.frag", "r", encoding="utf-8") as f:
+            fragment_shader_source: str = f.read()
 
-        fragment_shader_source: str = """
-            #version 330 core
-            in vec2 TexCoords;
-            out vec4 color;
+        # Compile shaders
+        vertexshader = shaders.compileShader(vertex_shader_source, gl.GL_VERTEX_SHADER)
+        fragmentshader = shaders.compileShader(fragment_shader_source, gl.GL_FRAGMENT_SHADER)
 
-            uniform sampler2D text;
-            uniform vec3 textColor;
+        # Create the shader program
+        self.shader_program = shaders.compileProgram(vertexshader, fragmentshader)
+        gl.glUseProgram(self.shader_program)
 
-            void main()
-            {
-                vec4 sampled = texture(text, TexCoords);
-                color = vec4(textColor, 1.0) * sampled;
-            }
-        """
+        # Set up the projection matrix
+        self.shader_projection = gl.glGetUniformLocation(self.shader_program, "projection")
+        gl.glUniformMatrix4fv(self.shader_projection, 1, gl.GL_FALSE, glm.value_ptr(self.projection))
 
-        vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
-        gl.glShaderSource(vertex_shader, vertex_shader_source)
-        gl.glCompileShader(vertex_shader)
+        # Disable byte-alignment restriction for texture
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
 
-        fragment_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
-        gl.glShaderSource(fragment_shader, fragment_shader_source)
-        gl.glCompileShader(fragment_shader)
 
-        self.shader_program = gl.glCreateProgram()
-        gl.glAttachShader(self.shader_program, vertex_shader)
-        gl.glAttachShader(self.shader_program, fragment_shader)
-        gl.glLinkProgram(self.shader_program)
+    # Load font using FreeType and prepare for rendering
+    def load_font(self, font_path: str) -> None:
 
-        gl.glDeleteShader(vertex_shader)
-        gl.glDeleteShader(fragment_shader)
+        # Ensure OpenGL context is active
+        self.window._ensure_context()
 
-    #
-    def load_font(self, font_path: str, window: "ND_Window_SDL_OPENGL") -> None:
-        # Load font characters using FreeType and store textures.
+        # Disable byte-alignment restriction for texture
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
 
-        #
-        window._ensure_context()
+        # Load font using FreeType
+        face = freetype.Face(font_path)  # Load font face
+        face.set_char_size(48 * 64)  # Set character size
 
-        #
-        face = freetype.Face(font_path)
-        face.set_char_size(48 * 64)
-
+        # Load ASCII characters (0-127)
         for c in range(128):
+
+            # Load character glyph
             face.load_char(chr(c))
             glyph = face.glyph
 
+            # Create texture for the glyph bitmap
             texture_id = gl.glGenTextures(1)
             gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
             gl.glTexImage2D(
@@ -198,45 +176,81 @@ class FontRenderer:
                 0, gl.GL_RED, gl.GL_UNSIGNED_BYTE, glyph.bitmap.buffer
             )
 
+            # Set texture parameters
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
 
+            # Store character data
             self.characters[chr(c)] = {
                 'texture_id': texture_id,
                 'size': (glyph.bitmap.width, glyph.bitmap.rows),
                 'bearing': (glyph.bitmap_left, glyph.bitmap_top),
-                'advance': glyph.advance.x >> 6
+                'advance': glyph.advance.x
             }
 
+        #
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
+        # Create VAO and VBO for rendering
+
+        # VAO
         self.vao = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.vao)
+
+        # VBO
         self.vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(self.vao)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
-        # gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
-        # gl.glEnableVertexAttribArray(0)
-        # gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 4 * 4, None)
-        # gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        # gl.glBindVertexArray(0)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
+        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
 
-    #
-    def render_text(self, text: str, x: int, y: int, scale: int, color) -> None:
-        gl.glUseProgram(self.shader_program)
-        gl.glUniform3f(gl.glGetUniformLocation(self.shader_program, "textColor"), color.r, color.g, color.b)
+    # Render text on the screen
+    def render_text(self, text: str, x: int, y: int, scale: int, color: ND_Color) -> None:
+
+        # Ensure OpenGL context is active
+        self.window._ensure_context()
+
+        #
+        gl.glUseProgram(self.shader_program)  # Use font shader program
+
+        # Set text color
+        gl.glUniform3f(
+            gl.glGetUniformLocation(self.shader_program, "textColor"),
+            color.r / 255, color.g / 255, color.b / 255
+        )
         gl.glActiveTexture(gl.GL_TEXTURE0)
+
+        # Enable blending for transparency
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+        # Bind the VAO
         gl.glBindVertexArray(self.vao)
 
-        for char in text:
+        # Iterate over characters in the text
+        for char_ in text:
+
+            # Convert char to int
+            char: int = ord(char_)
+
+            # Only ASCII characters are supported
+            if char >= 128:
+                continue
+
+            # Get the character font glyph
             ch = self.characters[char]
 
+            # Calculate position and size for the character
             xpos = x + ch['bearing'][0] * scale
             ypos = y - (ch['size'][1] - ch['bearing'][1]) * scale
-
             w = ch['size'][0] * scale
             h = ch['size'][1] * scale
 
+            # Define vertex data for the character
             vertices = np.array([
                 xpos,     ypos + h,   0.0, 0.0,
                 xpos,     ypos,       0.0, 1.0,
@@ -246,16 +260,27 @@ class FontRenderer:
                 xpos + w, ypos + h,   1.0, 0.0
             ], dtype=np.float32)
 
+            # Update the VBO with the character's vertex data
+
+            # Render the glyph texture over a quad
             gl.glBindTexture(gl.GL_TEXTURE_2D, ch['texture_id'])
+
+            # Update the VBO with new vertex data
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
             gl.glBufferSubData(gl.GL_ARRAY_BUFFER, 0, vertices.nbytes, vertices)
 
+            #
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+
+            # Render the character as triangles
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
 
-            x += (ch['advance'] * scale)
+            # Advance the cursor to the next position (in pixels)
+            x += (ch['advance'] >> 6) * scale  # Advance is in 1/64th pixels
 
-        gl.glBindVertexArray(0)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+        # Unbinding things
+        gl.glBindVertexArray(0)  # Unbind the VAO
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)  # Unbind the texture
 
 
 #

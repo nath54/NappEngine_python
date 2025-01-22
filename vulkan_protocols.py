@@ -1,4 +1,12 @@
 # vulkan_protocols.py
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 from typing import Protocol
 
 # Define a Protocol for VkImage (representing Vulkan image handle)

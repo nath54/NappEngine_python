@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 # Import necessary modules
 import vulkan as vk  # Assuming you have bindings properly set up
 import glfw
@@ -8,8 +16,11 @@ from PIL import Image
 import time
 import math
 import ctypes
-from vulkan_protocols import VkImageProtocol, VkInstanceProtocol, VkDeviceProtocol, VkSwapchainProtocol, VkDeviceMemoryProtocol
 from vulkan import vkCreateWin32SurfaceKHR, VkWin32SurfaceCreateInfoKHR  # Import platform-specific calls
+
+import sys
+sys.path.insert(0, "../../")
+from vulkan_protocols import VkImageProtocol, VkInstanceProtocol, VkDeviceProtocol, VkSwapchainProtocol, VkDeviceMemoryProtocol
 
 # Setup the VulkanRenderer class
 class VulkanRenderer:

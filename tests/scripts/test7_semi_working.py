@@ -1,3 +1,11 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+...
+
+"""
+
 import vulkan as vk  # type: ignore
 import glfw  # type: ignore
 import freetype  # type: ignore
@@ -7,6 +15,9 @@ from PIL import Image
 import time
 import math
 import ctypes
+
+import sys
+sys.path.insert(0, "../../")
 from vulkan_protocols import VkImageProtocol, VkInstanceProtocol, VkDeviceProtocol, VkSwapchainProtocol, VkDeviceMemoryProtocol
 
 # Path to the font file
