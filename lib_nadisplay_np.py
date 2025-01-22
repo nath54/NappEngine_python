@@ -2,7 +2,8 @@
 Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
-...
+
+Some utility functions for OpenGL or Vulkan functions, that uses numpy.
 
 """
 

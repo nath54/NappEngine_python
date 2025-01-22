@@ -2,7 +2,8 @@
 Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
-...
+
+Some utilitary functions for GLFW backend for lib_nadisplay.
 
 """
 

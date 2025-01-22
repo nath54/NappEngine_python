@@ -2,7 +2,8 @@
 Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
-...
+
+GLFW + VULKAN backend for lib_nadisplay.
 
 """
 
