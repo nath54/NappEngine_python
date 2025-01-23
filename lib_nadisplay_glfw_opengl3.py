@@ -3,7 +3,7 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-SDL + OPENGL backend for lib_nadisplay.
+GLFW + OPENGL backend for lib_nadisplay.
 
 """
 
@@ -45,8 +45,8 @@ from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_sdl import to_sdl_color, get_display_info
 from lib_nadisplay_opengl import create_and_validate_gl_shader_program
+from lib_nadisplay_glfw import get_display_info
 
 #
 BASE_PATH: str = "../../../"
@@ -484,16 +484,18 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         # sdl_or_glfw_window_id is int and has been initialized to -1 in parent class
         self.sdl_or_glfw_window_id = id(self.glw_window)
 
+
+        # Make the window's context current
+        glfw.make_context_current(self.glw_window)
+
         #
         self.next_texture_id: int = 0
-        self.sdl_textures: dict[int, object] = {}
         self.gl_textures: dict[int, int] = {}
-        self.sdl_textures_surfaces: dict[int, object] = {}
-        self.mutex_sdl_textures: Lock = Lock()
+        self.mutex_gl_textures: Lock = Lock()
 
         # Compile textures shaders
-        vertexshader_textures = shaders.compileShader(VERTEX_SHADER_SRC, gl.GL_VERTEX_SHADER)
-        fragmentshader_textures = shaders.compileShader(FRAGMENT_SHADER_SRC, gl.GL_FRAGMENT_SHADER)
+        vertexshader_textures = shaders.compileShader(VERTEX_SHADER_TEXTURES_SRC, gl.GL_VERTEX_SHADER)
+        fragmentshader_textures = shaders.compileShader(FRAGMENT_SHADER_TEXTURES_SRC, gl.GL_FRAGMENT_SHADER)
 
         # Create the textures shader program
         self.shader_program_textures = shaders.compileProgram(vertexshader_textures, fragmentshader_textures)
@@ -533,7 +535,13 @@ class ND_Window_GLFW_OPENGL(ND_Window):
     def _ensure_context(self) -> None:
         """Ensure the OpenGL context is current."""
         #
-        if not glfw.make_context_current(self.glw_window):
+        glfw.make_context_current(self.glw_window)
+
+        # Now, get the current context
+        current_context = glfw.get_current_context()
+
+        #
+        if not current_context:
             print("No OpenGL context available.")
             raise RuntimeError("No valid OpenGL context.")
         #
@@ -551,9 +559,8 @@ class ND_Window_GLFW_OPENGL(ND_Window):
             #
             self.destroy_prepared_texture(texture_id)
 
-        #
-        sdl2.SDL_GL_DeleteContext(self.gl_context)
-        sdl2.SDL_DestroyWindow(self.sdl_window)
+        # TODO
+        pass
 
     #
     def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
@@ -573,8 +580,8 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if not self.display.initialized:
             return
 
-        #
-        sdl2.SDL_SetWindowTitle(self.sdl_window, new_title.encode('utf-8'))
+        # TODO
+        return
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
@@ -582,18 +589,17 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if not self.display.initialized:
             return
 
-        #
-        sdl2.SDL_SetWindowPosition(self.sdl_window, new_x, new_y)
+        # TODO
+        return
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
-        log_opengl_context_attributes()
         if not self.display.initialized:
             return
 
-        #
-        sdl2.SDL_SetWindowSize(self.sdl_window, new_width, new_height)
+        # TODO
+        return
 
     #
     def set_fullscreen(self, mode: int) -> None:
@@ -613,12 +619,8 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if not self.display.initialized:
             return
 
-        if mode == 0:
-            sdl2.SDL_SetWindowFullscreen(self.sdl_window, 0)
-        elif mode == 1:
-            sdl2.SDL_SetWindowFullscreen(self.sdl_window, sdl2.SDL_WINDOW_FULLSCREEN_DESKTOP)
-        elif mode == 2:
-            sdl2.SDL_SetWindowFullscreen(self.sdl_window, sdl2.SDL_WINDOW_FULLSCREEN)
+        # TODO
+        return
 
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
@@ -682,24 +684,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if font_name is None:
             font_name = self.display.default_font
 
-        # Get font
-        font: Optional[sdlttf.TTF_OpenFont] = self.display.get_font(font_name, font_size, self)  # type: ignore
-
-        # Do nothing if not font got
-        if font is None:
-            return -1
+        # TODO
 
         #
-        color_sdl: sdl2.SDL_Color = to_sdl_color(color)
-
-        # Create rendered text surface
-        surface = sdlttf.TTF_RenderText_Blended(font, text.encode('utf-8'), color_sdl)
-
-        # Convert the SDL surface into an OpenGL texture
-        texture_id: int = self._create_opengl_texture_from_surface(surface)
-
-        #
-        return texture_id
+        return -1
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
@@ -711,19 +699,10 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         #
         self._ensure_shaderProgram_textures()
 
-        # Chargement de l'image
-        image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
-
-        # Si l'image n'a pas bien été chargée, erreur est abandon
-        if not image_surface:
-            print(f"Failed to load image: {img_path}")
-            return -1
-
-        # Convert the SDL surface into an OpenGL texture
-        texture_id: int = self._create_opengl_texture_from_surface(image_surface)
+        # TODO
 
         #
-        return texture_id
+        return -1
 
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformations = ND_Transformations()) -> None:
@@ -747,65 +726,26 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         #
         self._ensure_shaderProgram_textures()
         #
-        if texture_id not in self.textures_dimensions:
+        if texture_id not in self.gl_textures:
             return ND_Point(0, 0)
         #
-        return ND_Point(*self.textures_dimensions[texture_id])
+
+        w: int = -1
+        h: int = -1
+        # TODO
+
+        #
+        return ND_Point(w,h)
 
     #
     def destroy_prepared_texture(self, texture_id: int) -> None:
         #
         self._ensure_shaderProgram_textures()
         #
-        with self.mutex_sdl_textures:
+        with self.mutex_gl_textures:
             if texture_id in self.gl_textures:
                 gl.glDeleteTextures(1, [self.gl_textures[texture_id]])
-                sdl2.SDL_FreeSurface(self.sdl_textures_surfaces[texture_id])
-                del self.sdl_textures_surfaces[texture_id]
                 del self.gl_textures[texture_id]
-
-    #
-    def _create_opengl_texture_from_surface(self, surface: sdl2.SDL_Surface) -> int:
-        """
-        Converts an SDL_Surface to an OpenGL texture and returns the texture ID.
-        """
-
-        #
-        if not self.display.initialized:
-            return -1
-
-        #
-        self._ensure_shaderProgram_textures()
-
-        # Ensure SDL_Surface is valid
-        if not surface or not surface.contents:
-            print("Invalid SDL_Surface provided.")
-            return -1
-
-        #
-        self._ensure_context()
-
-        width, height = surface.contents.w, surface.contents.h
-
-        # Generate an OpenGL texture ID
-        texture_id = gl.glGenTextures(1)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
-
-        # Upload pixel data to OpenGL
-        gl.glTexImage2D(
-            gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width, height, 0,
-            gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, ctypes.c_void_p(surface.contents.pixels)
-        )
-
-        # Set texture parameters
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
-
-        # Unbind the texture and return the ID
-        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-        return texture_id
 
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
@@ -1425,7 +1365,8 @@ class ND_Window_GLFW_OPENGL(ND_Window):
             return
 
         #
-        sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
+
+        glfw.make_context_current(self.glw_window)
         gl.glViewport(0, 0, self.width, self.height)
 
         gl.glClearColor(0, 0, 0, 1)
@@ -1445,5 +1386,5 @@ class ND_Window_GLFW_OPENGL(ND_Window):
             scene.render()
 
         #
-        sdl2.SDL_GL_SwapWindow(self.sdl_window)
+        glfw.swap_buffers(self.glw_window)
 

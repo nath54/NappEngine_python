@@ -11,7 +11,7 @@ Some utilitary functions for GLFW backend for lib_nadisplay.
 from typing import Optional
 from lib_nadisplay_rects import ND_Point
 import lib_nadisplay_events as nd_event
-from lib_nadisplay import ND_EventsManager
+from lib_nadisplay import ND_EventsManager, ND_MainApp
 import glfw  # type: ignore
 
 
@@ -43,7 +43,10 @@ def get_display_info() -> Optional[glfw._GLFWvidmode]:
 #
 class ND_EventsManager_GLFW(ND_EventsManager):
     #
-    def __init__(self) -> None:
+    def __init__(self, main_app: ND_MainApp) -> None:
+        #
+        super().__init__(main_app)
+        #
         self.key_pressed: set[int | str] = set()
         self.events_waiting_too_poll: list[nd_event.ND_Event] = []
 
