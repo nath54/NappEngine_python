@@ -45,6 +45,11 @@ Currently the only backend working is `SDL + SDLGFX`, the backend `Pygame` is so
 
 There are some efforts to quickly get the backend `SDL + OpenGL`, then the others working, but for now, some *OpenGL Context Errors* can't be debugged.
 
+Okay, finally, I successfully found the error: sdl2 + opengl on python doesn't work with Wayland ! Had to switch into x11 windows manager, but now got only a black screen.
+
+I'm currently trying glfw + opengl to see what happens, currently developping it.
+
+
 ### Front-end
 
 Currently, there are the following usable classes for creating apps and games with the lib_nadisplay :
@@ -66,7 +71,6 @@ Currently, there are the following usable classes for creating apps and games wi
 - `ND_MultiLayer`
 - `ND_CameraGrid`
 - `ND_RectGrid`
-
 
 A lot of new element classes are planned to be added in the future.
 

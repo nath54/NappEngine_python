@@ -18,11 +18,8 @@ import os
 # Import NumPy for numerical operations
 import numpy as np  # type: ignore
 
-# Import SDL2 libraries for graphics rendering and font handling
-import sdl2  # type: ignore
-import sdl2.video  # type: ignore
-import sdl2.sdlttf as sdlttf  # type: ignore
-import sdl2.sdlimage as sdlimage  # type: ignore
+# Import glfw library
+import glfw  # type: ignore
 
 # To optimize speed in production, OpenGL error checking and logging can be disabled
 # import OpenGL
@@ -108,7 +105,7 @@ def log_opengl_context_attributes():
 # Class for rendering fonts using OpenGL
 class FontRenderer:
     # Initialize the font renderer
-    def __init__(self, font_path: str, window: "ND_Window_SDL_OPENGL") -> None:
+    def __init__(self, font_path: str, window: "ND_Window_GLFW_OPENGL") -> None:
         self.shader_program: int = 0  # OpenGL shader program
         self.shader_projection: int = 0  # OpenGL shader projection matrix
         self.projection = glm.ortho(0, 640, 640, 0, -100000, 100000)
@@ -117,7 +114,7 @@ class FontRenderer:
         self.vbo: int = 0  # Vertex Buffer Object ID
         self.init_shader()  # Initialize shaders
         #
-        self.window: ND_Window_SDL_OPENGL = window
+        self.window: ND_Window_GLFW_OPENGL = window
         #
         self.init_shader()
         #
@@ -294,7 +291,7 @@ class FontRenderer:
 
 
 #
-class ND_Display_SDL_OPENGL(ND_Display):
+class ND_Display_GLFW_OPENGL(ND_Display):
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
@@ -304,30 +301,27 @@ class ND_Display_SDL_OPENGL(ND_Display):
         self.events_thread_in_main_thread: bool = True
         self.display_thread_in_main_thread: bool = True
         #
-        self.ttf_fonts: dict[str, FontRenderer] = {}
+        self.fonts_renderers: dict[str, dict[int, Optional[FontRenderer]]] = {}
+        #
+        self.shader_geometry_program: int = -1
+        self.shader_textures_program: int = -1
+        self.shader_fonts_program: int = -1
         #
 
     #
     def get_time_msec(self) -> float:
-        return sdl2.SDL_GetTicks()
+        return glfw.get_time() * 1000.0
 
     #
     def wait_time_msec(self, delay_in_msec: float) -> None:
-        sdl2.SDL_Delay(int(delay_in_msec))
+        glfw.wait_events_timeout(delay_in_msec / 1000.0)
 
     #
     def init_display(self) -> None:
 
-        # Initialize SDL2 and TTF
-        sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO)
-        sdlttf.TTF_Init()
-
-        # Request an OpenGL 3.3 context
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_DOUBLEBUFFER, 1)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_DEPTH_SIZE, 24)
+        # Initialize GLFW
+        if not glfw.init():
+            raise RuntimeError("GLFW could not be initialized")
 
         # Load system fonts
         self.load_system_fonts()
@@ -352,48 +346,48 @@ class ND_Display_SDL_OPENGL(ND_Display):
             w.destroy_window()
 
         #
-        sdlttf.TTF_Quit()
-        sdl2.SDL_Quit()
+        glfw.terminate()
 
     #
-    def get_font(self, font: str, font_size: int, window: "ND_Window_SDL_OPENGL") -> Optional[FontRenderer]: # type: ignore
+    def get_font(self, font: str, font_size: int, window: "ND_Window_GLFW_OPENGL") -> Optional[FontRenderer]:  # type: ignore
         #
         if not self.initialized:
             return None
 
         #
-        if font not in self.ttf_fonts:
-
-            #
-            if font not in self.font_names:
-                return None
-
+        if font not in self.fonts_renderers:
+            self.fonts_renderers[font] = {}
+        #
+        if font_size < 8:
+            font_size = 8
+        #
+        if font_size not in self.fonts_renderers[font]:
             #
             font_path: str = self.font_names[font]
             #
-            if not (font_path.endswith(".ttf") or font_path.endswith(".otf")) or not os.path.exists(font_path):
+            if (font_path.endswith(".ttf") or font_path.endswith(".otf")) and os.path.exists(font_path):
+                #
+                if font not in self.fonts_renderers:
+                    self.fonts_renderers[font] = {}
+                #
+                font_renderer: Optional[FontRenderer] = FontRenderer(font_path, window)
+                self.fonts_renderers[font][font_size] = font_renderer
+                #
+                # if font_renderer is not None:
+                #     if not font_renderer.load_and_init():
+                #         self.fonts_renderers[font][font_size] = None
+            else:
                 return None
-            #
-            self.ttf_fonts[font] = FontRenderer(font_path, window)
         #
-        return self.ttf_fonts[font]
+        return self.fonts_renderers[font][font_size]
+
 
     #
     def get_focused_window_id(self) -> int:
         #
-        if not self.initialized:
-            return -1
-
-        # Get the focused window
-        focused_window: Optional[object] = sdl2.SDL_GetKeyboardFocus()
-
-        # Check if a window is focused
-        if focused_window is not None:
-            # Get the window ID
-            window_id: int = sdl2.SDL_GetWindowID(focused_window)
-            return window_id
-        else:
-            return -1  # Indicate that no window is focused
+        # TODO
+        #
+        return -1
 
     #
     def create_window(self, window_params: dict[str, Any], error_if_win_id_not_available: bool = False) -> int:
@@ -441,7 +435,7 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
 
 #
-class ND_Window_SDL_OPENGL(ND_Window):
+class ND_Window_GLFW_OPENGL(ND_Window):
     #
     def __init__(
             self,
@@ -459,12 +453,12 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         if isinstance(size, str):
             #
-            infos: Optional[sdl2.SDL_DisplayMode] = get_display_info()
+            infos: Optional[glfw._GLFWvidmode] = get_display_info()
             #
             if infos is not None:
                 #
-                screen_width: int = infos.w
-                screen_height: int = infos.h
+                screen_width: int = infos.size.width
+                screen_height: int = infos.size.height
                 #
                 if size == "max":
                     self.width = screen_width
@@ -478,77 +472,47 @@ class ND_Window_SDL_OPENGL(ND_Window):
             self.height = size[1]
 
         #
-        self.sdl_window: sdl2.SDL_Window = sdl2.SDL_CreateWindow(
-                                    title.encode('utf-8'),
-                                    sdl2.SDL_WINDOWPOS_CENTERED,
-                                    sdl2.SDL_WINDOWPOS_CENTERED,
-                                    self.width,
-                                    self.height,
-                                    sdl2.SDL_WINDOW_OPENGL
+        self.glw_window: glfw._GLFWwindow = glfw.create_window(
+                                                self.width,
+                                                self.height,
+                                                title,
+                                                None,
+                                                None
         )
-        #
-        if not self.sdl_window:
-            raise UserWarning("Window creation failed:", sdl2.SDL_GetError())
-        print("SDL2 window created successfully.")
 
-        #
-        x_c, y_c, w_c, h_c = ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0)
-        sdl2.SDL_GetWindowPosition(self.sdl_window, ctypes.byref(x_c), ctypes.byref(y_c))
-        sdl2.SDL_GetWindowSize(self.sdl_window, ctypes.byref(w_c), ctypes.byref(h_c))
-        #
-        self.x, self.y, self.width, self.height = x_c.value, y_c.value, w_c.value, h_c.value
-        #
-        self.rect = ND_Rect(self.x, self.y, self.width, self.height)
-
-        #
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
-        self.gl_context: Optional[sdl2.SDL_GL_Context] = sdl2.SDL_GL_CreateContext(self.sdl_window)
-        #
-        if not self.gl_context:
-            raise UserWarning("OpenGL context creation failed:", sdl2.SDL_GetError())
-        print("OpenGL context created successfully.")
-        #
-        # Make the context current
-        if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
-            raise UserWarning("Failed to make OpenGL context current:", sdl2.SDL_GetError())
-        print("OpenGL context made current.")
-        #
-        sdl2.SDL_GL_SetSwapInterval(1)  # Enable vsync
-        gl.glDisable(gl.GL_DEPTH_TEST)  # Disable depth test
-        gl.glDisable(gl.GL_CULL_FACE)   #
-
-        if self.gl_context is None:
-            raise UserWarning(f"ERROR: GL context is invalid : {self.gl_context} !!!")
 
         # sdl_or_glfw_window_id is int and has been initialized to -1 in parent class
-        self.sdl_or_glfw_window_id = sdl2.SDL_GetWindowID(self.sdl_window)
+        self.sdl_or_glfw_window_id = id(self.glw_window)
 
         #
         self.next_texture_id: int = 0
-        self.textures_dimensions: dict[int, tuple[int, int]] = {}
+        self.sdl_textures: dict[int, object] = {}
         self.gl_textures: dict[int, int] = {}
         self.sdl_textures_surfaces: dict[int, object] = {}
         self.mutex_sdl_textures: Lock = Lock()
-        #
-        self.prepared_font_textures: dict[str, int] = {}
-        #
 
+        # Compile textures shaders
+        vertexshader_textures = shaders.compileShader(VERTEX_SHADER_SRC, gl.GL_VERTEX_SHADER)
+        fragmentshader_textures = shaders.compileShader(FRAGMENT_SHADER_SRC, gl.GL_FRAGMENT_SHADER)
 
-        # Compile shaders and create a program
-        self.shader_program: int = create_and_validate_gl_shader_program(
-                                    VERTEX_SHADER_SRC, FRAGMENT_SHADER_SRC)
-        if self.shader_program <= 0:
-            raise UserWarning("Failed to create shader program.")
-        print("Shader program created successfully.")
+        # Create the textures shader program
+        self.shader_program_textures = shaders.compileProgram(vertexshader_textures, fragmentshader_textures)
 
-        # Compile shaders and create a program for textures
-        self.shader_program_textures: int = create_and_validate_gl_shader_program(
-                                            VERTEX_SHADER_TEXTURES_SRC, FRAGMENT_SHADER_TEXTURES_SRC)
-        if self.shader_program_textures <= 0:
-            raise UserWarning("Failed to create texture shader program.")
-        print("Shader program created successfully.")
+        # Compile base shaders
+        vertexshader = shaders.compileShader(VERTEX_SHADER_SRC, gl.GL_VERTEX_SHADER)
+        fragmentshader = shaders.compileShader(FRAGMENT_SHADER_SRC, gl.GL_FRAGMENT_SHADER)
+
+        # Create the base shader program
+        self.shader_program = shaders.compileProgram(vertexshader, fragmentshader)
+        gl.glUseProgram(self.shader_program)
+
+        # Set up the projection matrix
+        shader_projection = gl.glGetUniformLocation(self.shader_program, "projection")
+        projection = glm.ortho(0, 640, 640, 0, -100000, 100000)
+        gl.glUniformMatrix4fv(shader_projection, 1, gl.GL_FALSE, glm.value_ptr(projection))
+
+        # Disable byte-alignment restriction for texture
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
 
         #
         log_opengl_context_info()
@@ -568,12 +532,11 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def _ensure_context(self) -> None:
         """Ensure the OpenGL context is current."""
-        if not self.gl_context:
+        #
+        if not glfw.make_context_current(self.glw_window):
             print("No OpenGL context available.")
             raise RuntimeError("No valid OpenGL context.")
-        if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
-            print("Failed to make OpenGL context current:", sdl2.SDL_GetError())
-            raise RuntimeError("Failed to make OpenGL context current.")
+        #
         if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
             raise RuntimeError("No current OpenGL program bound.")
         # print("\nOpenGL context is current.\n")

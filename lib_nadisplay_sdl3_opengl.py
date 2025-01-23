@@ -7,7 +7,6 @@ SDL + OPENGL backend for lib_nadisplay.
 
 """
 
-
 # Import necessary modules for type hints and threading
 from typing import Optional, Any, Callable, cast, Type
 from threading import Lock
@@ -18,11 +17,11 @@ import os
 # Import NumPy for numerical operations
 import numpy as np  # type: ignore
 
-# Import SDL2 libraries for graphics rendering and font handling
-import sdl2  # type: ignore
-import sdl2.video  # type: ignore
-import sdl2.sdlttf as sdlttf  # type: ignore
-import sdl2.sdlimage as sdlimage  # type: ignore
+# Import SDL3 libraries for graphics rendering and font handling
+import sdl3  # type: ignore
+# import sdl3.video  # type: ignore
+# import sdl3.sdlttf as sdlttf  # type: ignore
+# import sdl3.sdlimage as sdlimage  # type: ignore
 
 # To optimize speed in production, OpenGL error checking and logging can be disabled
 # import OpenGL
@@ -214,6 +213,7 @@ class FontRenderer:
         gl.glBindVertexArray(self.vao)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
         gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        # gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
@@ -245,10 +245,13 @@ class FontRenderer:
         gl.glBindVertexArray(self.vao)
 
         # Iterate over characters in the text
-        for char in text:
+        for char_ in text:
+
+            # Convert char to int
+            char: int = ord(char_)
 
             # Only ASCII characters are supported
-            if char not in self.characters:
+            if char >= 128:
                 continue
 
             # Get the character font glyph
@@ -309,25 +312,25 @@ class ND_Display_SDL_OPENGL(ND_Display):
 
     #
     def get_time_msec(self) -> float:
-        return sdl2.SDL_GetTicks()
+        return sdl3.SDL_GetTicks()
 
     #
     def wait_time_msec(self, delay_in_msec: float) -> None:
-        sdl2.SDL_Delay(int(delay_in_msec))
+        sdl3.SDL_Delay(int(delay_in_msec))
 
     #
     def init_display(self) -> None:
 
-        # Initialize SDL2 and TTF
-        sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO)
-        sdlttf.TTF_Init()
+        # Initialize sdl3 and TTF
+        sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO)
+        # sdlttf.TTF_Init()
 
         # Request an OpenGL 3.3 context
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_DOUBLEBUFFER, 1)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_DEPTH_SIZE, 24)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_CONTEXT_MINOR_VERSION, 3)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_CONTEXT_PROFILE_MASK, sdl3.SDL_GL_CONTEXT_PROFILE_CORE)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_DOUBLEBUFFER, 1)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_DEPTH_SIZE, 24)
 
         # Load system fonts
         self.load_system_fonts()
@@ -352,8 +355,8 @@ class ND_Display_SDL_OPENGL(ND_Display):
             w.destroy_window()
 
         #
-        sdlttf.TTF_Quit()
-        sdl2.SDL_Quit()
+        # sdlttf.TTF_Quit()
+        sdl3.SDL_Quit()
 
     #
     def get_font(self, font: str, font_size: int, window: "ND_Window_SDL_OPENGL") -> Optional[FontRenderer]: # type: ignore
@@ -385,12 +388,12 @@ class ND_Display_SDL_OPENGL(ND_Display):
             return -1
 
         # Get the focused window
-        focused_window: Optional[object] = sdl2.SDL_GetKeyboardFocus()
+        focused_window: Optional[object] = sdl3.SDL_GetKeyboardFocus()
 
         # Check if a window is focused
         if focused_window is not None:
             # Get the window ID
-            window_id: int = sdl2.SDL_GetWindowID(focused_window)
+            window_id: int = sdl3.SDL_GetWindowID(focused_window)
             return window_id
         else:
             return -1  # Indicate that no window is focused
@@ -459,7 +462,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         if isinstance(size, str):
             #
-            infos: Optional[sdl2.SDL_DisplayMode] = get_display_info()
+            infos: Optional[sdl3.SDL_DisplayMode] = get_display_info()
             #
             if infos is not None:
                 #
@@ -478,44 +481,42 @@ class ND_Window_SDL_OPENGL(ND_Window):
             self.height = size[1]
 
         #
-        self.sdl_window: sdl2.SDL_Window = sdl2.SDL_CreateWindow(
+        self.sdl_window: sdl3.SDL_Window = sdl3.SDL_CreateWindow(
                                     title.encode('utf-8'),
-                                    sdl2.SDL_WINDOWPOS_CENTERED,
-                                    sdl2.SDL_WINDOWPOS_CENTERED,
                                     self.width,
                                     self.height,
-                                    sdl2.SDL_WINDOW_OPENGL
+                                    sdl3.SDL_WINDOW_OPENGL
         )
         #
         if not self.sdl_window:
-            raise UserWarning("Window creation failed:", sdl2.SDL_GetError())
-        print("SDL2 window created successfully.")
+            raise UserWarning("Window creation failed:", sdl3.SDL_GetError())
+        print("sdl3 window created successfully.")
 
         #
         x_c, y_c, w_c, h_c = ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0)
-        sdl2.SDL_GetWindowPosition(self.sdl_window, ctypes.byref(x_c), ctypes.byref(y_c))
-        sdl2.SDL_GetWindowSize(self.sdl_window, ctypes.byref(w_c), ctypes.byref(h_c))
+        sdl3.SDL_GetWindowPosition(self.sdl_window, ctypes.byref(x_c), ctypes.byref(y_c))
+        sdl3.SDL_GetWindowSize(self.sdl_window, ctypes.byref(w_c), ctypes.byref(h_c))
         #
         self.x, self.y, self.width, self.height = x_c.value, y_c.value, w_c.value, h_c.value
         #
         self.rect = ND_Rect(self.x, self.y, self.width, self.height)
 
         #
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
-        self.gl_context: Optional[sdl2.SDL_GL_Context] = sdl2.SDL_GL_CreateContext(self.sdl_window)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_CONTEXT_MINOR_VERSION, 3)
+        sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_CONTEXT_PROFILE_MASK, sdl3.SDL_GL_CONTEXT_PROFILE_CORE)
+        self.gl_context: Optional[sdl3.SDL_GL_Context] = sdl3.SDL_GL_CreateContext(self.sdl_window)
         #
         if not self.gl_context:
-            raise UserWarning("OpenGL context creation failed:", sdl2.SDL_GetError())
+            raise UserWarning("OpenGL context creation failed:", sdl3.SDL_GetError())
         print("OpenGL context created successfully.")
         #
         # Make the context current
-        if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
-            raise UserWarning("Failed to make OpenGL context current:", sdl2.SDL_GetError())
+        if sdl3.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
+            raise UserWarning("Failed to make OpenGL context current:", sdl3.SDL_GetError())
         print("OpenGL context made current.")
         #
-        sdl2.SDL_GL_SetSwapInterval(1)  # Enable vsync
+        sdl3.SDL_GL_SetSwapInterval(1)  # Enable vsync
         gl.glDisable(gl.GL_DEPTH_TEST)  # Disable depth test
         gl.glDisable(gl.GL_CULL_FACE)   #
 
@@ -523,7 +524,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
             raise UserWarning(f"ERROR: GL context is invalid : {self.gl_context} !!!")
 
         # sdl_or_glfw_window_id is int and has been initialized to -1 in parent class
-        self.sdl_or_glfw_window_id = sdl2.SDL_GetWindowID(self.sdl_window)
+        self.sdl_or_glfw_window_id = sdl3.SDL_GetWindowID(self.sdl_window)
 
         #
         self.next_texture_id: int = 0
@@ -550,10 +551,6 @@ class ND_Window_SDL_OPENGL(ND_Window):
             raise UserWarning("Failed to create texture shader program.")
         print("Shader program created successfully.")
 
-        #
-        log_opengl_context_info()
-        log_opengl_context_attributes()
-
 
     #
     def _ensure_shaderProgram_base(self) -> None:
@@ -571,15 +568,15 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if not self.gl_context:
             print("No OpenGL context available.")
             raise RuntimeError("No valid OpenGL context.")
-        if sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
-            print("Failed to make OpenGL context current:", sdl2.SDL_GetError())
+        if sdl3.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context) != 0:
+            print("Failed to make OpenGL context current:", sdl3.SDL_GetError())
             raise RuntimeError("Failed to make OpenGL context current.")
         if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
             raise RuntimeError("No current OpenGL program bound.")
-        # print("\nOpenGL context is current.\n")
+        print("\nOpenGL context is current.\n")
         #
-        # log_opengl_context_info()
-        # log_opengl_context_attributes()
+        log_opengl_context_info()
+        log_opengl_context_attributes()
 
     #
     def destroy_window(self) -> None:
@@ -589,8 +586,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             self.destroy_prepared_texture(texture_id)
 
         #
-        sdl2.SDL_GL_DeleteContext(self.gl_context)
-        sdl2.SDL_DestroyWindow(self.sdl_window)
+        sdl3.SDL_GL_DeleteContext(self.gl_context)
+        sdl3.SDL_DestroyWindow(self.sdl_window)
 
     #
     def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
@@ -611,7 +608,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        sdl2.SDL_SetWindowTitle(self.sdl_window, new_title.encode('utf-8'))
+        sdl3.SDL_SetWindowTitle(self.sdl_window, new_title.encode('utf-8'))
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
@@ -620,17 +617,16 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        sdl2.SDL_SetWindowPosition(self.sdl_window, new_x, new_y)
+        sdl3.SDL_SetWindowPosition(self.sdl_window, new_x, new_y)
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
-        log_opengl_context_attributes()
         if not self.display.initialized:
             return
 
         #
-        sdl2.SDL_SetWindowSize(self.sdl_window, new_width, new_height)
+        sdl3.SDL_SetWindowSize(self.sdl_window, new_width, new_height)
 
     #
     def set_fullscreen(self, mode: int) -> None:
@@ -651,11 +647,11 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         if mode == 0:
-            sdl2.SDL_SetWindowFullscreen(self.sdl_window, 0)
+            sdl3.SDL_SetWindowFullscreen(self.sdl_window, 0)
         elif mode == 1:
-            sdl2.SDL_SetWindowFullscreen(self.sdl_window, sdl2.SDL_WINDOW_FULLSCREEN_DESKTOP)
+            sdl3.SDL_SetWindowFullscreen(self.sdl_window, sdl3.SDL_WINDOW_FULLSCREEN_DESKTOP)
         elif mode == 2:
-            sdl2.SDL_SetWindowFullscreen(self.sdl_window, sdl2.SDL_WINDOW_FULLSCREEN)
+            sdl3.SDL_SetWindowFullscreen(self.sdl_window, sdl3.SDL_WINDOW_FULLSCREEN)
 
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
@@ -708,6 +704,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
 
+        return -1
+
         #
         if not self.display.initialized:
             return -1
@@ -727,7 +725,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return -1
 
         #
-        color_sdl: sdl2.SDL_Color = to_sdl_color(color)
+        color_sdl: sdl3.SDL_Color = to_sdl_color(color)
 
         # Create rendered text surface
         surface = sdlttf.TTF_RenderText_Blended(font, text.encode('utf-8'), color_sdl)
@@ -740,6 +738,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
+
+        return -1
 
         #
         if not self.display.initialized:
@@ -797,12 +797,12 @@ class ND_Window_SDL_OPENGL(ND_Window):
         with self.mutex_sdl_textures:
             if texture_id in self.gl_textures:
                 gl.glDeleteTextures(1, [self.gl_textures[texture_id]])
-                sdl2.SDL_FreeSurface(self.sdl_textures_surfaces[texture_id])
+                sdl3.SDL_FreeSurface(self.sdl_textures_surfaces[texture_id])
                 del self.sdl_textures_surfaces[texture_id]
                 del self.gl_textures[texture_id]
 
     #
-    def _create_opengl_texture_from_surface(self, surface: sdl2.SDL_Surface) -> int:
+    def _create_opengl_texture_from_surface(self, surface: sdl3.SDL_Surface) -> int:
         """
         Converts an SDL_Surface to an OpenGL texture and returns the texture ID.
         """
@@ -1129,38 +1129,28 @@ class ND_Window_SDL_OPENGL(ND_Window):
         self._ensure_shaderProgram_base()
         self._ensure_context()
 
-        #
+
         gl.glUseProgram(self.shader_program)
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *fill_color.to_float_tuple())
 
-        # Define vertices for two triangles forming the rectangle
         vertices = np.array([
-            # First triangle
             x, y,  # Bottom-left
             x + width, y,  # Bottom-right
-            x + width, y + height,  # Top-right
-
-            # Second triangle
-            x, y,  # Bottom-left
             x + width, y + height,  # Top-right
             x, y + height  # Top-left
         ], dtype=np.float32)
 
-        #
         vao = gl.glGenVertexArrays(1)
         vbo = gl.glGenBuffers(1)
 
-        #
         gl.glBindVertexArray(vao)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
         gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
         gl.glEnableVertexAttribArray(0)
 
-        #
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
+        gl.glDrawArrays(gl.GL_QUADS, 0, 4)
 
-        #
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
         gl.glDeleteBuffers(1, [vbo])
@@ -1462,11 +1452,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
             return
 
         #
-        sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
+        sdl3.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
         gl.glViewport(0, 0, self.width, self.height)
-
-        gl.glClearColor(0, 0, 0, 1)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
         #
         if self.state is not None and self.state in self.display_states:
@@ -1482,5 +1469,5 @@ class ND_Window_SDL_OPENGL(ND_Window):
             scene.render()
 
         #
-        sdl2.SDL_GL_SwapWindow(self.sdl_window)
+        sdl3.SDL_GL_SwapWindow(self.sdl_window)
 
