@@ -120,9 +120,6 @@ class ND_EventsManager_GLFW(ND_EventsManager):
         try:
             ev: Optional[nd_event.ND_Event] = self.events_waiting_to_poll.get_nowait()
             #
-            if ev is not None:
-                print(f"DEBUG | event : {ev}")
-            #
             if isinstance(ev, nd_event.ND_EventWindowClose):
                 #
                 if len(self.windows) == 1: # Dernière fenêtre à fermer -> On envoie un event QUIT plutôt

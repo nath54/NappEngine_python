@@ -15,6 +15,12 @@ from threading import Lock
 # Import operating system utilities
 import os
 
+#
+import math
+
+#
+import time
+
 # Import NumPy for numerical operations
 import numpy as np  # type: ignore
 
@@ -1465,7 +1471,14 @@ class ND_Window_SDL_OPENGL(ND_Window):
         sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
         gl.glViewport(0, 0, self.width, self.height)
 
-        gl.glClearColor(0, 0, 0, 1)
+
+        a: float = time.time() / 20.0
+        ra: float = (math.sin(10 * a + 23) + 1.0) / 2.0
+        ga: float = (math.sin(20 * a + 232) + 1.0) / 2.0
+        ba: float = (math.sin(-10 * a + 42) + 1.0) / 2.0
+
+
+        gl.glClearColor(ra, ga, ba, 1)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
         #
