@@ -82,12 +82,12 @@ class ND_MainApp:
         self.is_running: bool = False
         self.is_threading: bool = True
         #
-        self.display: Optional["ND_Display"] = DisplayClass(self, WindowClass=WindowClass)
+        self.display: Optional[ND_Display] = DisplayClass(self, WindowClass=WindowClass)
         #
         if self.display is not None:
             self.display.init_display()
         #
-        self.events_manager: "ND_EventsManager" = EventsManagerClass(self)
+        self.events_manager: ND_EventsManager = EventsManagerClass(self)
         #
         self.init_queue_functions: list[Callable[[ND_MainApp], None]] = []
         #

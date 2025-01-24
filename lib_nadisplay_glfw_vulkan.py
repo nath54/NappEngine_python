@@ -22,7 +22,7 @@ from lib_nadisplay_rects import ND_Point, ND_Rect
 from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_glfw import get_display_info
+from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
 from lib_nadisplay_vulkan import init_vulkan
 
 
@@ -146,6 +146,9 @@ class ND_Display_GLFW_VULKAN(ND_Display):
             window_params["window_id"] = win_id
             #
             self.windows[win_id] = self.WindowClass(self, **window_params)
+            #
+            if hasattr(self.main_app.events_manager, "register_window_callback"):
+                self.main_app.events_manager.register_window_callback(self.windows[win_id])
 
         #
         return win_id
@@ -169,7 +172,7 @@ class ND_Display_GLFW_VULKAN(ND_Display):
 
 
 #
-class ND_Window_GLFW_VULKAN(ND_Window):
+class ND_Window_GLFW_VULKAN(ND_Window_GLFW):
     #
     def __init__(
             self,

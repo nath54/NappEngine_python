@@ -46,7 +46,7 @@ from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_opengl import create_and_validate_gl_shader_program
-from lib_nadisplay_glfw import get_display_info
+from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
 
 #
 BASE_PATH: str = "../../../"
@@ -413,6 +413,9 @@ class ND_Display_GLFW_OPENGL(ND_Display):
             window_params["window_id"] = win_id
             #
             self.windows[win_id] = self.WindowClass(self, **window_params)
+            #
+            if hasattr(self.main_app.events_manager, "register_window_callback"):
+                self.main_app.events_manager.register_window_callback(self.windows[win_id])
 
         #
         return win_id
@@ -435,7 +438,7 @@ class ND_Display_GLFW_OPENGL(ND_Display):
 
 
 #
-class ND_Window_GLFW_OPENGL(ND_Window):
+class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
     #
     def __init__(
             self,
@@ -559,8 +562,8 @@ class ND_Window_GLFW_OPENGL(ND_Window):
             #
             self.destroy_prepared_texture(texture_id)
 
-        # TODO
-        pass
+        #
+        glfw.destroy_window(self.glw_window)
 
     #
     def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
@@ -580,8 +583,7 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if not self.display.initialized:
             return
 
-        # TODO
-        return
+        glfw.set_window_title(self.glw_window, new_title)
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
@@ -589,17 +591,15 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if not self.display.initialized:
             return
 
-        # TODO
-        return
+        glfw.set_window_pos(self.glw_window, new_x, new_y)
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
         if not self.display.initialized:
             return
-
-        # TODO
-        return
+        #
+        glfw.set_window_size(self.glw_window, new_width, new_height)
 
     #
     def set_fullscreen(self, mode: int) -> None:
@@ -619,8 +619,27 @@ class ND_Window_GLFW_OPENGL(ND_Window):
         if not self.display.initialized:
             return
 
-        # TODO
-        return
+        #
+        if mode == 0:
+            #
+            glfw.set_window_monitor(self.glw_window, None, None, None, self.width, self.height, glfw.DONT_CARE)
+
+        #
+        elif mode == 1:
+            #
+            monitor_: glfw._GLFWvidmonitor = glfw.get_primary_monitor()
+            mode_: glfw._GLFWvidmode = glfw.get_video_mode(monitor_)
+            #
+            glfw.set_window_monitor(self.glw_window, None, 0, 0, mode_.size.width, mode_.size.height, glfw.DONT_CARE)
+            glfw.set_window_size(self.glw_window, mode_.size.width, mode_.size.height)
+            glfw.set_window_pos(self.glw_window, 0, 0)
+
+        #
+        elif mode == 2:
+            monitor_: glfw._GLFWvidmonitor = glfw.get_primary_monitor()
+            mode_: glfw._GLFWvidmode = glfw.get_video_mode(monitor_)
+            glfw.set_window_monitor(self.glw_window, monitor_, 0, 0, mode_.size.width, mode_.size.height, mode_.refresh_rate)
+
 
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:

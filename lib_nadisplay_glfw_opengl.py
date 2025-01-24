@@ -29,7 +29,7 @@ import ctypes
 from lib_nadisplay_colors import ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_glfw import get_display_info
+from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
 from lib_nadisplay_opengl import create_and_validate_gl_shader_program
 from lib_nadisplay_np import get_rendering_buffer
 
@@ -394,6 +394,9 @@ class ND_Display_GLFW_OPENGL(ND_Display):
             window_params["window_id"] = win_id
             #
             self.windows[win_id] = self.WindowClass(self, **window_params)
+            #
+            if hasattr(self.main_app.events_manager, "register_window_callback"):
+                self.main_app.events_manager.register_window_callback(self.windows[win_id])
 
         #
         return win_id
@@ -417,7 +420,7 @@ class ND_Display_GLFW_OPENGL(ND_Display):
 
 
 #
-class ND_Window_GLFW_OPENGL(ND_Window):
+class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
     #
     def __init__(
             self,

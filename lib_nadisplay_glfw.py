@@ -45,17 +45,15 @@ class ND_Window_GLFW(ND_Window):
             self,
             display: ND_Display,
             window_id: int,
-            size: tuple[int, int] | str,
-            title: str = "Pygame App",
-            fullscreen: bool = False,
-            init_state: Optional[str] = None
+            init_state: Optional[str] = None,
+            title: str = "App",
+            fullscreen: bool = False
         ):
 
         #
         super().__init__(display=display, window_id=window_id, init_state=init_state)
-
-
-
+        #
+        self.glw_window: glfw._GLFWwindow = None
 
 
 #
@@ -68,7 +66,7 @@ class ND_EventsManager_GLFW(ND_EventsManager):
         self.windows: list[ND_Window_GLFW] = []
 
     #
-    def init_window(self, nd_window: ND_Window_GLFW) -> None:
+    def register_window_callback(self, nd_window: ND_Window_GLFW) -> None:
         if self.main_app.display is None or not self.main_app.display.initialized:
             return
 
@@ -77,37 +75,37 @@ class ND_EventsManager_GLFW(ND_EventsManager):
 
         # Register callbacks
         #
-        glfw.set_key_callback(nd_window,
+        glfw.set_key_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, key: int, scancode: int, action: int, mods: int
             lambda window, key, scancode, action, mods, nd_window=nd_window: self.key_callback(window, key, scancode, action, mods, nd_window)
         )
         #
-        glfw.set_mouse_button_callback(nd_window,
+        glfw.set_mouse_button_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, button: int, action: int, mods: int
             lambda window, button, action, mods, nd_window=nd_window: self.mouse_button_callback(window, button, action, mods, nd_window)
         )
         #
-        glfw.set_cursor_pos_callback(nd_window,
+        glfw.set_cursor_pos_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, x: float, y: float
             lambda window, x, y, nd_window=nd_window: self.cursor_position_callback(window, x, y, nd_window)
         )
         #
-        glfw.set_scroll_callback(nd_window,
+        glfw.set_scroll_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, xoffset: float, yoffset: float
             lambda window, xoffset, yoffset, nd_window=nd_window: self.scroll_callback(window, xoffset, yoffset, nd_window)
         )
         #
-        glfw.set_window_size_callback(nd_window,
+        glfw.set_window_size_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, width: int, height: int
             lambda window, width, height, nd_window=nd_window: self.window_size_callback
         )
         #
-        glfw.set_window_close_callback(nd_window,
+        glfw.set_window_close_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow
             lambda window, nd_window=nd_window: self.window_close_callback(window, nd_window)
         )
         #
-        glfw.set_window_focus_callback(nd_window,
+        glfw.set_window_focus_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, focused: int
             lambda window, focused, nd_window=nd_window: self.window_focus_callback(window, focused, nd_window)
         )
@@ -120,7 +118,12 @@ class ND_EventsManager_GLFW(ND_EventsManager):
 
         #
         try:
-            return self.events_waiting_to_poll.get_nowait()
+            ev: Optional[nd_event.ND_Event] = self.events_waiting_to_poll.get_nowait()
+            #
+            if ev is not None:
+                print(f"DEBUG | event : {ev}")
+            #
+            return ev
         #
         except Exception as _:
             return None
