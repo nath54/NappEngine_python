@@ -123,6 +123,24 @@ class ND_EventsManager_GLFW(ND_EventsManager):
             if ev is not None:
                 print(f"DEBUG | event : {ev}")
             #
+            if isinstance(ev, nd_event.ND_EventWindowClose):
+                #
+                if len(self.windows) == 1: # Dernière fenêtre à fermer -> On envoie un event QUIT plutôt
+                    return nd_event.ND_EventQuit()
+                #
+                # Sinon, on enlève juste la fenêtre dans nos fenêtres
+                #
+                elt_to_del: Optional[ND_Window_GLFW] = None
+                #
+                win: ND_Window_GLFW
+                for win in self.windows:
+                    #
+                    if win.window_id == ev.window_id:
+                        elt_to_del = win
+                #
+                if elt_to_del is not None:
+                    self.windows.remove(elt_to_del)
+            #
             return ev
         #
         except Exception as _:

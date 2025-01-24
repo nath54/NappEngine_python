@@ -564,6 +564,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         #
         glfw.destroy_window(self.glw_window)
+        #
 
     #
     def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
@@ -620,6 +621,10 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             return
 
         #
+        monitor_: glfw._GLFWvidmonitor
+        mode_: glfw._GLFWvidmode
+
+        #
         if mode == 0:
             #
             glfw.set_window_monitor(self.glw_window, None, None, None, self.width, self.height, glfw.DONT_CARE)
@@ -627,8 +632,8 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         elif mode == 1:
             #
-            monitor_: glfw._GLFWvidmonitor = glfw.get_primary_monitor()
-            mode_: glfw._GLFWvidmode = glfw.get_video_mode(monitor_)
+            monitor_ = glfw.get_primary_monitor()
+            mode_ = glfw.get_video_mode(monitor_)
             #
             glfw.set_window_monitor(self.glw_window, None, 0, 0, mode_.size.width, mode_.size.height, glfw.DONT_CARE)
             glfw.set_window_size(self.glw_window, mode_.size.width, mode_.size.height)
@@ -636,8 +641,8 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         #
         elif mode == 2:
-            monitor_: glfw._GLFWvidmonitor = glfw.get_primary_monitor()
-            mode_: glfw._GLFWvidmode = glfw.get_video_mode(monitor_)
+            monitor_ = glfw.get_primary_monitor()
+            mode_ = glfw.get_video_mode(monitor_)
             glfw.set_window_monitor(self.glw_window, monitor_, 0, 0, mode_.size.width, mode_.size.height, mode_.refresh_rate)
 
 
