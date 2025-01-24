@@ -13,17 +13,17 @@ from lib_nadisplay_glfw_opengl3 import ND_Display_GLFW_OPENGL as DisplayClass, N
 from lib_nadisplay_glfw import ND_EventsManager_GLFW as EventsManagerClass  # Not working at all
 # from lib_nadisplay_pygame import ND_Display_Pygame as DisplayClass, ND_Window_Pygame as WindowClass, ND_EventsManager_Pygame as EventsManagerClass  # Working a little
 
+#
 from scene_main_menu import create_main_menu_scene
 from scene_tests_menu import create_tests_menu_scene
-
 
 #
 MAIN_WINDOW_ID: int = 0
 
-
-
+#
 if __name__ == "__main__":
 
+    #
     app = nd.ND_MainApp(
                 DisplayClass=DisplayClass,
                 WindowClass=WindowClass,
@@ -31,6 +31,7 @@ if __name__ == "__main__":
                 global_vars_to_save=[],
                 path_to_global_vars_save_file=""
         )
+
     #
     if app.display is None:
         exit(1)
@@ -42,8 +43,10 @@ if __name__ == "__main__":
         "window_id": MAIN_WINDOW_ID,
         "init_state": "main_menu"
     }, True)
+
     #
     win: Optional[nd.ND_Window] = app.display.get_window(win_id)
+
     #
     if win is None:
         exit(1)
