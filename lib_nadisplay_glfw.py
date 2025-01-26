@@ -176,6 +176,8 @@ class ND_EventsManager_GLFW(ND_EventsManager):
     #
     def mouse_button_callback(self, window: glfw._GLFWwindow, button: int, action: int, mods: int, nd_window: ND_Window_GLFW) -> None:
         #
+        button += 1 # I'm not sure about the conversion tho
+        #
         x, y = glfw.get_cursor_pos(window)
         if action == glfw.PRESS:
             self.events_waiting_to_poll.put(nd_event.ND_EventMouseButtonDown(mouse_id=0, x=int(x), y=int(y), button_id=button))
