@@ -168,10 +168,12 @@ class ND_EventsManager_GLFW(ND_EventsManager):
     # Event callback implementations
     def key_callback(self, window: glfw._GLFWwindow, key: int, scancode: int, action: int, mods: int, nd_window: ND_Window_GLFW) -> None:
         #
+        key_str: str = "{:c}".format(key)
+        #
         if action == glfw.PRESS:
-            self.events_waiting_to_poll.put(nd_event.ND_EventKeyDown(keyboard_id=key, key=chr(key)))
+            self.events_waiting_to_poll.put(nd_event.ND_EventKeyDown(keyboard_id=key, key=key_str))
         elif action == glfw.RELEASE:
-            self.events_waiting_to_poll.put(nd_event.ND_EventKeyUp(keyboard_id=key, key=chr(key)))
+            self.events_waiting_to_poll.put(nd_event.ND_EventKeyUp(keyboard_id=key, key=key_str))
 
     #
     def mouse_button_callback(self, window: glfw._GLFWwindow, button: int, action: int, mods: int, nd_window: ND_Window_GLFW) -> None:

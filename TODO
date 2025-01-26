@@ -1,8 +1,10 @@
 [x] Work and analyse test6.py to get pyopengl to work, and glfw too
     [x] Solve OpenGL context error -> Due to Wayland
-    [ ] Now, have to solve a black screen -> Nothing is rendered
+    [x] Now, have to solve a black screen -> Nothing is rendered
+    [ ] Now, have to render all the primitives with OpenGL
 [ ] Work on opengl + glfw
     [x] Base display implementation
-        [ ] Now, have to solve a black screen -> Nothing is rendered
-    [ ] Have to implement all the events gestion with glfw
+        [x] Now, have to solve a black screen -> Nothing is rendered
+    [x] Have to implement all the events gestion with glfw
+    [ ] Now, have to render all the primitives with OpenGL
 [ ] Vulkan + glfw is then next
