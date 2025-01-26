@@ -15,10 +15,6 @@ from threading import Lock
 # Import operating system utilities
 import os
 
-#
-import time
-import math
-
 # Import NumPy for numerical operations
 import numpy as np  # type: ignore
 
@@ -106,206 +102,41 @@ def log_opengl_context_attributes():
         print(f"OpenGL Error: {error}")
 
 
-# # Class for rendering fonts using OpenGL
-# class FontRenderer:
-#     # Initialize the font renderer
-#     def __init__(self, font_path: str, window: "ND_Window_GLFW_OPENGL") -> None:
-#         self.shader_program: int = 0  # OpenGL shader program
-#         self.shader_projection: int = 0  # OpenGL shader projection matrix
-#         self.projection = glm.ortho(0, 640, 640, 0, -100000, 100000)
-#         self.characters: dict = {}  # Dictionary to store font character data
-#         self.vao: int = 0  # Vertex Array Object ID
-#         self.vbo: int = 0  # Vertex Buffer Object ID
-#         self.init_shader()  # Initialize shaders
-#         #
-#         self.window: ND_Window_GLFW_OPENGL = window
-#         #
-#         self.init_shader()
-#         #
-#         self.load_font(font_path)  # Load font
+def compile_shaders(vertex_source, fragment_source):
+    vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
+    gl.glShaderSource(vertex_shader, vertex_source)
+    gl.glCompileShader(vertex_shader)
+    if not gl.glGetShaderiv(vertex_shader, gl.GL_COMPILE_STATUS):
+        raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
 
-#     # Initialize the shaders for font rendering
-#     def init_shader(self) -> None:
+    fragment_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
+    gl.glShaderSource(fragment_shader, fragment_source)
+    gl.glCompileShader(fragment_shader)
+    if not gl.glGetShaderiv(fragment_shader, gl.GL_COMPILE_STATUS):
+        raise RuntimeError(gl.glGetShaderInfoLog(fragment_shader))
 
-#         # Vertex shader source code for font rendering
-#         with open(f"{BASE_PATH}gl_shaders/font_rendering_vertex.vert", "r", encoding="utf-8") as f:
-#             vertex_shader_source: str = f.read()
+    shader_program = gl.glCreateProgram()
+    gl.glAttachShader(shader_program, vertex_shader)
+    gl.glAttachShader(shader_program, fragment_shader)
+    gl.glLinkProgram(shader_program)
+    if not gl.glGetProgramiv(shader_program, gl.GL_LINK_STATUS):
+        raise RuntimeError(gl.glGetProgramInfoLog(shader_program))
 
-#         # Fragment shader source code for font rendering
-#         with open(f"{BASE_PATH}gl_shaders/font_rendering_fragment.frag", "r", encoding="utf-8") as f:
-#             fragment_shader_source: str = f.read()
+    gl.glDeleteShader(vertex_shader)
+    gl.glDeleteShader(fragment_shader)
 
-#         # Compile shaders
-#         vertexshader = shaders.compileShader(vertex_shader_source, gl.GL_VERTEX_SHADER)
-#         fragmentshader = shaders.compileShader(fragment_shader_source, gl.GL_FRAGMENT_SHADER)
+    return shader_program
 
-#         # Create the shader program
-#         self.shader_program = shaders.compileProgram(vertexshader, fragmentshader)
-#         gl.glUseProgram(self.shader_program)
-
-#         # Set up the projection matrix
-#         self.shader_projection = gl.glGetUniformLocation(self.shader_program, "projection")
-#         gl.glUniformMatrix4fv(self.shader_projection, 1, gl.GL_FALSE, glm.value_ptr(self.projection))
-
-#         # Disable byte-alignment restriction for texture
-#         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
-
-
-#     # Load font using FreeType and prepare for rendering
-#     def load_font(self, font_path: str) -> None:
-
-#         # Use program
-#         gl.glUseProgram(self.shader_program)
-
-#         # Ensure OpenGL context is active
-#         self.window._ensure_context()
-
-#         # Disable byte-alignment restriction for texture
-#         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
-
-#         # Enable blending for transparency
-#         gl.glEnable(gl.GL_BLEND)
-#         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
-#         # Load font using FreeType
-#         face = freetype.Face(font_path)  # Load font face
-#         face.set_char_size(48 * 64)  # Set character size
-
-#         # Load ASCII characters (0-127)
-#         for c in range(128):
-
-#             # Load character glyph
-#             face.load_char(chr(c))
-#             glyph = face.glyph
-
-#             # Create texture for the glyph bitmap
-#             texture_id = gl.glGenTextures(1)
-#             gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
-#             gl.glTexImage2D(
-#                 gl.GL_TEXTURE_2D, 0, gl.GL_RED,
-#                 glyph.bitmap.width, glyph.bitmap.rows,
-#                 0, gl.GL_RED, gl.GL_UNSIGNED_BYTE, glyph.bitmap.buffer
-#             )
-
-#             # Set texture parameters
-#             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
-#             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
-#             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-#             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-
-#             # Store character data
-#             self.characters[chr(c)] = {
-#                 'texture_id': texture_id,
-#                 'size': (glyph.bitmap.width, glyph.bitmap.rows),
-#                 'bearing': (glyph.bitmap_left, glyph.bitmap_top),
-#                 'advance': glyph.advance.x
-#             }
-
-#         #
-#         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-
-#         # Create VAO and VBO for rendering
-
-#         # VAO
-#         self.vao = gl.glGenVertexArrays(1)
-#         gl.glBindVertexArray(self.vao)
-
-#         # VBO
-#         self.vbo = gl.glGenBuffers(1)
-#         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
-#         gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
-#         gl.glEnableVertexAttribArray(0)
-
-#         gl.glBindVertexArray(self.vao)
-#         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
-#         gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-#         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-#         gl.glBindVertexArray(0)
-
-#     # Render text on the screen
-#     def render_text(self, text: str, x: int, y: int, scale: int, color: ND_Color) -> None:
-
-#         # Use program
-#         gl.glUseProgram(self.shader_program)
-
-#         # Ensure OpenGL context is active
-#         self.window._ensure_context()
-
-#         #
-#         gl.glUseProgram(self.shader_program)  # Use font shader program
-
-#         # Set text color
-#         gl.glUniform3f(
-#             gl.glGetUniformLocation(self.shader_program, "textColor"),
-#             color.r / 255, color.g / 255, color.b / 255
-#         )
-#         gl.glActiveTexture(gl.GL_TEXTURE0)
-
-#         # Enable blending for transparency
-#         gl.glEnable(gl.GL_BLEND)
-#         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
-#         # Bind the VAO
-#         gl.glBindVertexArray(self.vao)
-
-#         # Iterate over characters in the text
-#         for char in text:
-
-#             # Only ASCII characters are supported
-#             if char not in self.characters:
-#                 continue
-
-#             # Get the character font glyph
-#             ch = self.characters[char]
-
-#             # Calculate position and size for the character
-#             xpos = x + ch['bearing'][0] * scale
-#             ypos = y - (ch['size'][1] - ch['bearing'][1]) * scale
-#             w = ch['size'][0] * scale
-#             h = ch['size'][1] * scale
-
-#             # Define vertex data for the character
-#             vertices = np.array([
-#                 xpos,     ypos + h,   0.0, 0.0,
-#                 xpos,     ypos,       0.0, 1.0,
-#                 xpos + w, ypos,       1.0, 1.0,
-#                 xpos,     ypos + h,   0.0, 0.0,
-#                 xpos + w, ypos,       1.0, 1.0,
-#                 xpos + w, ypos + h,   1.0, 0.0
-#             ], dtype=np.float32)
-
-#             # Update the VBO with the character's vertex data
-
-#             # Render the glyph texture over a quad
-#             gl.glBindTexture(gl.GL_TEXTURE_2D, ch['texture_id'])
-
-#             # Update the VBO with new vertex data
-#             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
-#             gl.glBufferSubData(gl.GL_ARRAY_BUFFER, 0, vertices.nbytes, vertices)
-
-#             #
-#             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-
-#             # Render the character as triangles
-#             gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
-
-#             # Advance the cursor to the next position (in pixels)
-#             x += (ch['advance'] >> 6) * scale  # Advance is in 1/64th pixels
-
-#         # Unbinding things
-#         gl.glBindVertexArray(0)  # Unbind the VAO
-#         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)  # Unbind the texture
 
 class FontRenderer:
     def __init__(self, font_path: str, window: "ND_Window_GLFW_OPENGL") -> None:
+        self.window: ND_Window_GLFW_OPENGL = window  # Reference to the window object
         self.shader_program: int = 0  # OpenGL shader program
         self.shader_projection: int = 0  # OpenGL shader projection matrix
-        self.projection = glm.ortho(0, 640, 640, 0, -100000, 100000)  # Default projection
+        self.projection = glm.ortho(0, self.window.width, self.window.height, 0, -100000, 100000)  # Default projection
         self.characters: dict = {}  # Dictionary to store font character data
         self.vao: int = 0  # Vertex Array Object ID
         self.vbo: int = 0  # Vertex Buffer Object ID
-        self.window: ND_Window_GLFW_OPENGL = window  # Reference to the window object
         self.init_shader()  # Initialize shaders
         self.load_font(font_path)  # Load font
 
@@ -318,12 +149,9 @@ class FontRenderer:
         with open(f"{BASE_PATH}gl_shaders/font_rendering_fragment.frag", "r", encoding="utf-8") as f:
             fragment_shader_source: str = f.read()
 
-        # Compile shaders
-        vertexshader = shaders.compileShader(vertex_shader_source, gl.GL_VERTEX_SHADER)
-        fragmentshader = shaders.compileShader(fragment_shader_source, gl.GL_FRAGMENT_SHADER)
 
         # Create the shader program
-        self.shader_program = shaders.compileProgram(vertexshader, fragmentshader)
+        self.shader_program = compile_shaders(vertex_shader_source, fragment_shader_source)
         gl.glUseProgram(self.shader_program)
 
         # Set up the projection matrix
@@ -396,9 +224,42 @@ class FontRenderer:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
 
-    def render_text(self, text: str, x: int, y: int, scale: int, color: ND_Color) -> None:
+    def draw_solid_quad(self, x1: float, y1: float, x2: float, y2: float) -> None:
+        gl.glUseProgram(self.shader_program)
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), 1.0, 0.0, 0.0, 1.0)
+
+        # Define vertices with texture coordinates (even though they're not used for the solid quad)
+        vertices = np.array([
+            x1, y1, 0.0, 0.0,  # Bottom-left
+            x2, y1, 1.0, 0.0,  # Bottom-right
+            x2, y2, 1.0, 1.0,  # Top-right
+            x1, y2, 0.0, 1.0   # Top-left
+        ], dtype=np.float32)
+
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        # Set up vertex attribute pointers for vec4 (position + texture coordinates)
+        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 4 * 4, None)
+        gl.glEnableVertexAttribArray(0)
+
+        gl.glDrawArrays(gl.GL_TRIANGLE_FAN, 0, 4)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
+    def render_text(self, text: str, x: int, y: int, scale: float, color: ND_Color) -> None:
         # Use program
         gl.glUseProgram(self.shader_program)
+
+        #
+        scale /= 10.0
 
         # Ensure OpenGL context is active
         self.window._ensure_context()
@@ -436,6 +297,15 @@ class FontRenderer:
             xpos_ndc, ypos_ndc = self.window.screen_to_ndc(xpos, ypos)
             w_ndc, h_ndc = self.window.screen_to_ndc(w, h)
 
+            x1: float = xpos_ndc
+            y1: float = ypos_ndc
+            x2: float = xpos_ndc + w_ndc
+            y2: float = ypos_ndc + w_ndc
+
+            # print(f"DEBUG | scale = {scale} | (xpos, ypos, w, h) = ({xpos}, {ypos}, {w}, {h}) | (x1, y1, x2, y2) = ({x1}, {y1}, {x2}, {y2})")
+
+            self.draw_solid_quad(x1, y1, x2, y2)
+
             # Define vertex data for the character
             vertices = np.array([
                 xpos_ndc, ypos_ndc + h_ndc, 0.0, 0.0,  # Top-left
@@ -447,7 +317,9 @@ class FontRenderer:
             ], dtype=np.float32)
 
             # Render the glyph texture over a quad
+            # gl.glActiveTexture(gl.GL_TEXTURE0)
             gl.glBindTexture(gl.GL_TEXTURE_2D, ch['texture_id'])
+            # gl.glUniform1i(gl.glGetUniformLocation(self.shader_program, "text"), 0)
 
             # Update the VBO with new vertex data
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
@@ -1632,7 +1504,8 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glViewport(0, 0, self.width, self.height)
 
         gl.glClearColor(0, 0, 0, 1)
-        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glEnable(gl.GL_DEPTH_TEST)  # Enable depth testing for 3D
+        gl.glEnable(gl.GL_TEXTURE_2D)  # Enable texturing
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         #
