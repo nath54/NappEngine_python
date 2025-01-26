@@ -254,3 +254,27 @@ def create_and_validate_gl_shader_program(vertex_shader_src: str, fragment_shade
 #     return program
 
 
+# def compile_shaders(vertex_source, fragment_source):
+#     vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
+#     gl.glShaderSource(vertex_shader, vertex_source)
+#     gl.glCompileShader(vertex_shader)
+#     if not gl.glGetShaderiv(vertex_shader, gl.GL_COMPILE_STATUS):
+#         raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
+
+#     fragment_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
+#     gl.glShaderSource(fragment_shader, fragment_source)
+#     gl.glCompileShader(fragment_shader)
+#     if not gl.glGetShaderiv(fragment_shader, gl.GL_COMPILE_STATUS):
+#         raise RuntimeError(gl.glGetShaderInfoLog(fragment_shader))
+
+#     shader_program = gl.glCreateProgram()
+#     gl.glAttachShader(shader_program, vertex_shader)
+#     gl.glAttachShader(shader_program, fragment_shader)
+#     gl.glLinkProgram(shader_program)
+#     if not gl.glGetProgramiv(shader_program, gl.GL_LINK_STATUS):
+#         raise RuntimeError(gl.glGetProgramInfoLog(shader_program))
+
+#     gl.glDeleteShader(vertex_shader)
+#     gl.glDeleteShader(fragment_shader)
+
+#     return shader_program

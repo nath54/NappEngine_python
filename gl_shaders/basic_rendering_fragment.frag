@@ -1,6 +1,8 @@
 #version 330 core
-in vec4 frag_color;   // Input color from vertex shader
-out vec4 out_color;   // Output color to screen
+uniform vec4 color; // Uniform for the color
+
+out vec4 FragColor;
+
 void main() {
-    out_color = frag_color;  // Set the output color
+    FragColor = color; // Set the output color to the uniform
 }

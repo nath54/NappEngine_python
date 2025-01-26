@@ -663,6 +663,71 @@ class ND_Window_SDL_OPENGL(ND_Window):
         elif mode == 2:
             sdl2.SDL_SetWindowFullscreen(self.sdl_window, sdl2.SDL_WINDOW_FULLSCREEN)
 
+
+    #
+    def screen_to_ndc(self, x_screen: int, y_screen: int, viewport_origin: tuple[int, int]=(0, 0), invert_y: bool=True) -> tuple[float, float]:
+        """
+        Converts screen space coordinates (x_screen, y_screen) to OpenGL NDC coordinates.
+
+        Parameters:
+            x_screen (float): X coordinate in screen space.
+            y_screen (float): Y coordinate in screen space.
+            viewport_origin (tuple): The bottom-left corner of the viewport (default is (0, 0)).
+            invert_y (bool): If True, assumes screen space has a top-left origin and inverts the Y axis.
+
+            self.width (int): Width of the viewport in pixels.
+            self.height (int): Height of the viewport in pixels.
+
+        Returns:
+            tuple: (x_ndc, y_ndc) coordinates in NDC space.
+        """
+        x_vp: int = viewport_origin[0]
+        y_vp: int = viewport_origin[1]
+
+        # Adjust for the viewport origin
+        x_screen_adj: int = x_screen - x_vp
+        y_screen_adj: int = y_screen - y_vp
+
+        # Handle inverted Y-axis
+        if invert_y:
+            y_screen_adj = self.height - y_screen_adj
+
+        # Convert to NDC
+        x_ndc: float = 2 * (x_screen_adj / self.width) - 1
+        y_ndc: float = 2 * (y_screen_adj / self.height) - 1
+
+        return x_ndc, y_ndc
+
+    #
+    def ndc_to_screen(self, x_ndc: float, y_ndc: float, viewport_origin: tuple[int, int]=(0, 0), invert_y: bool=True) -> tuple[int, int]:
+        """
+        Converts OpenGL NDC coordinates (x_ndc, y_ndc) to screen space coordinates.
+
+        Parameters:
+            x_ndc (float): X coordinate in NDC space.
+            y_ndc (float): Y coordinate in NDC space.
+            viewport_origin (tuple): The bottom-left corner of the viewport (default is (0, 0)).
+            invert_y (bool): If True, assumes screen space has a top-left origin and inverts the Y axis.
+
+            self.width (int): Width of the viewport in pixels.
+            self.height (int): Height of the viewport in pixels.
+
+        Returns:
+            tuple: (x_screen, y_screen) coordinates in screen space.
+        """
+        x_vp: int = viewport_origin[0]
+        y_vp: int = viewport_origin[1]
+
+        # Convert from NDC to screen coordinates
+        x_screen: int = int( ((x_ndc + 1) / 2) * self.width + x_vp )
+        y_screen: int = int( ((y_ndc + 1) / 2) * self.height + y_vp )
+
+        # Handle inverted Y-axis
+        if invert_y:
+            y_screen = self.height - (y_screen - y_vp)
+
+        return x_screen, y_screen
+
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
         """
@@ -935,8 +1000,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
 
         vertices = np.array([
-            x1, y,  # Start point
-            x2, y   # End point
+            *self.screen_to_ndc(x1, y),  # Start point
+            *self.screen_to_ndc(x2, y)   # End point
         ], dtype=np.float32)
 
         vao = gl.glGenVertexArrays(1)
@@ -976,8 +1041,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
 
         vertices = np.array([
-            x, y1,  # Start point
-            x, y2   # End point
+            *self.screen_to_ndc(x, y1),  # Start point
+            *self.screen_to_ndc(x, y2)   # End point
         ], dtype=np.float32)
 
         vao = gl.glGenVertexArrays(1)
@@ -1017,8 +1082,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
 
         vertices = np.array([
-            x1, y1,  # Start point
-            x2, y2   # End point
+            *self.screen_to_ndc(x1, y1),  # Start point
+            *self.screen_to_ndc(x2, y2)   # End point
         ], dtype=np.float32)
 
         vao = gl.glGenVertexArrays(1)
@@ -1097,11 +1162,11 @@ class ND_Window_SDL_OPENGL(ND_Window):
         gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *outline_color.to_float_tuple())
 
         vertices = np.array([
-            x, y,  # Bottom-left
-            x + width, y,  # Bottom-right
-            x + width, y + height,  # Top-right
-            x, y + height,  # Top-left
-            x, y  # Back to bottom-left
+            *self.screen_to_ndc(x, y),  # Bottom-left
+            *self.screen_to_ndc(x + width, y),  # Bottom-right
+            *self.screen_to_ndc(x + width, y + height),  # Top-right
+            *self.screen_to_ndc(x, y + height),  # Top-left
+            *self.screen_to_ndc(x, y)  # Back to bottom-left
         ], dtype=np.float32)
 
         vao = gl.glGenVertexArrays(1)
@@ -1142,14 +1207,14 @@ class ND_Window_SDL_OPENGL(ND_Window):
         # Define vertices for two triangles forming the rectangle
         vertices = np.array([
             # First triangle
-            x, y,  # Bottom-left
-            x + width, y,  # Bottom-right
-            x + width, y + height,  # Top-right
+            *self.screen_to_ndc(x, y),  # Bottom-left
+            *self.screen_to_ndc(x + width, y),  # Bottom-right
+            *self.screen_to_ndc(x + width, y + height),  # Top-right
 
             # Second triangle
-            x, y,  # Bottom-left
-            x + width, y + height,  # Top-right
-            x, y + height  # Top-left
+            *self.screen_to_ndc(x, y),  # Bottom-left
+            *self.screen_to_ndc(x + width, y + height),  # Top-right
+            *self.screen_to_ndc(x, y + height)  # Top-left
         ], dtype=np.float32)
 
         #
@@ -1471,15 +1536,9 @@ class ND_Window_SDL_OPENGL(ND_Window):
         sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
         gl.glViewport(0, 0, self.width, self.height)
 
-
-        a: float = time.time() / 20.0
-        ra: float = (math.sin(10 * a + 23) + 1.0) / 2.0
-        ga: float = (math.sin(20 * a + 232) + 1.0) / 2.0
-        ba: float = (math.sin(-10 * a + 42) + 1.0) / 2.0
-
-
-        gl.glClearColor(ra, ga, ba, 1)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glClearColor(0, 0, 0, 1)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         #
         if self.state is not None and self.state in self.display_states:
