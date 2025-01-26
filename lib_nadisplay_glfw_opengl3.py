@@ -219,36 +219,6 @@ class FontRenderer:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
 
-    def draw_solid_quad(self, x1: float, y1: float, x2: float, y2: float) -> None:
-        gl.glUseProgram(self.shader_program)
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), 1.0, 0.0, 0.0, 1.0)
-
-        # Define vertices with texture coordinates (even though they're not used for the solid quad)
-        vertices = np.array([
-            x1, y1, 0.0, 0.0,  # Bottom-left
-            x2, y1, 1.0, 0.0,  # Bottom-right
-            x2, y2, 1.0, 1.0,  # Top-right
-            x1, y2, 0.0, 1.0   # Top-left
-        ], dtype=np.float32)
-
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-
-        # Set up vertex attribute pointers for vec4 (position + texture coordinates)
-        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 4 * 4, None)
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glDrawArrays(gl.GL_TRIANGLE_FAN, 0, 4)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
-
     def render_text(self, text: str, x: int, y: int, scale: float, color: ND_Color) -> None:
         # Use program
         gl.glUseProgram(self.shader_program)
