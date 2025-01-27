@@ -1,5 +1,5 @@
 import glfw  # type: ignore
-import vulkan as vk
+import vulkan as vk  # type: ignore
 import numpy as np
 import ctypes
 from freetype import Face  # type: ignore
@@ -49,6 +49,7 @@ class VulkanApp:
         self.create_instance()
         self.create_surface(window)
         self.create_device()
+        self.select_physical_device()  # Added step here
         self.setup_swapchain()
         self.create_render_pass()
         self.create_framebuffers()
@@ -115,6 +116,75 @@ class VulkanApp:
 
         self.device = vk.vkCreateDevice(physical_device, device_info, None)
         self.queue = vk.vkGetDeviceQueue(self.device, queue_family_index, 0)
+
+    def select_physical_device(self):
+        # Enumerate physical devices
+        physical_devices = vk.vkEnumeratePhysicalDevices(self.instance)
+
+        if not physical_devices or len(physical_devices) == 0:
+            raise RuntimeError("No physical devices found that support Vulkan.")
+
+        print(f"Found {len(physical_devices)} physical devices.")
+
+        # Iterate through devices to find a suitable one
+        for device in physical_devices:
+            if self.is_device_suitable(device):
+                self.physical_device = device
+                print("Physical device selected:", device)
+                return
+
+        raise RuntimeError("No suitable physical device found.")
+
+    def is_device_suitable(self, device):
+        # Debug print
+        print(f"Device: {device}, Type: {type(device)}")
+
+        # Enumerate required extensions
+        extensions = vk.vkEnumerateDeviceExtensionProperties(device, None)
+        required_extensions = [vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME]
+
+        for required in required_extensions:
+            if required not in [ext.extensionName for ext in extensions]:
+                return False
+
+        # Load the Vulkan function
+        vkGetPhysicalDeviceSurfaceSupportKHR = vk.vkGetInstanceProcAddr(
+            self.instance, "vkGetPhysicalDeviceSurfaceSupportKHR"
+        )
+        if not vkGetPhysicalDeviceSurfaceSupportKHR:
+            raise RuntimeError("Failed to load vkGetPhysicalDeviceSurfaceSupportKHR")
+
+        # Set function argument types (optional for some bindings)
+        vkGetPhysicalDeviceSurfaceSupportKHR.argtypes = [
+            ctypes.c_void_p,  # Raw Vulkan handle (device)
+            ctypes.c_uint32,  # Queue family index
+            ctypes.c_void_p,  # Raw Vulkan handle (surface)
+            ctypes.POINTER(ctypes.c_uint32),  # Output boolean
+        ]
+        vkGetPhysicalDeviceSurfaceSupportKHR.restype = vk.VkResult
+
+        # Query queue family properties
+        queue_families = vk.vkGetPhysicalDeviceQueueFamilyProperties(device)
+        for i, queue_family in enumerate(queue_families):
+            if queue_family.queueFlags & vk.VK_QUEUE_GRAPHICS_BIT:
+                supports_surface = ctypes.c_uint32()
+
+                # Pass raw `device` and `surface` directly
+                result = vkGetPhysicalDeviceSurfaceSupportKHR(
+                    ctypes.c_void_p(device),  # Cast the device to ctypes
+                    i,
+                    ctypes.c_void_p(self.surface),  # Cast surface to ctypes
+                    ctypes.byref(supports_surface),
+                )
+                if result == vk.VK_SUCCESS and supports_surface.value:
+                    self.graphics_queue_family_index = i
+                    return True
+
+        return False
+
+
+
+
 
     def setup_swapchain(self):
         # Ensure surface is valid
