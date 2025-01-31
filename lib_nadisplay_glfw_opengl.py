@@ -8,259 +8,295 @@ GLFW + OPENGL backend for lib_nadisplay.
 """
 
 
+# Import necessary modules for type hints and threading
 from typing import Optional, Any, Callable, cast, Type
 from threading import Lock
 
+# Import operating system utilities
 import os
-import math
 
-# To improve speed for non development code:
 #
-#   import OpenGL
-#   OpenGL.ERROR_LCHECKING = False
-#   OpenGL.ERROR_LOGGING = False
+from math import pi, cos, sin
 
-import OpenGL.GL as gl  # type: ignore
+# Import NumPy for numerical operations
+import numpy as np  # type: ignore
+
+# Import glfw library
 import glfw  # type: ignore
-import freetype  # type: ignore
-import glm  # type: ignore
-import ctypes
 
-from lib_nadisplay_colors import ND_Color, ND_Transformations
+# To optimize speed in production, OpenGL error checking and logging can be disabled
+# import OpenGL
+# OpenGL.ERROR_CHECKING = False
+# OpenGL.ERROR_LOGGING = False
+
+# Import OpenGL functionalities for rendering
+import OpenGL.GL as gl  # type: ignore
+from OpenGL.GL import shaders
+
+# Optionally, GLUT can be used for window management and other utilities
+# from OpenGL.GLUT import glutInit, glutCreateWindow, glutInitDisplayMode, GLUT_RGB, glutInitWindowSize
+
+# Import ctypes for low-level operations
+import ctypes
+# Import FreeType for font loading and rendering
+import freetype  # type: ignore
+# Import GLM for mathematical operations (e.g., vectors, matrices)
+import glm
+
+# Import lib_nadisplay functions
+from lib_nadisplay_colors import ND_Color
+from lib_nadisplay_colors import ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
+from lib_nadisplay_opengl import compile_shaders
 from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
-from lib_nadisplay_opengl import create_and_validate_gl_shader_program
-from lib_nadisplay_np import get_rendering_buffer
+from lib_nadisplay_math import calc_rad_agl_about_h_axis, calc_point_with_angle_and_distance_from_another_point, convert_deg_to_rad, earcut_triangulate_polygon
+
+#
+BASE_PATH: str = "../../../"
+
+# Vertex shader source code for basic rendering
+with open(f"{BASE_PATH}gl_shaders/basic_rendering_vertex.vert", "r", encoding="utf-8") as f:
+    VERTEX_SHADER_SRC: str = f.read()
+
+# Fragment shader source code for basic rendering
+with open(f"{BASE_PATH}gl_shaders/basic_rendering_fragment.frag", "r", encoding="utf-8") as f:
+    FRAGMENT_SHADER_SRC: str = f.read()
+
+# Vertex shader for rendering with textures
+with open(f"{BASE_PATH}gl_shaders/texture_rendering_vertex.vert", "r", encoding="utf-8") as f:
+    VERTEX_SHADER_TEXTURES_SRC: str = f.read()
+
+# Fragment shader for rendering with textures
+with open(f"{BASE_PATH}gl_shaders/texture_rendering_fragment.frag", "r", encoding="utf-8") as f:
+    FRAGMENT_SHADER_TEXTURES_SRC: str = f.read()
 
 
+# Log information about the current OpenGL context
+def log_opengl_context_info():
+    vendor = gl.glGetString(gl.GL_VENDOR)  # Get GPU vendor
+    renderer = gl.glGetString(gl.GL_RENDERER)  # Get GPU renderer
+    version = gl.glGetString(gl.GL_VERSION)  # Get OpenGL version
+    glsl_version = gl.glGetString(gl.GL_SHADING_LANGUAGE_VERSION)  # Get GLSL version
 
-VERTEX_GEOMETRY_SHADER_SRC: str = """
-    #version 330 core
-    layout (location = 0) in vec2 position;
-    layout (location = 1) in vec4 color;
-    out vec4 frag_color;
-    void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
-        frag_color = color;
-    }
-"""
+    print(f"OpenGL Vendor: {vendor}")
+    print(f"OpenGL Renderer: {renderer}")
+    print(f"OpenGL Version: {version}")
+    print(f"GLSL Version: {glsl_version}")
 
-FRAGMENT_GEOMETRY_SHADER_SRC: str = """
-    #version 330 core
-    in vec4 frag_color;
-    out vec4 out_color;
-    void main() {
-        out_color = frag_color;
-    }
-"""
+    error = gl.glGetError()  # Check for OpenGL errors
+    if error != gl.GL_NO_ERROR:
+        print(f"OpenGL Error: {error}")
 
 
-VERTEX_TEXTURES_SHADER_SRC = """
-    #version 330 core
-    layout (location = 0) in vec2 position;  // Position of the vertex
-    layout (location = 1) in vec2 texCoord;  // Texture coordinates
-    out vec2 fragTexCoord;  // Output to fragment shader
+# Log detailed attributes of the OpenGL context
+def log_opengl_context_attributes():
+    major_version = gl.glGetIntegerv(gl.GL_MAJOR_VERSION)  # OpenGL major version
+    minor_version = gl.glGetIntegerv(gl.GL_MINOR_VERSION)  # OpenGL minor version
+    context_flags = gl.glGetIntegerv(gl.GL_CONTEXT_FLAGS)  # Context flags
+    context_profile_mask = gl.glGetIntegerv(gl.GL_CONTEXT_PROFILE_MASK)  # Profile mask
 
-    void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
-        fragTexCoord = texCoord;  // Pass texture coordinates to fragment shader
-    }
-"""
+    print(f"OpenGL Major Version: {major_version}")
+    print(f"OpenGL Minor Version: {minor_version}")
+    print(f"OpenGL Context Flags: {context_flags}")
+    print(f"OpenGL Context Profile Mask: {context_profile_mask}")
 
-FRAGMENT_TEXTURES_SHADER_SRC = """
-    #version 330 core
-    in vec2 fragTexCoord;  // Input from vertex shader
-    out vec4 outColor;     // Output color
-    uniform sampler2D textureSampler;  // The texture sampler
-
-    void main() {
-        outColor = texture(textureSampler, fragTexCoord);  // Sample the texture
-    }
-"""
-
-
-# Vertex Shader code
-VERTEX_FONTS_SHADER_SRC = """
-    #version 330 core
-    layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
-    out vec2 TexCoords;
-
-    uniform mat4 projection;
-
-    void main()
-    {
-        gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
-        TexCoords = vertex.zw;
-    }
-"""
-
-# Fragment Shader code
-FRAGMENT_FONTS_SHADER_SRC = """
-    #version 330 core
-    in vec2 TexCoords;
-    out vec4 color;
-
-    uniform sampler2D text;
-    uniform vec4 textColor;
-
-    void main()
-    {
-        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-        color = textColor * sampled;
-    }
-"""
-
-
-class CharacterSlot:
-    """Store information about each character, including its texture and size."""
-
-    def __init__(self, texture: int, glyph: freetype.GlyphSlot) -> None:
-        """
-        Initialize a CharacterSlot with a texture and the associated glyph data.
-
-        :param texture: The OpenGL texture ID for the character.
-        :param glyph: The glyph object containing character data.
-        """
-        self.texture = texture
-        self.textureSize = (glyph.bitmap.width, glyph.bitmap.rows)
-
-        if isinstance(glyph, freetype.GlyphSlot):
-            # Glyph has bitmap_left and bitmap_top attributes
-            self.bearing = (glyph.bitmap_left, glyph.bitmap_top)
-            self.advance = glyph.advance.x
-        elif isinstance(glyph, freetype.BitmapGlyph):
-            # BitmapGlyph has left and top attributes
-            self.bearing = (glyph.left, glyph.top)
-            self.advance = None
-        else:
-            raise RuntimeError('Unknown glyph type')
+    error = gl.glGetError()  # Check for OpenGL errors
+    if error != gl.GL_NO_ERROR:
+        print(f"OpenGL Error: {error}")
 
 
 
 class FontRenderer:
-
-    def __init__(self, font_shader_program: int, font_path: str, font_size: int) -> None:
-        #
-        self.font_shader_program: int = font_shader_program
-        #
-        self.font_path: str = font_path
-        self.font_size: int = font_size
-        #
-        self.font_face: Optional[freetype.Face] = None
-        self.characters: dict[str, CharacterSlot] = {}
-        #
-        self.VBO = None
-        self.VAO = None
+    def __init__(self, font_path: str, window: "ND_Window_GLFW_OPENGL") -> None:
+        self.window: ND_Window_GLFW_OPENGL = window  # Reference to the window object
+        self.shader_program: int = 0  # OpenGL shader program
+        self.shader_projection: int = 0  # OpenGL shader projection matrix
+        self.projection = glm.ortho(0, self.window.width, self.window.height, 0, -100000, 100000)  # Default projection
+        self.characters: dict = {}  # Dictionary to store font character data
+        self.vao: int = 0  # Vertex Array Object ID
+        self.vbo: int = 0  # Vertex Buffer Object ID
+        self.init_shader()  # Initialize shaders
+        self.load_font(font_path)  # Load font
 
     #
-    def load_and_init(self) -> bool:
-        #
-        self.font_face = freetype.Face(self.font_path)
-        self.font_face.set_char_size(int(float(self.font_size) * 3.0 / 4.0) * self.font_size)
-        #
-        gl.glUseProgram(self.font_shader_program)
+    def _get_rendering_buffer(self, xpos: float, ypos: float, w: float, h: float, zfix: float = 0.0) -> np.ndarray:
+        """
+        Generate the vertex data for rendering a textured quad.
+
+        :param xpos: X position of the bottom-left corner of the quad.
+        :param ypos: Y position of the bottom-left corner of the quad.
+        :param w: Width of the quad.
+        :param h: Height of the quad.
+        :param zfix: Z position fix (usually 0.0).
+        :return: A NumPy array representing the vertices of the quad.
+        """
+        return np.asarray([
+            xpos,     ypos - h, 0, 0,  # Bottom-left vertex
+            xpos,     ypos,     0, 1,  # Top-left vertex
+            xpos + w, ypos,     1, 1,  # Top-right vertex
+            xpos,     ypos - h, 0, 0,  # Bottom-left vertex again
+            xpos + w, ypos,     1, 1,  # Top-right vertex
+            xpos + w, ypos - h, 1, 0   # Bottom-right vertex
+        ], np.float32)
+
+    def init_shader(self) -> None:
+        # Vertex shader source code for font rendering
+        with open(f"{BASE_PATH}gl_shaders/font_rendering_vertex.vert", "r", encoding="utf-8") as f:
+            vertex_shader_source: str = f.read()
+
+        # Fragment shader source code for font rendering
+        with open(f"{BASE_PATH}gl_shaders/font_rendering_fragment.frag", "r", encoding="utf-8") as f:
+            fragment_shader_source: str = f.read()
+
+        # Create the shader program
+        self.shader_program = compile_shaders(vertex_shader_source, fragment_shader_source)
+        gl.glUseProgram(self.shader_program)
 
         # Set up the projection matrix
-        shader_projection = gl.glGetUniformLocation(self.font_shader_program, "projection")
-        projection = glm.ortho(0, 640, 640, 0, -100000, 100000)
-        gl.glUniformMatrix4fv(shader_projection, 1, gl.GL_FALSE, glm.value_ptr(projection))
+        self.shader_projection = gl.glGetUniformLocation(self.shader_program, "projection")
+        gl.glUniformMatrix4fv(self.shader_projection, 1, gl.GL_FALSE, glm.value_ptr(self.projection))
 
         # Disable byte-alignment restriction for texture
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
 
-        # Load the first 128 characters of ASCII set
-        for i in range(0, 128):
-            self.font_face.load_char(chr(i))
-            glyph = self.font_face.glyph
+    def load_font(self, font_path: str) -> None:
+        # Use program
+        gl.glUseProgram(self.shader_program)
 
-            # Generate texture for the glyph
-            texture = gl.glGenTextures(1)
-            gl.glBindTexture(gl.GL_TEXTURE_2D, texture)
-            gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RED, glyph.bitmap.width, glyph.bitmap.rows, 0,
-                            gl.GL_RED, gl.GL_UNSIGNED_BYTE, glyph.bitmap.buffer)
+        # Ensure OpenGL context is active
+        self.window._ensure_context()
 
-            # Texture options
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-
-            # Store the character in the dictionary
-            self.characters[chr(i)] = CharacterSlot(texture, glyph)
-
-        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-
-        # Configure VAO and VBO for texture quads
-        self.VAO = gl.glGenVertexArrays(1)
-        gl.glBindVertexArray(self.VAO)
-
-        self.VBO = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
-        gl.glEnableVertexAttribArray(0)
-        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-        #
-        return True
-
-    #
-    def render_text(self, text: str, x: float, y: float, scale: float, color: ND_Color) -> None:
-        """
-        Render text on the window using OpenGL.
-
-        :param window: The GLFW window where the text will be rendered.
-        :param text: The text to be rendered.
-        :param x: X position of the text's starting point.
-        :param y: Y position of the text's starting point.
-        :param scale: The scaling factor for the text size.
-        :param color: The color of the text (R, G, B).
-        """
-
-        # Set text color
-        gl.glUniform4f(gl.glGetUniformLocation(self.font_shader_program, "textColor"),
-                       color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-
-        gl.glActiveTexture(gl.GL_TEXTURE0)
+        # Disable byte-alignment restriction for texture
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
 
         # Enable blending for transparency
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
-        # Bind the VAO
-        gl.glBindVertexArray(self.VAO)
+        # Load font using FreeType
+        face = freetype.Face(font_path)  # Load font face
+        face.set_char_size(48 * 64)  # Set character size
 
-        # Render each character in the text
-        for c in text:
-            ch = self.characters[c]
-            w, h = ch.textureSize
-            w = w * scale
-            h = h * scale
-            vertices = get_rendering_buffer(x, y, w, h)
+        # Load ASCII characters (0-127)
+        for c in range(128):
+            # Load character glyph
+            face.load_char(chr(c))
+            glyph = face.glyph
+
+            # Create texture for the glyph bitmap
+            texture_id = gl.glGenTextures(1)
+            gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
+            gl.glTexImage2D(
+                gl.GL_TEXTURE_2D, 0, gl.GL_RED,
+                glyph.bitmap.width, glyph.bitmap.rows,
+                0, gl.GL_RED, gl.GL_UNSIGNED_BYTE, glyph.bitmap.buffer
+            )
+
+            # Set texture parameters
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+
+            # Store character data
+            self.characters[chr(c)] = {
+                'texture_id': texture_id,
+                'size': (glyph.bitmap.width, glyph.bitmap.rows),
+                'bearing': (glyph.bitmap_left, glyph.bitmap_top),
+                'advance': glyph.advance.x
+            }
+
+        # Unbind texture
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
+        # Create VAO and VBO for rendering
+        self.vao = gl.glGenVertexArrays(1)
+        self.vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(self.vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
+        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+    def render_text(self, text: str, x: int, y: int, scale: float, color: ND_Color) -> None:
+        # Use program
+        gl.glUseProgram(self.shader_program)
+
+        #
+        scale /= 50
+
+        # Ensure OpenGL context is active
+        self.window._ensure_context()
+
+        # Set text color
+        gl.glUniform3f(
+            gl.glGetUniformLocation(self.shader_program, "textColor"),
+            color.r / 255, color.g / 255, color.b / 255
+        )
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+
+        # Disable depth to render the text correctly
+        gl.glDisable(gl.GL_DEPTH_TEST)
+
+        # Enable blending for transparency
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+        # Iterate over characters in the text
+        for char in text:
+            # Only ASCII characters are supported
+            if char not in self.characters:
+                continue
+
+            # Get the character font glyph
+            ch = self.characters[char]
+
+            # Calculate position and size for the character
+            xpos = x + ch['bearing'][0] * scale
+            ypos = y + 40 * scale + (ch['size'][1] - ch['bearing'][1]) * scale
+            w = ch['size'][0] * scale
+            h = ch['size'][1] * scale
+
+            # Convert screen coordinates to NDC
+            xpos_ndc, ypos_ndc = self.window.screen_to_ndc(xpos, ypos)
+            w_ndc, h_ndc = self.window.screen_to_ndc(w, h)
+
+            # Bind the VAO
+            gl.glBindVertexArray(self.vao)
+
+            # Define vertex data for the character
+            vertices = self._get_rendering_buffer(xpos, ypos, w, h)
 
             # Render the glyph texture over a quad
-            gl.glBindTexture(gl.GL_TEXTURE_2D, ch.texture)
+            gl.glBindTexture(gl.GL_TEXTURE_2D, ch['texture_id'])
 
             # Update the VBO with new vertex data
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
+
+            gl.glEnableVertexAttribArray(0)
             gl.glBufferSubData(gl.GL_ARRAY_BUFFER, 0, vertices.nbytes, vertices)
 
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-            # Draw the quad
+
+            # Render the character as triangles
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
 
             # Advance the cursor to the next position (in pixels)
-            x += (ch.advance >> 6) * scale
+            x += (ch['advance'] >> 6) * scale  # Advance is in 1/64th pixels
 
-        # Unbind the VAO and texture
+        # Unbind VAO and texture
         gl.glBindVertexArray(0)
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
 
 #
 class ND_Display_GLFW_OPENGL(ND_Display):
-
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
         #
@@ -277,45 +313,27 @@ class ND_Display_GLFW_OPENGL(ND_Display):
         self.shader_fonts_program: int = -1
         #
 
-
     #
     def get_time_msec(self) -> float:
         return glfw.get_time() * 1000.0
-
 
     #
     def wait_time_msec(self, delay_in_msec: float) -> None:
         glfw.wait_events_timeout(delay_in_msec / 1000.0)
 
-
     #
     def init_display(self) -> None:
 
-        # Init glfw
+        # Initialize GLFW
         if not glfw.init():
-            raise Exception("GLFW can't be initialized")
+            raise RuntimeError("GLFW could not be initialized")
 
-        # Compile shaders and create a program
-        self.shader_geometry_program = create_and_validate_gl_shader_program(
-                                            VERTEX_GEOMETRY_SHADER_SRC, FRAGMENT_GEOMETRY_SHADER_SRC)
-
-        # Compile shaders and create a program for textures
-        self.shader_textures_program = create_and_validate_gl_shader_program(
-                                            VERTEX_TEXTURES_SHADER_SRC, FRAGMENT_TEXTURES_SHADER_SRC)
-
-        # Compile shaders and create a program for textures
-        self.shader_fonts_program = create_and_validate_gl_shader_program(
-                                            VERTEX_FONTS_SHADER_SRC, FRAGMENT_FONTS_SHADER_SRC)
-
-        # Init system fonts
+        # Load system fonts
         self.load_system_fonts()
 
         #
         self.initialized = True
-
-        #
-        # print(f"System fonts availables: {self.font_names.keys()}")
-
+        print("Display initialized successfully.")
 
     #
     def destroy_display(self) -> None:
@@ -335,9 +353,8 @@ class ND_Display_GLFW_OPENGL(ND_Display):
         #
         glfw.terminate()
 
-
     #
-    def get_font(self, font: str, font_size: int) -> Optional[FontRenderer]:
+    def get_font(self, font: str, font_size: int, window: "ND_Window_GLFW_OPENGL") -> Optional[FontRenderer]:  # type: ignore
         #
         if not self.initialized:
             return None
@@ -358,17 +375,24 @@ class ND_Display_GLFW_OPENGL(ND_Display):
                 if font not in self.fonts_renderers:
                     self.fonts_renderers[font] = {}
                 #
-                font_renderer: Optional[FontRenderer] = FontRenderer(self.shader_fonts_program, font_path, font_size)
+                font_renderer: Optional[FontRenderer] = FontRenderer(font_path, window)
                 self.fonts_renderers[font][font_size] = font_renderer
                 #
-                if font_renderer is not None:
-                    if not font_renderer.load_and_init():
-                        self.fonts_renderers[font][font_size] = None
+                # if font_renderer is not None:
+                #     if not font_renderer.load_and_init():
+                #         self.fonts_renderers[font][font_size] = None
             else:
                 return None
         #
         return self.fonts_renderers[font][font_size]
 
+
+    #
+    def get_focused_window_id(self) -> int:
+        #
+        # TODO
+        #
+        return -1
 
     #
     def create_window(self, window_params: dict[str, Any], error_if_win_id_not_available: bool = False) -> int:
@@ -400,7 +424,6 @@ class ND_Display_GLFW_OPENGL(ND_Display):
 
         #
         return win_id
-
 
     #
     def destroy_window(self, win_id: int) -> None:
@@ -469,24 +492,96 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         # sdl_or_glfw_window_id is int and has been initialized to -1 in parent class
         self.sdl_or_glfw_window_id = id(self.glw_window)
 
+
+        # Make the window's context current
+        glfw.make_context_current(self.glw_window)
+
         #
         self.next_texture_id: int = 0
-        self.sdl_textures: dict[int, object] = {}
         self.gl_textures: dict[int, int] = {}
-        self.sdl_textures_surfaces: dict[int, object] = {}
-        self.mutex_sdl_textures: Lock = Lock()
+        self.mutex_gl_textures: Lock = Lock()
 
+        # Compile textures shaders
+        vertexshader_textures = shaders.compileShader(VERTEX_SHADER_TEXTURES_SRC, gl.GL_VERTEX_SHADER)
+        fragmentshader_textures = shaders.compileShader(FRAGMENT_SHADER_TEXTURES_SRC, gl.GL_FRAGMENT_SHADER)
+
+        # Create the textures shader program
+        self.shader_program_textures = shaders.compileProgram(vertexshader_textures, fragmentshader_textures)
+
+        # Compile base shaders
+        vertexshader = shaders.compileShader(VERTEX_SHADER_SRC, gl.GL_VERTEX_SHADER)
+        fragmentshader = shaders.compileShader(FRAGMENT_SHADER_SRC, gl.GL_FRAGMENT_SHADER)
+
+        # Create the base shader program
+        self.shader_program = shaders.compileProgram(vertexshader, fragmentshader)
+        gl.glUseProgram(self.shader_program)
+
+        # Set up the projection matrix
+        shader_projection = gl.glGetUniformLocation(self.shader_program, "projection")
+        projection = glm.ortho(0, 640, 640, 0, -100000, 100000)
+        gl.glUniformMatrix4fv(shader_projection, 1, gl.GL_FALSE, glm.value_ptr(projection))
+
+        # Disable byte-alignment restriction for texture
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
+
+        #
+        log_opengl_context_info()
+        log_opengl_context_attributes()
+
+
+    #
+    def _ensure_shaderProgram_base(self) -> None:
+        #
+        gl.glUseProgram(self.shader_program)
+
+    #
+    def _ensure_shaderProgram_textures(self) -> None:
+        #
+        gl.glUseProgram(self.shader_program_textures)
+
+    #
+    def _ensure_context(self) -> None:
+        """Ensure the OpenGL context is current."""
+        #
+        glfw.make_context_current(self.glw_window)
+
+        # Now, get the current context
+        current_context = glfw.get_current_context()
+
+        #
+        if not current_context:
+            print("No OpenGL context available.")
+            raise RuntimeError("No valid OpenGL context.")
+        #
+        if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
+            raise RuntimeError("No current OpenGL program bound.")
+        # print("\nOpenGL context is current.\n")
+        #
+        # log_opengl_context_info()
+        # log_opengl_context_attributes()
 
     #
     def destroy_window(self) -> None:
         #
-        for texture_id in self.sdl_textures:
+        for texture_id in self.gl_textures:
             #
             self.destroy_prepared_texture(texture_id)
 
-        # TODO
-        pass
+        #
+        glfw.destroy_window(self.glw_window)
+        #
 
+    #
+    def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
+        #
+        if (state not in self.display_states) or (state in self.display_states and erase_if_state_already_exists):
+            self.display_states[state] = state_display_function
+
+    #
+    def remove_display_state(self, state: str) -> None:
+        #
+        if state in self.display_states:
+            del self.display_states[state]
 
     #
     def set_title(self, new_title: str) -> None:
@@ -494,9 +589,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         if not self.display.initialized:
             return
 
-        # TODO
-        return
-
+        glfw.set_window_title(self.glw_window, new_title)
 
     #
     def set_position(self, new_x: int, new_y: int) -> None:
@@ -504,19 +597,15 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         if not self.display.initialized:
             return
 
-        # TODO
-        return
-
+        glfw.set_window_pos(self.glw_window, new_x, new_y)
 
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
         if not self.display.initialized:
             return
-
-        # TODO
-        return
-
+        #
+        glfw.set_window_size(self.glw_window, new_width, new_height)
 
     #
     def set_fullscreen(self, mode: int) -> None:
@@ -536,65 +625,162 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         if not self.display.initialized:
             return
 
-        # TODO
-        return
+        #
+        monitor_: glfw._GLFWvidmonitor
+        mode_: glfw._GLFWvidmode
 
+        #
+        if mode == 0:
+            #
+            glfw.set_window_monitor(self.glw_window, None, None, None, self.width, self.height, glfw.DONT_CARE)
+
+        #
+        elif mode == 1:
+            #
+            monitor_ = glfw.get_primary_monitor()
+            mode_ = glfw.get_video_mode(monitor_)
+            #
+            glfw.set_window_monitor(self.glw_window, None, 0, 0, mode_.size.width, mode_.size.height, glfw.DONT_CARE)
+            glfw.set_window_size(self.glw_window, mode_.size.width, mode_.size.height)
+            glfw.set_window_pos(self.glw_window, 0, 0)
+
+        #
+        elif mode == 2:
+            monitor_ = glfw.get_primary_monitor()
+            mode_ = glfw.get_video_mode(monitor_)
+            glfw.set_window_monitor(self.glw_window, monitor_, 0, 0, mode_.size.width, mode_.size.height, mode_.refresh_rate)
 
     #
-    def blit_texture(self, texture, dst_rect: ND_Rect) -> None:
+    def screen_to_ndc(self, x_screen: int, y_screen: int, viewport_origin: tuple[int, int]=(0, 0), invert_y: bool=True) -> tuple[float, float]:
+        """
+        Converts screen space coordinates (x_screen, y_screen) to OpenGL NDC coordinates.
+
+        Parameters:
+            x_screen (float): X coordinate in screen space.
+            y_screen (float): Y coordinate in screen space.
+            viewport_origin (tuple): The bottom-left corner of the viewport (default is (0, 0)).
+            invert_y (bool): If True, assumes screen space has a top-left origin and inverts the Y axis.
+
+            self.width (int): Width of the viewport in pixels.
+            self.height (int): Height of the viewport in pixels.
+
+        Returns:
+            tuple: (x_ndc, y_ndc) coordinates in NDC space.
+        """
+        x_vp: int = viewport_origin[0]
+        y_vp: int = viewport_origin[1]
+
+        # Adjust for the viewport origin
+        x_screen_adj: int = x_screen - x_vp
+        y_screen_adj: int = y_screen - y_vp
+
+        # Handle inverted Y-axis
+        if invert_y:
+            y_screen_adj = self.height - y_screen_adj
+
+        # Convert to NDC
+        x_ndc: float = 2 * (x_screen_adj / self.width) - 1
+        y_ndc: float = 2 * (y_screen_adj / self.height) - 1
+
+        return x_ndc, y_ndc
+
+    #
+    def ndc_to_screen(self, x_ndc: float, y_ndc: float, viewport_origin: tuple[int, int]=(0, 0), invert_y: bool=True) -> tuple[int, int]:
+        """
+        Converts OpenGL NDC coordinates (x_ndc, y_ndc) to screen space coordinates.
+
+        Parameters:
+            x_ndc (float): X coordinate in NDC space.
+            y_ndc (float): Y coordinate in NDC space.
+            viewport_origin (tuple): The bottom-left corner of the viewport (default is (0, 0)).
+            invert_y (bool): If True, assumes screen space has a top-left origin and inverts the Y axis.
+
+            self.width (int): Width of the viewport in pixels.
+            self.height (int): Height of the viewport in pixels.
+
+        Returns:
+            tuple: (x_screen, y_screen) coordinates in screen space.
+        """
+        x_vp: int = viewport_origin[0]
+        y_vp: int = viewport_origin[1]
+
+        # Convert from NDC to screen coordinates
+        x_screen: int = int( ((x_ndc + 1) / 2) * self.width + x_vp )
+        y_screen: int = int( ((y_ndc + 1) / 2) * self.height + y_vp )
+
+        # Handle inverted Y-axis
+        if invert_y:
+            y_screen = self.height - (y_screen - y_vp)
+
         #
-        if not self.display.initialized:
+        return x_screen, y_screen
+
+    #
+    def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
+        """
+        Renders a texture using OpenGL shaders.
+        """
+        if texture_id not in self.gl_textures:
+            print("Texture ID not found.")
             return
 
-        # Bind the OpenGL texture
-        gl.glBindTexture(gl.GL_TEXTURE_2D, texture)
+        #
+        self._ensure_shaderProgram_textures()
+        self._ensure_context()
 
-        # Enable 2D texturing
-        gl.glEnable(gl.GL_TEXTURE_2D)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.gl_textures[texture_id])
 
-        # Set up the quad vertices and texture coordinates
-        gl.glBegin(gl.GL_QUADS)
+        vertices = np.array([
+            # Position       # Texture Coords
+            dst_rect.x, dst_rect.y, 0.0, 1.0,  # Top-left corner
+            dst_rect.x + dst_rect.w, dst_rect.y, 1.0, 1.0,  # Top-right corner
+            dst_rect.x + dst_rect.w, dst_rect.y + dst_rect.h, 1.0, 0.0,  # Bottom-right corner
+            dst_rect.x, dst_rect.y + dst_rect.h, 0.0, 0.0   # Bottom-left corner
+        ], dtype=np.float32)
 
-        # Bottom-left corner
-        gl.glTexCoord2f(0.0, 0.0)
-        gl.glVertex2f(dst_rect.x, dst_rect.y + dst_rect.h)
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
 
-        # Bottom-right corner
-        gl.glTexCoord2f(1.0, 0.0)
-        gl.glVertex2f(dst_rect.x + dst_rect.w, dst_rect.y + dst_rect.h)
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
 
-        # Top-right corner
-        gl.glTexCoord2f(1.0, 1.0)
-        gl.glVertex2f(dst_rect.x + dst_rect.w, dst_rect.y)
+        # Position attribute
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 4 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
 
-        # Top-left corner
-        gl.glTexCoord2f(0.0, 1.0)
-        gl.glVertex2f(dst_rect.x, dst_rect.y)
+        # Texture coordinate attribute
+        gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
+        gl.glEnableVertexAttribArray(1)
 
-        gl.glEnd()
+        gl.glUseProgram(self.shader_program_textures)
+        gl.glDrawArrays(gl.GL_TRIANGLE_FAN, 0, 4)
 
-        # Disable texturing and unbind the texture
-        gl.glDisable(gl.GL_TEXTURE_2D)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
     #
-    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
+    def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
+
         #
         if not self.display.initialized:
-            return
+            return -1
+
+        #
+        self._ensure_shaderProgram_textures()
 
         #
         if font_name is None:
             font_name = self.display.default_font
-        #
-        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size))
-        #
-        if font_renderer is None:
-            return
-        #
-        font_renderer.render_text(txt, float(x), float(y), 1.0, font_color)
 
+        # TODO
+
+        #
+        return -1
 
     #
     def prepare_image_to_render(self, img_path: str) -> int:
@@ -603,637 +789,560 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         if not self.display.initialized:
             return -1
 
-        # Chargement de l'image
-        # image_surface = sdlimage.IMG_Load(img_path.encode('utf-8'))
-        image_surface = None
+        #
+        self._ensure_shaderProgram_textures()
 
         # TODO
-        pass
-
-        # Si l'image n'a pas bien été chargée, erreur est abandon
-        if not image_surface:
-            print(f"Failed to load image: {img_path}")
-            return -1
-
-        # Sinon, on convertit l'image en une texture
-
-        # Convert the SDL surface into an OpenGL texture
-        texture = self._create_opengl_texture_from_surface(image_surface)
 
         #
-        texture_id: int = -1
-        with self.mutex_sdl_textures:
-            #
-            texture_id = self.next_texture_id
-            self.next_texture_id += 1
-            #
-            self.sdl_textures[texture_id] = texture
-            self.sdl_textures_surfaces[texture_id] = image_surface
-
-        #
-        return texture_id
-
+        return -1
 
     #
-    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformations = ND_Transformations()) -> None:
+    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformations = ND_Transformations()) -> None:
 
         #
         if not self.display.initialized:
             return
 
         #
-        if texture_id not in self.sdl_textures:
+        if texture_id not in self.gl_textures:
             return
 
         #
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.sdl_textures[texture_id])
+        self._ensure_shaderProgram_textures()
 
-        gl.glEnable(gl.GL_TEXTURE_2D)
-        gl.glBegin(gl.GL_QUADS)
-        # Define the texture coordinates and vertices to map the texture onto a rectangle
-        gl.glTexCoord2f(0.0, 1.0)
-        gl.glVertex2f(x, y)
-
-        gl.glTexCoord2f(1.0, 1.0)
-        gl.glVertex2f(x + width, y)
-
-        gl.glTexCoord2f(1.0, 0.0)
-        gl.glVertex2f(x + width, y + height)
-
-        gl.glTexCoord2f(0.0, 0.0)
-        gl.glVertex2f(x, y + height)
-        gl.glEnd()
-
-        gl.glDisable(gl.GL_TEXTURE_2D)
-
+        #
+        self.blit_texture(texture_id, ND_Rect(x, y, width, height))
 
     #
     def get_prepared_texture_size(self, texture_id: int) -> ND_Point:
         #
-        if texture_id not in self.sdl_textures:
-            #
+        self._ensure_shaderProgram_textures()
+        #
+        if texture_id not in self.gl_textures:
             return ND_Point(0, 0)
         #
-        else:
-            #
-            w_c, h_c = ctypes.c_int(0), ctypes.c_int(0)
-            # TODO
-            # sdl2.SDL_QueryTexture(self.sdl_textures[texture_id], None, None, ctypes.byref(w), ctypes.byref(h))
-            #
-            w: int = w_c.value
-            h: int = h_c.value
-            #
-            return ND_Point(w, h)
 
+        w: int = -1
+        h: int = -1
+        # TODO
+
+        #
+        return ND_Point(w,h)
 
     #
     def destroy_prepared_texture(self, texture_id: int) -> None:
-        with self.mutex_sdl_textures:
-            if texture_id in self.sdl_textures:
-                # TODO
-                pass
-                del self.sdl_textures[texture_id]
+        #
+        self._ensure_shaderProgram_textures()
+        #
+        with self.mutex_gl_textures:
+            if texture_id in self.gl_textures:
+                gl.glDeleteTextures(1, [self.gl_textures[texture_id]])
+                del self.gl_textures[texture_id]
+
+    #
+    def _render_lines(self, points: list[ ND_Point ], color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+        #
+        N: int = len(points)
+        #
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+        #
+        vertices_pts: list[tuple[float, float]]=[(0, 0)] * N
+        #
+        x: float
+        y: float
+        for i in range(N):
+            #
+            x, y = self.screen_to_ndc(points[i].x, points[i].y)
+            #
+            vertices_pts[i] = (x, y)
+        #
+        vertices = np.array(vertices_pts, dtype=np.float32)
+
+        #
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        #
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glEnableVertexAttribArray(0)
+
+        #
+        gl.glDrawArrays(gl.GL_LINE_STRIP, 0, N)
+
+        #
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
+    #
+    def _render_uniform_colored_triangles(self, triangles: list[ tuple[ ND_Point, ND_Point, ND_Point ] ], color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+        #
+        N: int = len(triangles)
+
+        #
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
+
+        #
+        gl.glUseProgram(self.shader_program)
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+
+        #
+        vertices_pts: list[tuple[float, float]] = [(0, 0)] * (3 * N)
+        #
+        x: float
+        y: float
+        for i in range(N):
+            #
+            x, y = self.screen_to_ndc(triangles[i][0].x, triangles[i][0].y)
+            #
+            vertices_pts[3*i] = (x, y)
+            #
+            x, y = self.screen_to_ndc(triangles[i][1].x, triangles[i][1].y)
+            #
+            vertices_pts[3*i + 1] = (x, y)
+            #
+            x, y = self.screen_to_ndc(triangles[i][2].x, triangles[i][2].y)
+            #
+            vertices_pts[3*i + 2] = (x, y)
+
+        # Define vertices for two triangles forming the rectangle
+        vertices = np.array(vertices_pts, dtype=np.float32)
+
+        #
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        #
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glEnableVertexAttribArray(0)
+
+        #
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3 * N)
+
+        #
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
 
     #
-    def _create_opengl_texture_from_surface(self, surface) -> int:
-
+    def _render_point(self, point: ND_Point, color: ND_Color) -> None:
         #
         if not self.display.initialized:
-            return -1
+            print("Display not initialized.")
+            return
 
         #
-        gl_texture = gl.glGenTextures(1)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, gl_texture)
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
 
-        width = surface.contents.w
-        height = surface.contents.h
+        gl.glUseProgram(self.shader_program)
+        gl.glPointSize(1)
 
-        # Convert SDL surface into a format OpenGL can use (RGBA)
-        surface_pixels = ctypes.cast(surface.contents.pixels, ctypes.POINTER(ctypes.c_ubyte))
+        # Set color uniform
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
 
-        # Upload the pixel data from the SDL_Surface to the OpenGL texture
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, width, height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, surface_pixels)
+        vertices = np.array([*self.screen_to_ndc(point.x, point.y)], dtype=np.float32)
 
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
+
+        gl.glDrawArrays(gl.GL_POINTS, 0, 1)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
+    #
+    def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
+        #
+        if not self.display.initialized:
+            return
 
         #
-        texture_id: int = -1
-        with self.mutex_sdl_textures:
-            #
-            texture_id = self.next_texture_id
-            self.next_texture_id += 1
-            #
-            self.sdl_textures[texture_id] = gl_texture
-            self.sdl_textures_surfaces[texture_id] = surface
+        self._ensure_shaderProgram_textures()
 
         #
-        return texture_id
+        if font_name is None:
+            font_name = self.display.default_font
 
+        #
+        font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size, self))  # type: ignore
+
+        #
+        if font_renderer is None:
+            return
+
+        #
+        self._ensure_context()
+
+        # No texture cache, calcul it each time
+
+        font_renderer.render_text(txt, x, y, font_size, font_color)
 
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
-
+        """
+        Draw a single pixel on the screen at (x, y).
+        """
         #
-        if not self.display.initialized:
-            return
-
-        #
-        gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-        gl.glBegin(gl.GL_POINTS)
-        gl.glVertex2f(x, y)
-        gl.glEnd()
-
+        self._render_point(point=ND_Point(x, y), color=color)
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
-
+        """
+        Draw a horizontal line between (x1, y) and (x2, y).
+        """
         #
-        if not self.display.initialized:
-            return
-
-        #
-        gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-        gl.glBegin(gl.GL_LINES)
-        gl.glVertex2f(x1, y)
-        gl.glVertex2f(x2, y)
-        gl.glEnd()
-
+        self._render_lines(points=[ND_Point(x1, y), ND_Point(x2, y)], color=color)
 
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
-
+        """
+        Draw a vertical line between (x, y1) and (x, y2).
+        """
         #
-        if not self.display.initialized:
-            return
-
-        #
-        gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-        gl.glBegin(gl.GL_LINES)
-        gl.glVertex2f(x, y1)
-        gl.glVertex2f(x, y2)
-        gl.glEnd()
-
+        self._render_lines(points=[ND_Point(x, y1), ND_Point(x, y2)], color=color)
 
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
-
+        """
+        Draw a straight line between (x1, y1) and (x2, y2).
+        """
         #
-        if not self.display.initialized:
-            return
-
-        #
-        gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-        gl.glBegin(gl.GL_LINES)
-        gl.glVertex2f(x1, y1)
-        gl.glVertex2f(x2, y2)
-        gl.glEnd()
-
+        self._render_lines(points=[ND_Point(x1, y1), ND_Point(x2, y2)], color=color)
 
     #
-    def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
+    def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: float, color: ND_Color) -> None:
+        #
+        alpha: float = calc_rad_agl_about_h_axis( x1, y1, x2, y2 )
 
         #
-        if not self.display.initialized:
-            return
-
-        # Set the color for the line
-        gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-
-        # Calculate the direction vector (dx, dy) of the line
-        dx = x2 - x1
-        dy = y2 - y1
-
-        # Normalize the direction vector to find the perpendicular
-        length = math.sqrt(dx * dx + dy * dy)
-        if length == 0:
-            return  # Avoid division by zero in case of zero-length line
-
-        # Perpendicular vector (normal to the line)
-        nx = -dy / length
-        ny = dx / length
-
-        # Half thickness offset
-        half_thickness = line_thickness / 2.0
-
-        # Calculate the four vertices of the thick line (a quad)
-        x1_offset1 = x1 + nx * half_thickness
-        y1_offset1 = y1 + ny * half_thickness
-        x1_offset2 = x1 - nx * half_thickness
-        y1_offset2 = y1 - ny * half_thickness
-
-        x2_offset1 = x2 + nx * half_thickness
-        y2_offset1 = y2 + ny * half_thickness
-        x2_offset2 = x2 - nx * half_thickness
-        y2_offset2 = y2 - ny * half_thickness
-
-        # Draw the thick line as a quad using two triangles
-        gl.glBegin(gl.GL_TRIANGLES)
-
-        # First triangle
-        gl.glVertex2f(x1_offset1, y1_offset1)
-        gl.glVertex2f(x2_offset1, y2_offset1)
-        gl.glVertex2f(x1_offset2, y1_offset2)
-
-        # Second triangle
-        gl.glVertex2f(x1_offset2, y1_offset2)
-        gl.glVertex2f(x2_offset1, y2_offset1)
-        gl.glVertex2f(x2_offset2, y2_offset2)
+        agl_above: float = ( alpha - (pi / 2) ) % (2 * pi)
+        agl_below: float = ( alpha + (pi / 2) ) % (2 * pi)
 
         #
-        gl.glEnd()
+        ax: int
+        ay: int
+        ax, ay = calc_point_with_angle_and_distance_from_another_point(x1, y1, agl_above, line_thickness)
 
+        #
+        bx: int
+        by: int
+        bx, by = calc_point_with_angle_and_distance_from_another_point(x1, y1, agl_below, line_thickness)
+
+        #
+        cx: int
+        cy: int
+        cx, cy = calc_point_with_angle_and_distance_from_another_point(x2, y2, agl_above, line_thickness)
+
+        #
+        dx: int
+        dy: int
+        dx, dy = calc_point_with_angle_and_distance_from_another_point(x2, y2, agl_below, line_thickness)
+
+        #
+        self._render_uniform_colored_triangles(
+            triangles=[
+                ( ND_Point(ax, ay), ND_Point(bx, by), ND_Point(cx, cy) ),
+                ( ND_Point(ax, ay), ND_Point(dx, dy), ND_Point(cx, cy) )
+            ],
+            color=color
+        )
 
     #
-    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
-
+    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, corner_nb_points: int = 6) -> None:
         #
-        if not self.display.initialized:
-            return
-
+        self.draw_filled_rect(x=x + radius, y=y, width=width - 2 * radius, height=height, fill_color=fill_color)
+        self.draw_filled_rect(x=x, y=y + radius, width=radius, height=height - 2 * radius, fill_color=fill_color)
+        self.draw_filled_rect(x=x + width - radius, y=y + radius, width=radius, height=height - 2 * radius, fill_color=fill_color)
         #
-        gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
-        # You would implement the corner drawing using triangle fans here.
-        # For now, just drawing the filled rectangle part
-        self.draw_filled_rect(x + radius, y, width - 2 * radius, height, fill_color)
-        self.draw_filled_rect(x, y + radius, width, height - 2 * radius, fill_color)
-        # To draw borders, you can draw line loops or thin rectangles at the borders
-
+        self.draw_filled_pie(x=x + radius, y=y + radius, radius=radius, angle_start=180, angle_end=270, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        self.draw_filled_pie(x=x + width - radius, y=y + radius, radius=radius, angle_start=270, angle_end=360, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        self.draw_filled_pie(x=x + width - radius, y=y + height - radius, radius=radius, angle_start=0, angle_end=90, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        self.draw_filled_pie(x=x + radius, y=y + height - radius, radius=radius, angle_start=90, angle_end=180, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        #
+        self.draw_hline(x1=x + radius, x2=x + width - radius, y=y, color=border_color)
+        self.draw_hline(x1=x + radius, x2=x + width - radius, y=y+height, color=border_color)
+        self.draw_vline(x=x, y1=y + radius, y2=y + height - radius, color=border_color)
+        self.draw_vline(x=x + width, y1=y + radius, y2=y + height - radius, color=border_color)
+        #
+        self.draw_arc(x=x + radius, y=y + radius, radius=radius, angle_start=180, angle_end=270, color=border_color, arc_nb_points=corner_nb_points)
+        self.draw_arc(x=x + width - radius, y=y + radius, radius=radius, angle_start=270, angle_end=360, color=border_color, arc_nb_points=corner_nb_points)
+        self.draw_arc(x=x + width - radius, y=y + height - radius, radius=radius, angle_start=0, angle_end=90, color=border_color, arc_nb_points=corner_nb_points)
+        self.draw_arc(x=x + radius, y=y + height - radius, radius=radius, angle_start=90, angle_end=180, color=border_color, arc_nb_points=corner_nb_points)
 
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        #
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-        gl.glBegin(gl.GL_LINE_LOOP)
-        gl.glVertex2f(x, y)
-        gl.glVertex2f(x + width, y)
-        gl.glVertex2f(x + width, y + height)
-        gl.glVertex2f(x, y + height)
-        gl.glEnd()
-
+        self._render_lines(
+            points=[
+                ND_Point(x, y),
+                ND_Point(x + width, y),
+                ND_Point(x + width, y + height),
+                ND_Point(x, y + height),
+                ND_Point(x, y)
+            ],
+            color=outline_color
+        )
 
     #
-    def draw_filled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
-
+    def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        #
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-        gl.glBegin(gl.GL_QUADS)
-        gl.glVertex2f(x, y)
-        gl.glVertex2f(x + width, y)
-        gl.glVertex2f(x + width, y + height)
-        gl.glVertex2f(x, y + height)
-        gl.glEnd()
-
+        self._render_uniform_colored_triangles(triangles=[
+            ( ND_Point(x, y), ND_Point(x + width, y), ND_Point(x + width, y + height) ),
+            ( ND_Point(x, y), ND_Point(x + width, y + height), ND_Point(x, y + height) )
+            ],
+            color=fill_color
+        )
 
     #
-    def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color, steps: int = 1) -> None:
-
+    def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color, circle_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
+        da: float = (2 * pi) / circle_nb_points
         #
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-        gl.glBegin(gl.GL_LINE_LOOP)
-        for i in range(0, 360, steps):
-            theta = 2.0 * math.pi * i / 360  # Get the current angle
-            dx = radius * math.cos(theta)  # Calculate the x component
-            dy = radius * math.sin(theta)  # Calculate the y component
-            gl.glVertex2f(x + dx, y + dy)
-        gl.glEnd()
-
+        self._render_lines(
+            points=[
+                ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, i * da, radius))
+                for i in range(circle_nb_points + 1)
+            ],
+            color=outline_color
+        )
 
     #
-    def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color, steps: int = 1) -> None:
-
+    def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color, circle_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
+        da: float = (2 * pi) / circle_nb_points
         #
-        gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
-        gl.glBegin(gl.GL_TRIANGLE_FAN)
-        gl.glVertex2f(x, y)  # Center of the circle
-        for i in range(0, 360, steps):
-            theta = 2.0 * math.pi * i / 360  # Get the current angle
-            dx = radius * math.cos(theta)  # Calculate the x component
-            dy = radius * math.sin(theta)  # Calculate the y component
-            gl.glVertex2f(x + dx, y + dy)
-        gl.glEnd()
-
+        center: ND_Point = ND_Point(x, y)
+        #
+        points: list[ND_Point] = [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, i * da, radius))
+            for i in range(circle_nb_points)
+        ]
+        #
+        self._render_uniform_colored_triangles(
+            triangles=[
+                ( center, points[i], points[(i+1)%circle_nb_points] )
+                for i in range(circle_nb_points)
+            ],
+            color=fill_color
+        )
 
     #
-    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        # Set the color using SDL_Color (normalize to 0-1 for OpenGL)
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-
-        # Begin drawing the unfilled ellipse with GL_LINE_LOOP
-        gl.glBegin(gl.GL_LINE_LOOP)
-
-        # Generate points around the ellipse
-        num_segments = 100  # Number of segments to approximate the ellipse
-        for i in range(num_segments):
-            theta = 2.0 * math.pi * i / num_segments  # Current angle
-            x_pos = x + rx * math.cos(theta)  # X position
-            y_pos = y + ry * math.sin(theta)  # Y position
-            gl.glVertex2f(x_pos, y_pos)
-
-        gl.glEnd()
-
+    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color, ellipse_nb_points: int = 72) -> None:
+        """
+        Draw an unfilled ellipse centered at (x, y) with radii (rx, ry).
+        """
+        da: float = (2 * pi) / ellipse_nb_points
+        points: list[ND_Point] = [
+            ND_Point(x + int(rx * cos(i * da)), y + int(ry * sin(i * da)))
+            for i in range(ellipse_nb_points + 1)
+        ]
+        self._render_lines(points=points, color=outline_color)
 
     #
-    def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        # Set the color using SDL_Color (normalize to 0-1 for OpenGL)
-        gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
-
-        # Begin drawing the filled ellipse with GL_TRIANGLE_FAN
-        gl.glBegin(gl.GL_TRIANGLE_FAN)
-
-        # Center point of the ellipse (fan center)
-        gl.glVertex2f(x, y)
-
-        # Generate points around the ellipse
-        num_segments = 100  # Number of segments to approximate the ellipse
-        for i in range(num_segments + 1):  # One extra point to complete the loop
-            theta = 2.0 * math.pi * i / num_segments  # Current angle
-            x_pos = x + rx * math.cos(theta)  # X position
-            y_pos = y + ry * math.sin(theta)  # Y position
-            gl.glVertex2f(x_pos, y_pos)
-
-        gl.glEnd()
-
+    def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color, ellipse_nb_points: int = 72) -> None:
+        """
+        Draw a filled ellipse centered at (x, y) with radii (rx, ry).
+        """
+        da: float = (2 * pi) / ellipse_nb_points
+        center: ND_Point = ND_Point(x, y)
+        points: list[ND_Point] = [
+            ND_Point(x + int(rx * cos(i * da)), y + int(ry * sin(i * da)))
+            for i in range(ellipse_nb_points)
+        ]
+        triangles: list[tuple[ND_Point, ND_Point, ND_Point]] = [
+            (center, points[i], points[(i + 1) % ellipse_nb_points])
+            for i in range(ellipse_nb_points)
+        ]
+        self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
     #
-    def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
-
+    def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color, arc_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a / 255.0)
-
-        # Begin drawing the unfilled arc with GL_LINE_STRIP
-        gl.glBegin(gl.GL_LINE_STRIP)
-
-        # Number of segments to approximate the arc
-        num_segments = 100
-        for i in range(num_segments + 1):
-            theta = angle_start + (angle_end - angle_start) * i / num_segments  # Current angle in radians
-            x_pos = x + radius * math.cos(theta)  # X position
-            y_pos = y + radius * math.sin(theta)  # Y position
-            gl.glVertex2f(x_pos, y_pos)  # Add the vertex
-
-        gl.glEnd()
-
+        agl_start: float = convert_deg_to_rad(angle_start)
+        agl_end: float = convert_deg_to_rad(angle_end)
+        #
+        da: float = (agl_end - agl_start) / (arc_nb_points - 1)
+        #
+        points: list[ND_Point] = [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, agl_start + i * da, radius))
+            for i in range(arc_nb_points)
+        ]
+        #
+        self._render_lines(points=points, color=color)
 
     #
-    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
-
+    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color, pie_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-
-        # Begin drawing the unfilled pie with GL_LINE_LOOP
-        gl.glBegin(gl.GL_LINE_LOOP)
-
-        # Number of segments to approximate the arc (the pie slice)
-        num_segments = 100
-        for i in range(num_segments + 1):
-            theta = angle_start + (angle_end - angle_start) * i / num_segments  # Current angle in radians
-            x_pos = x + radius * math.cos(theta)  # X position
-            y_pos = y + radius * math.sin(theta)  # Y position
-            gl.glVertex2f(x_pos, y_pos)  # Add the perimeter vertex
-
-        # Connect back to the center of the pie
-        gl.glVertex2f(x, y)  # Connect the last point to the center to complete the unfilled slice
-
-        gl.glEnd()
-
+        agl_start: float = convert_deg_to_rad(angle_start)
+        agl_end: float = convert_deg_to_rad(angle_end)
+        #
+        da: float = (agl_end - agl_start) / (pie_nb_points - 1)
+        #
+        center: ND_Point = ND_Point(x, y)
+        #
+        points: list[ND_Point] = [center] + [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, agl_start + i * da, radius))
+            for i in range(pie_nb_points)
+        ] + [center]
+        #
+        self._render_lines(points=points, color=outline_color)
 
     #
-    def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
-
+    def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color, pie_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
-
-        # Begin drawing the filled pie with GL_TRIANGLE_FAN
-        gl.glBegin(gl.GL_TRIANGLE_FAN)
-
-        # Center of the pie (fan center)
-        gl.glVertex2f(x, y)
-
-        # Number of segments to approximate the pie (the slice)
-        num_segments = 100
-        for i in range(num_segments + 1):  # One extra point to complete the loop
-            theta = angle_start + (angle_end - angle_start) * i / num_segments  # Current angle in radians
-            x_pos = x + radius * math.cos(theta)  # X position
-            y_pos = y + radius * math.sin(theta)  # Y position
-            gl.glVertex2f(x_pos, y_pos)  # Add the perimeter vertex
-
-        gl.glEnd()
-
+        agl_start: float = convert_deg_to_rad(angle_start)
+        agl_end: float = convert_deg_to_rad(angle_end)
+        #
+        da: float = (agl_end - agl_start) / (pie_nb_points - 1)
+        #
+        center: ND_Point = ND_Point(x, y)
+        #
+        points: list[ND_Point] = [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, agl_start + i * da, radius))
+            for i in range(pie_nb_points)
+        ]
+        #
+        triangles: list[tuple[ND_Point, ND_Point, ND_Point]]=[
+            ( center, points[i], points[(i+1)%pie_nb_points] )
+            for i in range(pie_nb_points)
+        ]
+        #
+        self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        # Set the color using the SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-
-        # Begin drawing an unfilled triangle using GL_LINE_LOOP
-        gl.glBegin(gl.GL_LINE_LOOP)
-
-        # Specify the vertices of the triangle
-        gl.glVertex2f(x1, y1)  # First vertex
-        gl.glVertex2f(x2, y2)  # Second vertex
-        gl.glVertex2f(x3, y3)  # Third vertex
-
-        # End drawing
-        gl.glEnd()
-
+        self._render_lines(
+            points=[
+                ND_Point(x1, y1),
+                ND_Point(x2, y2),
+                ND_Point(x3, y3)
+            ],
+            color=outline_color
+        )
 
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        # Set the color using the SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(filled_color.r / 255.0, filled_color.g / 255.0, filled_color.b / 255.0, filled_color.a / 255.0)
-
-        # Begin drawing an unfilled triangle using GL_LINE_LOOP
-        gl.glBegin(gl.GL_TRIANGLE)
-
-        # Specify the vertices of the triangle
-        gl.glVertex2f(x1, y1)  # First vertex
-        gl.glVertex2f(x2, y2)  # Second vertex
-        gl.glVertex2f(x3, y3)  # Third vertex
-
-        # End drawing
-        gl.glEnd()
-
+        self._render_uniform_colored_triangles(
+            triangles=[( ND_Point(x1, y1), ND_Point(x2, y2), ND_Point(x3, y3) )],
+            color=filled_color
+        )
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
         #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
         #
-        n: int = len(x_coords)
-
-        # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(outline_color.r / 255.0, outline_color.g / 255.0, outline_color.b / 255.0, outline_color.a / 255.0)
-
-        # Begin drawing the unfilled polygon with GL_LINE_LOOP
-        gl.glBegin(gl.GL_LINE_LOOP)
-
-        # Iterate over the vertices and draw the polygon
-        for i in range(n):
-            gl.glVertex2f(x_coords[i], y_coords[i])
-
-        # End the drawing
-        gl.glEnd()
-
+        self._render_lines(
+            points=[
+                ND_Point(x_coords[i], y_coords[i])
+                for i in range(len(x_coords))
+            ],
+            color=outline_color
+        )
 
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        #
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
         #
-        n: int = len(x_coords)
-
-        # Set the color using SDL_Color (normalize the values to 0-1 for OpenGL)
-        gl.glColor4f(fill_color.r / 255.0, fill_color.g / 255.0, fill_color.b / 255.0, fill_color.a / 255.0)
-
-        # Begin drawing the unfilled polygon with GL_LINE_LOOP
-        gl.glBegin(gl.GL_POLYGON)
-
-        # Iterate over the vertices and draw the polygon
-        for i in range(n):
-            gl.glVertex2f(x_coords[i], y_coords[i])
-
-        # End the drawing
-        gl.glEnd()
-
+        points = [ND_Point(x, y) for x, y in zip(x_coords, y_coords)]
+        triangles = earcut_triangulate_polygon(points)
+        self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        #
-        if texture_id not in self.sdl_textures:
-            return
-        #
-        ts: ND_Point = self.get_prepared_texture_size(texture_id)
-
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.sdl_textures[texture_id])
-        gl.glBegin(gl.GL_POLYGON)
-        for i in range(len(x_coords)):
-            gl.glTexCoord2f((x_coords[i] + texture_dx) / ts.x, (y_coords[i] + texture_dy) / ts.y)
-            gl.glVertex2f(x_coords[i], y_coords[i])
-        gl.glEnd()
-        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-
+        pass
 
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        #
-        if len(x_coords) != len(y_coords) or len(x_coords) < nb_interpolations:
-            return
-
-        # TODO
         pass
-
 
     #
     def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
+        """
+        Restrict rendering to the specified area using OpenGL scissor test.
+        """
+        if not self.display.initialized:
+            return
 
-        # Apply OpenGL viewport or scissor test for clipping
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
+
+        # Convert to OpenGL coordinate system (bottom-left origin)
         gl.glEnable(gl.GL_SCISSOR_TEST)
-        gl.glScissor(x, self.height - (y + w), w, h)  # OpenGL's Y axis is inverted
+        gl.glScissor(x, self.height - (y + h), w, h)
 
+    #
+    def reset_area_drawing_constraint(self) -> None:
+        """
+        Remove scissor test and allow full-screen rendering.
+        """
+        if not self.display.initialized:
+            return
+
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
+
+        gl.glDisable(gl.GL_SCISSOR_TEST)
 
     #
     def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
-
-        #
+        """
+        Enable constraints and push to stack.
+        """
         self.push_to_clip_rect_stack(x, y, width, height)
-
-        #
-        if not self.display.initialized:
-            return
-
-        #
         self.apply_area_drawing_constraint(x, y, width, height)
-
 
     #
     def disable_area_drawing_constraints(self) -> None:
-        #
-        self.remove_top_of_clip_rect_stack()
-        #
-        if not self.display.initialized:
-            return
-        #
-        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
-        #
-        if new_clip_rect is None:
-            #
-            gl.glDisable(gl.GL_SCISSOR_TEST)
-        else:
-            #
-            self.apply_area_drawing_constraint(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h)
+        """
+        Disable constraints and pop from stack safely.
+        """
+        if self.clip_rect_stack:  # Ensure stack isn't empty
+            self.remove_top_of_clip_rect_stack()
 
+        new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
+
+        if new_clip_rect is None:
+            self.reset_area_drawing_constraint()
+        else:
+            self.apply_area_drawing_constraint(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h)
 
     #
     def update_display(self) -> None:
@@ -1243,7 +1352,13 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             return
 
         #
-        # sdl2.SDL_GL_MakeCurrent(self.sdl_window, self.gl_context)
+        glfw.make_context_current(self.glw_window)
+        gl.glViewport(0, 0, self.width, self.height)
+
+        gl.glClearColor(0, 0, 0, 1)
+        gl.glEnable(gl.GL_DEPTH_TEST)  # Enable depth testing for 3D
+        gl.glEnable(gl.GL_TEXTURE_2D)  # Enable texturing
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         #
         if self.state is not None and self.state in self.display_states:
@@ -1259,8 +1374,5 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             scene.render()
 
         #
-        # sdl2.SDL_GL_SwapWindow(self.sdl_window)
-        # TODO
-        pass
-
+        glfw.swap_buffers(self.glw_window)
 
