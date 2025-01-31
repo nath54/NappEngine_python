@@ -57,7 +57,7 @@ class VulkanApp:
     def create_instance(self):
         # Query required extensions from GLFW
         glfw_extensions = glfw.get_required_instance_extensions()
-
+        #
         if not glfw_extensions:
             raise RuntimeError("GLFW failed to find required Vulkan extensions")
 

@@ -15,6 +15,9 @@ from threading import Lock
 # Import operating system utilities
 import os
 
+#
+from math import pi
+
 # Import NumPy for numerical operations
 import numpy as np  # type: ignore
 
@@ -47,6 +50,7 @@ from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_opengl import compile_shaders
 from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
+from lib_nadisplay_math import calc_rad_agl_about_h_axis, calc_point_with_angle_and_distance_from_another_point
 
 #
 BASE_PATH: str = "../../../"
@@ -708,8 +712,8 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         if invert_y:
             y_screen = self.height - (y_screen - y_vp)
 
+        #
         return x_screen, y_screen
-
 
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
@@ -835,6 +839,108 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             if texture_id in self.gl_textures:
                 gl.glDeleteTextures(1, [self.gl_textures[texture_id]])
                 del self.gl_textures[texture_id]
+
+    #
+    def _render_lines(self, points: list[ ND_Point ], color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+        #
+        N: int = len(points)
+        #
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+        #
+        vertices_pts: list[tuple[float, float]]=[(0, 0)] * N
+        #
+        x: float
+        y: float
+        for i in range(N):
+            #
+            x, y = self.screen_to_ndc(points[i].x, points[i].y)
+            #
+            vertices_pts[i] = (x, y)
+        #
+        vertices = np.array(vertices_pts, dtype=np.float32)
+
+        #
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        #
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glEnableVertexAttribArray(0)
+
+        #
+        gl.glDrawArrays(gl.GL_LINE_LOOP, 0, N)
+
+        #
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
+    #
+    def _render_uniform_colored_triangles(self, triangles: list[ tuple[ ND_Point, ND_Point, ND_Point ] ], color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            return
+        #
+        N: int = len(triangles)
+
+        #
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
+
+        #
+        gl.glUseProgram(self.shader_program)
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+
+        #
+        vertices_pts: list[tuple[float, float]] = [(0, 0)] * (3 * N)
+        #
+        x: float
+        y: float
+        for i in range(N):
+            #
+            x, y = self.screen_to_ndc(triangles[i][0].x, triangles[i][0].y)
+            #
+            vertices_pts[3*i] = (x, y)
+            #
+            x, y = self.screen_to_ndc(triangles[i][1].x, triangles[i][1].y)
+            #
+            vertices_pts[3*i + 1] = (x, y)
+            #
+            x, y = self.screen_to_ndc(triangles[i][2].x, triangles[i][2].y)
+            #
+            vertices_pts[3*i + 2] = (x, y)
+
+        # Define vertices for two triangles forming the rectangle
+        vertices = np.array(vertices_pts, dtype=np.float32)
+
+        #
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        #
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glEnableVertexAttribArray(0)
+
+        #
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3 * N)
+
+        #
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
+
+
 
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
@@ -1026,7 +1132,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glDeleteVertexArrays(1, [vao])
 
     #
-    def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: int, color: ND_Color) -> None:
+    def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: float, color: ND_Color) -> None:
 
         #
         if not self.display.initialized:
@@ -1041,7 +1147,40 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         self._ensure_context()
 
         #
-        # TODO
+        alpha: float = calc_rad_agl_about_h_axis( x1, y1, x2, y2 )
+
+        #
+        agl_above: float = ( alpha - (pi / 2) ) % (2 * pi)
+        agl_below: float = ( alpha + (pi / 2) ) % (2 * pi)
+
+        #
+        ax: int
+        ay: int
+        ax, ay = calc_point_with_angle_and_distance_from_another_point(x1, y1, agl_above, line_thickness)
+
+        #
+        bx: int
+        by: int
+        bx, by = calc_point_with_angle_and_distance_from_another_point(x1, y1, agl_below, line_thickness)
+
+        #
+        cx: int
+        cy: int
+        cx, cy = calc_point_with_angle_and_distance_from_another_point(x2, y2, agl_above, line_thickness)
+
+        #
+        dx: int
+        dy: int
+        dx, dy = calc_point_with_angle_and_distance_from_another_point(x2, y2, agl_below, line_thickness)
+
+        #
+        self._render_uniform_colored_triangles(
+            triangles=[
+                ( ND_Point(ax, ay), ND_Point(bx, by), ND_Point(cx, cy) ),
+                ( ND_Point(ax, ay), ND_Point(dx, dy), ND_Point(cx, cy) )
+            ],
+            color=color
+        )
 
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
@@ -1067,96 +1206,27 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
         #
-        if not self.display.initialized:
-            return
+        self._render_lines(
+            points=[
+                ND_Point(x, y),
+                ND_Point(x + width, y),
+                ND_Point(x + width, y + height),
+                ND_Point(x, y + height),
+                ND_Point(x, y)
+            ],
+            color=outline_color
+        )
 
-        #
-        if self.shader_program <= 0:
-            print(f"Error: shader program hasn't been initialized (={self.shader_program}).")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        gl.glUseProgram(self.shader_program)
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *outline_color.to_float_tuple())
-
-        vertices = np.array([
-            *self.screen_to_ndc(x, y),  # Bottom-left
-            *self.screen_to_ndc(x + width, y),  # Bottom-right
-            *self.screen_to_ndc(x + width, y + height),  # Top-right
-            *self.screen_to_ndc(x, y + height),  # Top-left
-            *self.screen_to_ndc(x, y)  # Back to bottom-left
-        ], dtype=np.float32)
-
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glDrawArrays(gl.GL_LINE_LOOP, 0, 5)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
 
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        #
-        if self.shader_program <= 0:
-            print(f"Error: shader program hasn't been initialized (={self.shader_program}).")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        gl.glUseProgram(self.shader_program)
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *fill_color.to_float_tuple())
-
-        # Define vertices for two triangles forming the rectangle
-        vertices = np.array([
-            # First triangle
-            *self.screen_to_ndc(x, y),  # Bottom-left
-            *self.screen_to_ndc(x + width, y),  # Bottom-right
-            *self.screen_to_ndc(x + width, y + height),  # Top-right
-
-            # Second triangle
-            *self.screen_to_ndc(x, y),  # Bottom-left
-            *self.screen_to_ndc(x + width, y + height),  # Top-right
-            *self.screen_to_ndc(x, y + height)  # Top-left
-        ], dtype=np.float32)
-
-        #
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        #
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-        gl.glEnableVertexAttribArray(0)
-
-        #
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
-
-        #
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
+        self._render_uniform_colored_triangles(triangles=[
+            ( ND_Point(x, y), ND_Point(x + width, y), ND_Point(x + width, y + height) ),
+            ( ND_Point(x, y), ND_Point(x + width, y + height), ND_Point(x, y + height) )
+            ],
+            color=fill_color
+        )
 
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color) -> None:
