@@ -2494,7 +2494,7 @@ class ND_Button(ND_Clickable):
             if not self.border and self.border_radius <= 0:
                 self.window.draw_filled_rect(x, y, self.w, self.h, bg_color)
             elif not self.border:
-                self.window.draw_rounded_rect(x, y, self.w, self.h, self.border_radius, bg_color, cl((0, 0, 0, 0)))
+                self.window.draw_rounded_rect(x, y, self.w, self.h, self.border_radius, bg_color, cl((255, 0, 0, 0)))
             else:
                 self.window.draw_rounded_rect(x, y, self.w, self.h, self.border_radius, bg_color, fg_color)
 

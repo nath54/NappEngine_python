@@ -16,7 +16,7 @@ from threading import Lock
 import os
 
 #
-from math import pi
+from math import pi, cos, sin
 
 # Import NumPy for numerical operations
 import numpy as np  # type: ignore
@@ -50,7 +50,7 @@ from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_opengl import compile_shaders
 from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
-from lib_nadisplay_math import calc_rad_agl_about_h_axis, calc_point_with_angle_and_distance_from_another_point
+from lib_nadisplay_math import calc_rad_agl_about_h_axis, calc_point_with_angle_and_distance_from_another_point, convert_deg_to_rad, earcut_triangulate_polygon
 
 #
 BASE_PATH: str = "../../../"
@@ -874,7 +874,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glEnableVertexAttribArray(0)
 
         #
-        gl.glDrawArrays(gl.GL_LINE_LOOP, 0, N)
+        gl.glDrawArrays(gl.GL_LINE_STRIP, 0, N)
 
         #
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
@@ -941,6 +941,42 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glDeleteVertexArrays(1, [vao])
 
 
+    #
+    def _render_point(self, point: ND_Point, color: ND_Color) -> None:
+        #
+        if not self.display.initialized:
+            print("Display not initialized.")
+            return
+
+        #
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
+
+        gl.glUseProgram(self.shader_program)
+        gl.glPointSize(1)
+
+        # Set color uniform
+        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
+
+        vertices = np.array([*self.screen_to_ndc(point.x, point.y)], dtype=np.float32)
+
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
+        gl.glEnableVertexAttribArray(0)
+
+        gl.glDrawArrays(gl.GL_POINTS, 0, 1)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+        gl.glDeleteBuffers(1, [vbo])
+        gl.glDeleteVertexArrays(1, [vao])
 
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
@@ -974,178 +1010,35 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         """
         Draw a single pixel on the screen at (x, y).
         """
-        if not self.display.initialized:
-            print("Display not initialized.")
-            return
-
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        gl.glUseProgram(self.shader_program)
-        gl.glPointSize(1)
-
-        # Set color uniform
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
-
-        vertices = np.array([*self.screen_to_ndc(x, y)], dtype=np.float32)
-
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glDrawArrays(gl.GL_POINTS, 0, 1)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
+        self._render_point(point=ND_Point(x, y), color=color)
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
         """
         Draw a horizontal line between (x1, y) and (x2, y).
         """
-        if not self.display.initialized:
-            print("Display not initialized.")
-            return
-
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        gl.glUseProgram(self.shader_program)
-
-        # Set color uniform
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
-
-        vertices = np.array([
-            *self.screen_to_ndc(x1, y),  # Start point
-            *self.screen_to_ndc(x2, y)   # End point
-        ], dtype=np.float32)
-
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glDrawArrays(gl.GL_LINES, 0, 2)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
+        self._render_lines(points=[ND_Point(x1, y), ND_Point(x2, y)], color=color)
 
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
         """
         Draw a vertical line between (x, y1) and (x, y2).
         """
-        if not self.display.initialized:
-            print("Display not initialized.")
-            return
-
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        gl.glUseProgram(self.shader_program)
-
-        # Set color uniform
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
-
-        vertices = np.array([
-            *self.screen_to_ndc(x, y1),  # Start point
-            *self.screen_to_ndc(x, y2)   # End point
-        ], dtype=np.float32)
-
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glDrawArrays(gl.GL_LINES, 0, 2)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
+        self._render_lines(points=[ND_Point(x, y1), ND_Point(x, y2)], color=color)
 
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
         """
         Draw a straight line between (x1, y1) and (x2, y2).
         """
-        if not self.display.initialized:
-            print("Display not initialized.")
-            return
-
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        gl.glUseProgram(self.shader_program)
-
-        # Set color uniform
-        gl.glUniform4f(gl.glGetUniformLocation(self.shader_program, "color"), *color.to_float_tuple())
-
-        vertices = np.array([
-            *self.screen_to_ndc(x1, y1),  # Start point
-            *self.screen_to_ndc(x2, y2)   # End point
-        ], dtype=np.float32)
-
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
-
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
-
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 2 * vertices.itemsize, None)
-        gl.glEnableVertexAttribArray(0)
-
-        gl.glDrawArrays(gl.GL_LINES, 0, 2)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-        gl.glBindVertexArray(0)
-
-        gl.glDeleteBuffers(1, [vbo])
-        gl.glDeleteVertexArrays(1, [vao])
+        self._render_lines(points=[ND_Point(x1, y1), ND_Point(x2, y2)], color=color)
 
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: float, color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
         #
         alpha: float = calc_rad_agl_about_h_axis( x1, y1, x2, y2 )
 
@@ -1183,25 +1076,26 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         )
 
     #
-    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
-
+    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, corner_nb_points: int = 6) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
+        self.draw_filled_rect(x=x + radius, y=y, width=width - 2 * radius, height=height, fill_color=fill_color)
+        self.draw_filled_rect(x=x, y=y + radius, width=radius, height=height - 2 * radius, fill_color=fill_color)
+        self.draw_filled_rect(x=x + width - radius, y=y + radius, width=radius, height=height - 2 * radius, fill_color=fill_color)
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
+        self.draw_filled_pie(x=x + radius, y=y + radius, radius=radius, angle_start=180, angle_end=270, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        self.draw_filled_pie(x=x + width - radius, y=y + radius, radius=radius, angle_start=270, angle_end=360, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        self.draw_filled_pie(x=x + width - radius, y=y + height - radius, radius=radius, angle_start=0, angle_end=90, fill_color=fill_color, pie_nb_points=corner_nb_points)
+        self.draw_filled_pie(x=x + radius, y=y + height - radius, radius=radius, angle_start=90, angle_end=180, fill_color=fill_color, pie_nb_points=corner_nb_points)
         #
-        self.draw_filled_rect(x, y, width, height, fill_color)
-
+        self.draw_hline(x1=x + radius, x2=x + width - radius, y=y, color=border_color)
+        self.draw_hline(x1=x + radius, x2=x + width - radius, y=y+height, color=border_color)
+        self.draw_vline(x=x, y1=y + radius, y2=y + height - radius, color=border_color)
+        self.draw_vline(x=x + width, y1=y + radius, y2=y + height - radius, color=border_color)
         #
-        # TODO
+        self.draw_arc(x=x + radius, y=y + radius, radius=radius, angle_start=180, angle_end=270, color=border_color, arc_nb_points=corner_nb_points)
+        self.draw_arc(x=x + width - radius, y=y + radius, radius=radius, angle_start=270, angle_end=360, color=border_color, arc_nb_points=corner_nb_points)
+        self.draw_arc(x=x + width - radius, y=y + height - radius, radius=radius, angle_start=0, angle_end=90, color=border_color, arc_nb_points=corner_nb_points)
+        self.draw_arc(x=x + radius, y=y + height - radius, radius=radius, angle_start=90, angle_end=180, color=border_color, arc_nb_points=corner_nb_points)
 
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
@@ -1217,7 +1111,6 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             color=outline_color
         )
 
-
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
@@ -1229,291 +1122,226 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         )
 
     #
-    def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color) -> None:
-
+    def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color, circle_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
+        da: float = (2 * pi) / circle_nb_points
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+        self._render_lines(
+            points=[
+                ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, i * da, radius))
+                for i in range(circle_nb_points + 1)
+            ],
+            color=outline_color
+        )
 
     #
-    def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color) -> None:
-
+    def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color, circle_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
+        da: float = (2 * pi) / circle_nb_points
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
+        center: ND_Point = ND_Point(x, y)
         #
-        # TODO
+        points: list[ND_Point] = [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, i * da, radius))
+            for i in range(circle_nb_points)
+        ]
+        #
+        self._render_uniform_colored_triangles(
+            triangles=[
+                ( center, points[i], points[(i+1)%circle_nb_points] )
+                for i in range(circle_nb_points)
+            ],
+            color=fill_color
+        )
 
     #
-    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color, ellipse_nb_points: int = 72) -> None:
+        """
+        Draw an unfilled ellipse centered at (x, y) with radii (rx, ry).
+        """
+        da: float = (2 * pi) / ellipse_nb_points
+        points: list[ND_Point] = [
+            ND_Point(x + int(rx * cos(i * da)), y + int(ry * sin(i * da)))
+            for i in range(ellipse_nb_points + 1)
+        ]
+        self._render_lines(points=points, color=outline_color)
 
     #
-    def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
-
-    #
-    def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+    def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color, ellipse_nb_points: int = 72) -> None:
+        """
+        Draw a filled ellipse centered at (x, y) with radii (rx, ry).
+        """
+        da: float = (2 * pi) / ellipse_nb_points
+        center: ND_Point = ND_Point(x, y)
+        points: list[ND_Point] = [
+            ND_Point(x + int(rx * cos(i * da)), y + int(ry * sin(i * da)))
+            for i in range(ellipse_nb_points)
+        ]
+        triangles: list[tuple[ND_Point, ND_Point, ND_Point]] = [
+            (center, points[i], points[(i + 1) % ellipse_nb_points])
+            for i in range(ellipse_nb_points)
+        ]
+        self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
     #
-    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
-
+    def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color, arc_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
+        agl_start: float = convert_deg_to_rad(angle_start)
+        agl_end: float = convert_deg_to_rad(angle_end)
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
+        da: float = (agl_end - agl_start) / (arc_nb_points - 1)
         #
-        # TODO
+        points: list[ND_Point] = [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, agl_start + i * da, radius))
+            for i in range(arc_nb_points)
+        ]
+        #
+        self._render_lines(points=points, color=color)
 
     #
-    def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color) -> None:
-
+    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color, pie_nb_points: int = 36) -> None:
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
+        agl_start: float = convert_deg_to_rad(angle_start)
+        agl_end: float = convert_deg_to_rad(angle_end)
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
+        da: float = (agl_end - agl_start) / (pie_nb_points - 1)
         #
-        # TODO
+        center: ND_Point = ND_Point(x, y)
+        #
+        points: list[ND_Point] = [center] + [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, agl_start + i * da, radius))
+            for i in range(pie_nb_points)
+        ] + [center]
+        #
+        self._render_lines(points=points, color=outline_color)
+
+    #
+    def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color, pie_nb_points: int = 36) -> None:
+        #
+        agl_start: float = convert_deg_to_rad(angle_start)
+        agl_end: float = convert_deg_to_rad(angle_end)
+        #
+        da: float = (agl_end - agl_start) / (pie_nb_points - 1)
+        #
+        center: ND_Point = ND_Point(x, y)
+        #
+        points: list[ND_Point] = [
+            ND_Point(*calc_point_with_angle_and_distance_from_another_point(x, y, agl_start + i * da, radius))
+            for i in range(pie_nb_points)
+        ]
+        #
+        triangles: list[tuple[ND_Point, ND_Point, ND_Point]]=[
+            ( center, points[i], points[(i+1)%pie_nb_points] )
+            for i in range(pie_nb_points)
+        ]
+        #
+        self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+        self._render_lines(
+            points=[
+                ND_Point(x1, y1),
+                ND_Point(x2, y2),
+                ND_Point(x3, y3)
+            ],
+            color=outline_color
+        )
 
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+        self._render_uniform_colored_triangles(
+            triangles=[( ND_Point(x1, y1), ND_Point(x2, y2), ND_Point(x3, y3) )],
+            color=filled_color
+        )
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+        self._render_lines(
+            points=[
+                ND_Point(x_coords[i], y_coords[i])
+                for i in range(len(x_coords))
+            ],
+            color=outline_color
+        )
 
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
         if len(x_coords) != len(y_coords) or len(x_coords) < 3:
             return
 
         #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
+        points = [ND_Point(x, y) for x, y in zip(x_coords, y_coords)]
+        triangles = earcut_triangulate_polygon(points)
+        self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
-
         #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program_textures <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        if texture_id not in self.gl_textures:
-            return
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
-
-    #
-    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
-
-        #
-        if not self.display.initialized:
-            return
-
-        if self.shader_program <= 0:
-            print("Error: shader program hasn't been initialized.")
-            return
-
-        if len(x_coords) != 4 or len(y_coords) != 4:
-            raise ValueError("Bezier curve requires exactly 4 control points.")
-
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-
-        #
-        # TODO
-
-    #
-    def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
-
-        #
-        # TODO
         pass
 
     #
-    def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
-        self.push_to_clip_rect_stack(x, y, width, height)
-        #
+        pass
+
+    #
+    def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
+        """
+        Restrict rendering to the specified area using OpenGL scissor test.
+        """
         if not self.display.initialized:
             return
 
-        #
         self._ensure_shaderProgram_base()
         self._ensure_context()
-        #
+
+        # Convert to OpenGL coordinate system (bottom-left origin)
+        gl.glEnable(gl.GL_SCISSOR_TEST)
+        gl.glScissor(x, self.height - (y + h), w, h)
+
+    #
+    def reset_area_drawing_constraint(self) -> None:
+        """
+        Remove scissor test and allow full-screen rendering.
+        """
+        if not self.display.initialized:
+            return
+
+        self._ensure_shaderProgram_base()
+        self._ensure_context()
+
+        gl.glDisable(gl.GL_SCISSOR_TEST)
+
+    #
+    def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
+        """
+        Enable constraints and push to stack.
+        """
+        self.push_to_clip_rect_stack(x, y, width, height)
         self.apply_area_drawing_constraint(x, y, width, height)
 
     #
     def disable_area_drawing_constraints(self) -> None:
-        #
-        self.remove_top_of_clip_rect_stack()
-        #
-        if not self.display.initialized:
-            return
+        """
+        Disable constraints and pop from stack safely.
+        """
+        if self.clip_rect_stack:  # Ensure stack isn't empty
+            self.remove_top_of_clip_rect_stack()
 
-        #
-        self._ensure_shaderProgram_base()
-        self._ensure_context()
-        #
         new_clip_rect: Optional[ND_Rect] = self.get_top_of_clip_rect_stack()
-        #
+
         if new_clip_rect is None:
-            #
-            gl.glDisable(gl.GL_SCISSOR_TEST)
+            self.reset_area_drawing_constraint()
         else:
-            #
             self.apply_area_drawing_constraint(new_clip_rect.x, new_clip_rect.y, new_clip_rect.w, new_clip_rect.h)
 
     #
@@ -1524,7 +1352,6 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             return
 
         #
-
         glfw.make_context_current(self.glw_window)
         gl.glViewport(0, 0, self.width, self.height)
 
