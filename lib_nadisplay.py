@@ -26,6 +26,7 @@ import numpy as np
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_colors import ND_Color, cl, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point, ND_Position, ND_Position_Constraints, ND_Position_Margins
+from lib_nadisplay_rects import ND_Point_3D
 
 
 
@@ -5077,5 +5078,51 @@ class ND_Position_MultiLayer(ND_Position):
             return self.position_margins.height_stretch_ratio
         #
         return 0.0
+
+
+#
+class ND_Elt_3D:
+
+    #
+    def __init__(self, origin: ND_Point_3D) -> None:
+        #
+        self.origin: ND_Point_3D = origin
+
+    #
+    def render(self) -> None:
+        #
+        pass
+
+
+#
+class ND_Space_3D(ND_Elt):
+
+    #
+    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, elts: Optional[list[ND_Elt_3D]] = None ) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+
+        #
+        self.elts: list[ND_Elt_3D] = elts if elts is not None else []
+
+    #
+    def render(self) -> None:
+        # Will be rendered by a ND_Camera_3D
+        pass
+
+#
+def ND_Camera_3D(ND_Elt):
+
+    #
+    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, space_3D: ND_Space_3D) -> None:
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position)
+        #
+        self.space_3D: ND_Space_3D = space_3D
+
+    #
+    def render(self) -> None:
+        # TODO
+        return
 
 
