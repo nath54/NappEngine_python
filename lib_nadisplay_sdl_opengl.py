@@ -117,6 +117,10 @@ class FontRenderer:
         self.characters: dict = {}  # Dictionary to store font character data
         self.vao: int = 0  # Vertex Array Object ID
         self.vbo: int = 0  # Vertex Buffer Object ID
+
+        # Ensure context is current on this thread
+        self.window._ensure_context()
+
         self.init_shader()  # Initialize shaders
         self.load_font(font_path)  # Load font
 
@@ -142,6 +146,10 @@ class FontRenderer:
         ], np.float32)
 
     def init_shader(self) -> None:
+
+        # Ensure OpenGL context is active before any OpenGL calls
+        self.window._ensure_context()
+
         # Vertex shader source code for font rendering
         with open(f"{BASE_PATH}gl_shaders/font_rendering_vertex.vert", "r", encoding="utf-8") as f:
             vertex_shader_source: str = f.read()
@@ -167,6 +175,7 @@ class FontRenderer:
 
         # Ensure OpenGL context is active
         self.window._ensure_context()
+        self.window.verify_context()
 
         # Disable byte-alignment restriction for texture
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
@@ -219,20 +228,23 @@ class FontRenderer:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
         gl.glEnableVertexAttribArray(0)
+
+        print("Calling glVertexAttribPointer")
         gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
 
     def render_text(self, text: str, x: int, y: int, scale: float, color: ND_Color) -> None:
+
+        # Ensure OpenGL context is active
+        self.window._ensure_context()
+
         # Use program
         gl.glUseProgram(self.shader_program)
 
         #
         scale /= 50
-
-        # Ensure OpenGL context is active
-        self.window._ensure_context()
 
         # Set text color
         gl.glUniform3f(
@@ -579,10 +591,21 @@ class ND_Window_SDL_OPENGL(ND_Window):
             raise RuntimeError("Failed to make OpenGL context current.")
         if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
             raise RuntimeError("No current OpenGL program bound.")
-        # print("\nOpenGL context is current.\n")
         #
-        # log_opengl_context_info()
-        # log_opengl_context_attributes()
+        print("\nOpenGL context is current.\n\nCURRENT CONTEXT INFORMATIONS :\n\n")
+        #
+        log_opengl_context_info()
+        log_opengl_context_attributes()
+
+    def verify_context(self):
+        #
+        current_context = sdl2.SDL_GL_GetCurrentContext()
+        if not current_context:
+            raise RuntimeError("No current OpenGL context detected.")
+        elif current_context != self.gl_context:
+            print("Warning: Current context differs from window's context.")
+        else:
+            print("Context verified successfully.")
 
     #
     def destroy_window(self) -> None:

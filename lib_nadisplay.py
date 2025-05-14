@@ -591,6 +591,8 @@ class ND_MainApp:
         #
         elif isinstance(event, nd_event.ND_EventWindowResized):
             #
+            # print(f"DEBUG | ND_EventWindowResized = {event}")
+            #
             window.update_size(event.w, event.h)
             #
             scene: ND_Scene
@@ -5110,8 +5112,9 @@ class ND_Space_3D(ND_Elt):
         # Will be rendered by a ND_Camera_3D
         pass
 
+
 #
-def ND_Camera_3D(ND_Elt):
+class ND_Camera_3D(ND_Elt):
 
     #
     def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, space_3D: ND_Space_3D) -> None:
