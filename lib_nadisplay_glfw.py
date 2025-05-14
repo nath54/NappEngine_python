@@ -97,7 +97,7 @@ class ND_EventsManager_GLFW(ND_EventsManager):
         #
         glfw.set_window_size_callback(nd_window.glw_window,
             # window: glfw._GLFWwindow, width: int, height: int
-            lambda window, width, height, nd_window=nd_window: self.window_size_callback
+            lambda window, width, height, nd_window=nd_window: self.window_size_callback(window, width, height, nd_window)
         )
         #
         glfw.set_window_close_callback(nd_window.glw_window,
