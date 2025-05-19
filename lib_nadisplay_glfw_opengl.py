@@ -223,6 +223,30 @@ class FontRenderer:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
 
+
+    def handle_resize(self, new_width: int, new_height: int) -> None:
+        """
+        Updates the projection matrix when the window is resized.
+        """
+        # Ensure OpenGL context is active on this thread before making GL calls
+        self.window._ensure_context()
+
+        # Recalculate the orthographic projection matrix
+        self.projection = glm.ortho(0, new_width, new_height, 0, -100000, 100000)
+
+        # Activate the shader program to update the uniform
+        gl.glUseProgram(self.shader_program)
+
+        # Get uniform location (can store this in init if preferred)
+        self.shader_projection = gl.glGetUniformLocation(self.shader_program, "projection")
+
+        # Upload the new projection matrix
+        gl.glUniformMatrix4fv(self.shader_projection, 1, gl.GL_FALSE, glm.value_ptr(self.projection))
+
+        # Optional: Unbind the shader program
+        # gl.glUseProgram(0)
+
+
     def render_text(self, text: str, x: int, y: int, scale: float, color: ND_Color) -> None:
         # Use program
         gl.glUseProgram(self.shader_program)
@@ -385,6 +409,23 @@ class ND_Display_GLFW_OPENGL(ND_Display):
                 return None
         #
         return self.fonts_renderers[font][font_size]
+
+    #
+    def get_all_loaded_fonts(self) -> list[FontRenderer]: # type: ignore
+
+        #
+        all_loaded_fonts: list[FontRenderer] = []
+        #
+        for dict_font_renderer in self.fonts_renderers.values():
+            #
+            for font_renderer in dict_font_renderer.values():
+                #
+                if not font_renderer:
+                    continue
+                #
+                all_loaded_fonts.append( font_renderer )
+        #
+        return all_loaded_fonts
 
 
     #
@@ -605,6 +646,20 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             return
         #
         glfw.set_window_size(self.glw_window, new_width, new_height)
+
+    #
+    def update_size(self, new_w: int, new_h: int) -> None:
+        #
+        self.width, self.height = new_w, new_h
+        #
+        self.rect = ND_Rect(self.x, self.y, self.width, self.height)
+        #
+        for font_renderer in self.display.get_all_loaded_fonts():
+            #
+            if not font_renderer:
+                continue
+            #
+            font_renderer.handle_resize(new_w, new_h)
 
     #
     def set_fullscreen(self, mode: int) -> None:
