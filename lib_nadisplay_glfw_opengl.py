@@ -555,7 +555,6 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
             raise RuntimeError("No current OpenGL program bound.")
-        # print("\nOpenGL context is current.\n")
         #
         # log_opengl_context_info()
         # log_opengl_context_attributes()

@@ -7,13 +7,13 @@ SDL + OPENGL backend for lib_nadisplay.
 
 """
 
+# Import operating system utilities
+import os
+os.environ["SDL_VIDEO_X11_FORCE_EGL"] = "1"  # Fix for wayland "Failed to Retrieve context error"
 
 # Import necessary modules for type hints and threading
 from typing import Optional, Any, Callable, cast, Type
 from threading import Lock
-
-# Import operating system utilities
-import os
 
 #
 from math import pi, cos, sin
@@ -229,6 +229,10 @@ class FontRenderer:
         gl.glBufferData(gl.GL_ARRAY_BUFFER, 6 * 4 * 4, None, gl.GL_DYNAMIC_DRAW)
         gl.glEnableVertexAttribArray(0)
 
+        #
+        self.window._ensure_context()
+        self.window.verify_context()
+
         print("Calling glVertexAttribPointer")
         gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
@@ -340,7 +344,8 @@ class ND_Display_SDL_OPENGL(ND_Display):
         # Request an OpenGL 3.3 context
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
+        # sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
+        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_COMPATIBILITY)
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_DOUBLEBUFFER, 1)
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_DEPTH_SIZE, 24)
 
@@ -518,7 +523,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
         #
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
         sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_MINOR_VERSION, 3)
-        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
+        # sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_CORE)
+        sdl2.SDL_GL_SetAttribute(sdl2.SDL_GL_CONTEXT_PROFILE_MASK, sdl2.SDL_GL_CONTEXT_PROFILE_COMPATIBILITY)
         self.gl_context: Optional[sdl2.SDL_GL_Context] = sdl2.SDL_GL_CreateContext(self.sdl_window)
         #
         if not self.gl_context:
@@ -592,10 +598,8 @@ class ND_Window_SDL_OPENGL(ND_Window):
         if gl.glGetIntegerv(gl.GL_CURRENT_PROGRAM) == 0:
             raise RuntimeError("No current OpenGL program bound.")
         #
-        print("\nOpenGL context is current.\n\nCURRENT CONTEXT INFORMATIONS :\n\n")
-        #
-        log_opengl_context_info()
-        log_opengl_context_attributes()
+        # log_opengl_context_info()
+        # log_opengl_context_attributes()
 
     def verify_context(self):
         #
@@ -651,7 +655,7 @@ class ND_Window_SDL_OPENGL(ND_Window):
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
-        log_opengl_context_attributes()
+        # log_opengl_context_attributes()
         if not self.display.initialized:
             return
 

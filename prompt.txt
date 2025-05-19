@@ -1,0 +1,233 @@
+Here is two graphical back-end for a python graphical display library / app engine.
+
+One is using sdl + opengl and the other is using glfw + opengl.
+
+When using the sdl_opengl version :
+
+```
+$ python main.py
+
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.0
+Display initialized successfully.
+ - thread <Thread(Thread-1 (thread_wrap_fn), initial)> for events created
+SDL2 window created successfully.
+OpenGL context created successfully.
+OpenGL context made current.
+Shader program created: 3
+Shader program created successfully with ID: 3
+Shader program created successfully.
+Shader program created: 6
+Shader program created successfully with ID: 6
+Shader program created successfully.
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Core Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 1
+
+Beginning of the app...
+
+
+Begin to exec all init functions in order
+
+
+All Init functions called
+
+
+OpenGL context is current.
+
+CURRENT CONTEXT INFORMATIONS :
+
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Core Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 1
+
+OpenGL context is current.
+
+CURRENT CONTEXT INFORMATIONS :
+
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Core Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 1
+
+OpenGL context is current.
+
+CURRENT CONTEXT INFORMATIONS :
+
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Core Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 1
+
+OpenGL context is current.
+
+CURRENT CONTEXT INFORMATIONS :
+
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Core Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 1
+Context verified successfully.
+Calling glVertexAttribPointer
+Traceback (most recent call last):
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/main.py", line 59, in <module>
+    app.run()
+    ~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay.py", line 913, in run
+    self.mainloop_without_threads()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay.py", line 840, in mainloop_without_threads
+    self.display.update_display()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay.py", line 1025, in update_display
+    window.update_display()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay_sdl_opengl.py", line 1468, in update_display
+    scene.render()
+    ~~~~~~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay.py", line 1913, in render
+    element.render()
+    ~~~~~~~~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay.py", line 3951, in render
+    elt.render()
+    ~~~~~~~~~~^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay.py", line 1995, in render
+    self.window.draw_text(
+    ~~~~~~~~~~~~~~~~~~~~~^
+            txt=self.text,
+            ^^^^^^^^^^^^^^
+    ...<4 lines>...
+            font_color=self.font_color
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay_sdl_opengl.py", line 1090, in draw_text
+    font_renderer: Optional[FontRenderer] = cast(Optional[FontRenderer], self.display.get_font(font_name, font_size, self))  # type: ignore
+                                                                         ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay_sdl_opengl.py", line 392, in get_font
+    self.ttf_fonts[font] = FontRenderer(font_path, window)
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay_sdl_opengl.py", line 125, in __init__
+    self.load_font(font_path)  # Load font
+    ~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/nathan/github/NappEngine_python/tests/apps/app1/../../../lib_nadisplay_sdl_opengl.py", line 233, in load_font
+    gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nathan/github/NappEngine_python/venv/lib/python3.13/site-packages/OpenGL/latebind.py", line 63, in __call__
+    return self.wrapperFunction( self.baseFunction, *args, **named )
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nathan/github/NappEngine_python/venv/lib/python3.13/site-packages/OpenGL/GL/VERSION/GL_2_0.py", line 465, in glVertexAttribPointer
+    contextdata.setValue( key, array )
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/nathan/github/NappEngine_python/venv/lib/python3.13/site-packages/OpenGL/contextdata.py", line 58, in setValue
+    context = getContext( context )
+  File "/home/nathan/github/NappEngine_python/venv/lib/python3.13/site-packages/OpenGL/contextdata.py", line 40, in getContext
+    raise error.Error(
+        """Attempt to retrieve context when no valid context"""
+    )
+OpenGL.error.Error: Attempt to retrieve context when no valid context
+At exit catched
+```
+
+When using the glfw_opengl version :
+
+```
+$ python main.py
+
+Display initialized successfully.
+ - thread <Thread(Thread-1 (thread_wrap_fn), initial)> for events created
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Compatibility Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 2
+
+Beginning of the app...
+
+
+Begin to exec all init functions in order
+
+
+All Init functions called
+
+
+OpenGL context is current.
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Compatibility Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 2
+
+OpenGL context is current.
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Compatibility Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 2
+
+OpenGL context is current.
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Compatibility Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 2
+
+OpenGL context is current.
+
+OpenGL Vendor: b'AMD'
+OpenGL Renderer: b'AMD Radeon Graphics (radeonsi, renoir, ACO, DRM 3.61, 6.14.6-arch1-1)'
+OpenGL Version: b'4.6 (Compatibility Profile) Mesa 25.0.5-arch1.1'
+GLSL Version: b'4.60'
+OpenGL Major Version: 4
+OpenGL Minor Version: 6
+OpenGL Context Flags: 0
+OpenGL Context Profile Mask: 2
+
+At exit catched
+```
+
+Can you examine the difference in opengl initialization between theses two scripts and tell me what I need to change in the sdl + opengl file.
+
+Give only the code snippets I need to change.
+
+Think step by step and with auto-critic.
