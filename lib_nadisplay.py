@@ -4912,7 +4912,7 @@ class ND_Position_MultiLayer(ND_Position):
 
     #
     @w.setter
-    def w(self, new_value: int) -> None:
+    def w(self, new_value: int) -> None:  # type: ignore
         # TODO
         pass
 
@@ -4932,7 +4932,7 @@ class ND_Position_MultiLayer(ND_Position):
 
     #
     @h.setter
-    def h(self, new_value: int) -> None:
+    def h(self, new_value: int) -> None:  # type: ignore
         # TODO
         pass
 
@@ -5106,6 +5106,7 @@ class ND_Space_3D(ND_Elt):
 
     #
     def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, elts: Optional[list[ND_Elt_3D]] = None ) -> None:
+
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
 

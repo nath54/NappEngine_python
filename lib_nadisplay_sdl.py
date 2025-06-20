@@ -310,7 +310,7 @@ class ND_EventsManager_SDL(ND_EventsManager):
         elif sdl_event.type == sdl2.SDL_MOUSEMOTION:
             #
             if sdl_event.motion.xrel == 0 and sdl_event.motion.yrel == 0:
-                return nd_event.ND_EmptyEvent()
+                return nd_event.ND_EventEmpty()
             #
             return nd_event.ND_EventMouseMotion(
                                 x=sdl_event.motion.x,
@@ -327,7 +327,7 @@ class ND_EventsManager_SDL(ND_EventsManager):
             )
 
         # If it is an unsupported event
-        return nd_event.ND_EmptyEvent()
+        return nd_event.ND_EventEmpty()
 
 
     #

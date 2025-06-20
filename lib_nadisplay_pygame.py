@@ -1121,7 +1121,7 @@ class ND_EventsManager_Pygame(ND_EventsManager):
         elif pygame_event.type == pygame.MOUSEMOTION:
             #
             if pygame_event.rel[0] == 0 and pygame_event.rel[1] == 0:
-                return nd_event.ND_EmptyEvent()
+                return nd_event.ND_EventEmpty()
             #
             return nd_event.ND_EventMouseMotion(
                                 x=pygame_event.pos[0],
@@ -1138,7 +1138,7 @@ class ND_EventsManager_Pygame(ND_EventsManager):
             )
 
         # If it is an unsupported event
-        return nd_event.ND_EmptyEvent()
+        return nd_event.ND_EventEmpty()
 
 
     #

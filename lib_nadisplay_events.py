@@ -109,5 +109,5 @@ class ND_EventWindowClose(ND_EventWindow):
 
 
 @dataclass
-class ND_EmptyEvent(ND_Event):
+class ND_EventEmpty(ND_Event):
     pass
