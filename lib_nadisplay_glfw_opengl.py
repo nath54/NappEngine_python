@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Author: CERISARA Nathan (https://github.com/nath54)
 
@@ -31,7 +33,7 @@ import glfw  # type: ignore
 
 # Import OpenGL functionalities for rendering
 import OpenGL.GL as gl  # type: ignore
-from OpenGL.GL import shaders
+from OpenGL.GL import shaders  # type: ignore
 
 # Optionally, GLUT can be used for window management and other utilities
 # from OpenGL.GLUT import glutInit, glutCreateWindow, glutInitDisplayMode, GLUT_RGB, glutInitWindowSize

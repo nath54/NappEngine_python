@@ -8,7 +8,7 @@ Some utility functions for manipulating colors, and a database of common color n
 """
 
 
-from typing import Any, Optional
+from typing import Optional
 from dataclasses import dataclass
 
 
@@ -157,7 +157,7 @@ def color_to_int(color: ND_Color) -> int:
 
 
 #
-def cl(c: Any) -> ND_Color:
+def cl(c: str | list[int | float | None] | tuple[int | float | None, ...] | None) -> ND_Color:
 
     #
     if isinstance(c, str):

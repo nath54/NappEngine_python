@@ -85,8 +85,7 @@ class ND_MainApp:
         #
         self.display: Optional[ND_Display] = DisplayClass(self, WindowClass=WindowClass)
         #
-        if self.display is not None:
-            self.display.init_display()
+        self.display.init_display()
         #
         self.events_manager: ND_EventsManager = EventsManagerClass(self)
         #
@@ -469,7 +468,7 @@ class ND_MainApp:
         return None
 
     #
-    def add_function_to_mainloop_fns_queue(self, mainloop_name: str, function: Callable) -> None:
+    def add_function_to_mainloop_fns_queue(self, mainloop_name: str, function: Callable[["ND_MainApp", float], None]) -> None:
         #
         with self.mainloop_queue_fns_mutex:
             #
@@ -479,7 +478,7 @@ class ND_MainApp:
             self.mainloop_queue_functions[mainloop_name].append(function)
 
     #
-    def add_functions_to_mainloop_fns_queue(self, mainloop_name: str, functions: list[Callable]) -> None:
+    def add_functions_to_mainloop_fns_queue(self, mainloop_name: str, functions: list[Callable[["ND_MainApp", float], None]]) -> None:
         #
         with self.mainloop_queue_fns_mutex:
             #
@@ -498,7 +497,7 @@ class ND_MainApp:
                 del self.mainloop_queue_functions[mainloop_name]
 
     #
-    def get_mainloop_fns_queue(self, mainloop_name: str) -> list[Callable]:
+    def get_mainloop_fns_queue(self, mainloop_name: str) -> list[Callable[["ND_MainApp", float], None]]:
         #
         if mainloop_name not in self.mainloop_queue_functions:
             return []
@@ -506,7 +505,7 @@ class ND_MainApp:
         return self.mainloop_queue_functions[mainloop_name]
 
     #
-    def add_function_to_event_fns_queue(self, event_name: str, fn: Callable[..., None]) -> None:
+    def add_function_to_event_fns_queue(self, event_name: str, fn: Callable[["ND_MainApp"], None]) -> None:
         #
         with self.events_functions_mutex:
             #
@@ -561,6 +560,7 @@ class ND_MainApp:
             #
             scene: ND_Scene
             for scene in win.scenes.values():
+                #
                 scene.handle_event(event)  # Potentiel Blockage ici lors de la fermeture de l'application
 
     #
@@ -738,7 +738,7 @@ class ND_MainApp:
         print("\nAll thread created\n")
 
     #
-    def thread_wrap_fn(self, fn_to_call: Callable, fn_to_call_args: list[Any]) -> None:
+    def thread_wrap_fn(self, fn_to_call: Callable[..., Any], fn_to_call_args: list[Any]) -> None:
 
         #
         fn_to_call(*fn_to_call_args)
@@ -748,7 +748,7 @@ class ND_MainApp:
             self.threads_condition.notify_all()
 
     #
-    def create_thread(self, fn_to_call: Callable, fn_to_call_args: list[Any] = [], thread_name: str = "unknown thread") -> int:
+    def create_thread(self, fn_to_call: Callable[..., Any], fn_to_call_args: list[Any] = [], thread_name: str = "unknown thread") -> int:
         #
         if not self.is_threading:
             return -1
@@ -967,7 +967,7 @@ class ND_Display:
         """Scans system directories for fonts and adds them to the font_names dictionary."""
 
         #
-        font_dirs = []
+        font_dirs: list[str] = []
 
         #
         if os.name == "nt":  # Windows
@@ -1182,7 +1182,7 @@ class ND_Window:
         return rect_window.contains_point( pt_mouse )
 
     #
-    def blit_texture(self, texture, dst_rect) -> None:
+    def blit_texture(self, texture: Any, dst_rect: ND_Rect) -> None:
         #
         return
 
@@ -1197,7 +1197,7 @@ class ND_Window:
         return -1
 
     #
-    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformations = ND_Transformations()) -> None:
+    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformations = ND_Transformations()) -> None:
         #
         return
 
@@ -1267,7 +1267,7 @@ class ND_Window:
         return
 
     #
-    def draw_filled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
+    def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
         return
 
@@ -1312,7 +1312,7 @@ class ND_Window:
         return
 
     #
-    def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
+    def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, fill_color: ND_Color) -> None:
         #
         return
 
@@ -1432,9 +1432,10 @@ class ND_Elt:
         #
         self.position: ND_Position = position
         #
-        self.visible: bool = True
         self._visible: bool = True
         self.clickable: bool = True
+        #
+        self.transformations: ND_Transformations = ND_Transformations()
 
     #
     @property
@@ -1449,8 +1450,8 @@ class ND_Elt:
 
     #
     @visible.setter
-    def visible(self, value: bool) -> None:
-        self._visible = value
+    def visible(self, new_visible: bool) -> None:
+        self._visible = new_visible
 
     #
     def render(self) -> None:
@@ -1458,7 +1459,7 @@ class ND_Elt:
         return
 
     #
-    def handle_event(self, event) -> None:
+    def handle_event(self, event: nd_event.ND_Event) -> None:
         # Abstract class, so do nothing
         return
 
@@ -1514,7 +1515,7 @@ class ND_Elt:
     @property
     def min_w(self) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_min_width"):
+        if not self.position:
             return 0
         #
         return self.position.get_min_width()
@@ -1523,7 +1524,7 @@ class ND_Elt:
     @property
     def max_w(self) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_max_width"):
+        if not self.position:
             return 0
         #
         return self.position.get_max_width()
@@ -1532,7 +1533,7 @@ class ND_Elt:
     @property
     def min_h(self) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_max_height"):
+        if not self.position:
             return 0
         #
         return self.position.get_max_height()
@@ -1541,7 +1542,7 @@ class ND_Elt:
     @property
     def max_h(self) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_max_height"):
+        if not self.position:
             return 0
         #
         return self.position.get_max_height()
@@ -1549,7 +1550,7 @@ class ND_Elt:
     #
     def get_margin_left(self, space_left: int = -1) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_margin_left"):
+        if not self.position:
             return 0
         #
         return self.position.get_margin_left(space_left)
@@ -1557,7 +1558,7 @@ class ND_Elt:
     #
     def get_margin_right(self, space_left: int = -1) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_margin_right"):
+        if not self.position:
             return 0
         #
         return self.position.get_margin_right(space_left)
@@ -1565,7 +1566,7 @@ class ND_Elt:
     #
     def get_margin_top(self, space_left: int = -1) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_margin_top"):
+        if not self.position:
             return 0
         #
         return self.position.get_margin_top(space_left)
@@ -1573,7 +1574,7 @@ class ND_Elt:
     #
     def get_margin_bottom(self, space_left: int = -1) -> int:
         #
-        if not self.position or not hasattr(self.position, "get_margin_bottom"):
+        if not self.position:
             return 0
         #
         return self.position.get_margin_bottom(space_left)
@@ -1581,7 +1582,7 @@ class ND_Elt:
     #
     def get_width_stretch_ratio(self) -> float:
         #
-        if not self.position or not hasattr(self.position, "get_width_stretch_ratio"):
+        if not self.position:
             return 0
         #
         return self.position.get_width_stretch_ratio()
@@ -1589,10 +1590,16 @@ class ND_Elt:
     #
     def get_height_stretch_ratio(self) -> float:
         #
-        if not self.position or not hasattr(self.position, "get_height_stretch_ratio"):
+        if not self.position:
             return 0
         #
         return self.position.get_height_stretch_ratio()
+
+    #
+    def update_layout(self) -> None:
+        #
+        pass
+
 
 
 #
@@ -1750,11 +1757,12 @@ class ND_Quadtree:
         point_rect = ND_Rect(point[0], point[1], 1, 1)  # Represent the point as a tiny rectangle
         potential_collisions = self.retrieve(point_rect)
 
-        colliding_ids = []
+        colliding_ids: list[str] = []
         for obj_rect, obj_id in potential_collisions:
             if (obj_rect.x <= point[0] <= obj_rect.x + obj_rect.w and
                 obj_rect.y <= point[1] <= obj_rect.y + obj_rect.h):
                 colliding_ids.append(obj_id)
+
         return colliding_ids
 
 
@@ -1823,7 +1831,7 @@ class ND_Scene:
         return win_state not in cast(set[str], self.on_window_state)
 
     #
-    def handle_event(self, event) -> None:
+    def handle_event(self, event: nd_event.ND_Event) -> None:
         #
         if event.blocked:
             return
@@ -2090,7 +2098,7 @@ class ND_Rectangle(ND_Clickable):
             position: ND_Position,
             border_radius: int = 5,
             border: bool = True,
-            onclick: Optional[Callable] = None,
+            onclick: Optional[Callable[["ND_Clickable"], None]] = None,
             mouse_active: bool = True,
             base_bg_color: Optional[ND_Color] = None,
             base_fg_color: Optional[ND_Color] = None,
@@ -2161,7 +2169,7 @@ class ND_Sprite(ND_Clickable):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable] = None,
+            onclick: Optional[Callable[["ND_Clickable"], None]] = None,
             mouse_active: bool = True,
             base_texture: Optional[int | str] = None,
             hover_texture: Optional[int | str] = None,
@@ -2174,7 +2182,7 @@ class ND_Sprite(ND_Clickable):
         self.hover_texture: Optional[int | str] = self.window.prepare_image_to_render(hover_texture) if isinstance(hover_texture, str) else hover_texture
         self.clicked_texture: Optional[int | str] = self.window.prepare_image_to_render(clicked_texture) if isinstance(clicked_texture, str) else clicked_texture
         #
-        self.transformations: ND_Transformations = ND_Transformations()
+        self.transformations = ND_Transformations()
 
     #
     def render(self) -> None:
@@ -2281,7 +2289,7 @@ class ND_Sprite_of_AtlasTexture(ND_Elt):
         self.nb_tiles_x: int = nb_tiles_x
         self.nb_tiles_y: int = nb_tiles_y
         #
-        self.transformations: ND_Transformations = ND_Transformations()
+        self.transformations = ND_Transformations()
 
     #
     def render(self) -> None:
@@ -2315,7 +2323,7 @@ class ND_AnimatedSprite(ND_Elt):
         #
         self.default_animation_speed: float = default_animation_speed
         #
-        self.transformations: ND_Transformations = ND_Transformations()
+        self.transformations = ND_Transformations()
         #
         self.current_animation: str = default_animation
         self.current_frame: int = 0
@@ -2992,7 +3000,7 @@ class ND_Checkbox(ND_Elt):
             self.bt_unchecked.render()
 
     #
-    def on_bt_checked_pressed(self, _) -> None:
+    def on_bt_checked_pressed(self, clickable: ND_Clickable) -> None:
         #
         self.checked = False
         #
@@ -3003,7 +3011,7 @@ class ND_Checkbox(ND_Elt):
             self.on_pressed(self)
 
     #
-    def on_bt_unchecked_pressed(self, _) -> None:
+    def on_bt_unchecked_pressed(self, clickable: ND_Clickable) -> None:
         #
         self.checked = True
         #
@@ -3134,7 +3142,7 @@ class ND_NumberInput(ND_Elt):
         self.bt_down.handle_event(event)
 
     #
-    def on_bt_up_pressed(self, _) -> None:
+    def on_bt_up_pressed(self, clickable: ND_Clickable) -> None:
         #
         new_value: float = self.value + self.step
         #
@@ -3146,7 +3154,7 @@ class ND_NumberInput(ND_Elt):
         self.line_edit.set_text(str(self.value))
 
     #
-    def on_bt_down_pressed(self, _) -> None:
+    def on_bt_down_pressed(self, clickable: ND_Clickable) -> None:
         #
         new_value: float = self.value - self.step
         #
@@ -3158,7 +3166,7 @@ class ND_NumberInput(ND_Elt):
         self.line_edit.set_text(str(self.value))
 
     #
-    def on_line_edit_validated(self, _, value: str) -> None:
+    def on_line_edit_validated(self, line_edit: ND_LineEdit, value: str) -> None:
         #
         try:
             new_value: float = float(self.line_edit.text)
@@ -3177,11 +3185,11 @@ class ND_NumberInput(ND_Elt):
                 self.on_new_value_validated(self, self.value)
 
     #
-    def on_line_edit_escaped(self, _) -> None:
+    def on_line_edit_escaped(self, line_edit: ND_LineEdit) -> None:
         #
         value: str = self.line_edit.text
         #
-        self.on_line_edit_validated(_, value)
+        self.on_line_edit_validated(line_edit, value)
         #
         # self.line_edit.set_text(str(self.value))
 
@@ -3390,7 +3398,7 @@ class ND_SelectOptions(ND_Elt):
                     self.set_state_base()
 
     #
-    def on_main_button_clicked(self, _) -> None:
+    def on_main_button_clicked(self, clickable: ND_Clickable) -> None:
         #
         self.set_state_selection()
 
@@ -3711,7 +3719,9 @@ class ND_Container(ND_Elt):
         self.content_width = row_width
         #
         if isinstance(self.position, ND_Position_Container) and self.position.is_w_auto():
-            self.position._w = self.content_width
+            #
+            self.position.set_w(new_w=self.content_width)
+            # self.position._w = self.content_width
         #
         self.last_scroll_y = self.scroll_y
         crt_y: int = self.y + int(self.scroll_y)
@@ -3861,7 +3871,9 @@ class ND_Container(ND_Elt):
         self.content_height = col_height
         #
         if isinstance(self.position, ND_Position_Container) and self.position.is_h_auto():
-            self.position._h = col_height
+            #
+            self.position.set_h(new_h=col_height)
+            # self.position._h = col_height
 
         # Second pass
         #
@@ -3904,13 +3916,16 @@ class ND_Container(ND_Elt):
     #
     def _layout_grid(self):
         #
-        cols = self.element_alignment_kargs.get("cols", 3)
-        row_spacing = self.element_alignment_kargs.get("row_spacing", 5)
-        col_spacing = self.element_alignment_kargs.get("col_spacing", 5)
-
-        max_width = (self.w - (cols - 1) * col_spacing) // cols
-        x, y = 0, 0
-        row_height = 0
+        cols: int = int( self.element_alignment_kargs.get("cols", 3) )
+        row_spacing: int = int( self.element_alignment_kargs.get("row_spacing", 5) )
+        col_spacing: int = int( self.element_alignment_kargs.get("col_spacing", 5) )
+        #
+        max_width: int = (self.w - (cols - 1) * col_spacing) // cols
+        #
+        x: int = 0
+        y: int = 0
+        #
+        row_height: int = 0
 
         #
         self.last_scroll_x = self.scroll_x
@@ -3918,15 +3933,25 @@ class ND_Container(ND_Elt):
 
         #
         for i, element in enumerate(self.elements):
-            element.position._w = min(element.w, max_width)
+            #
+            # element.position._w = min(element.w, max_width)
+            element.position.set_w(new_w=min(element.w, max_width))
+            #
             if i % cols == 0 and i != 0:
                 x = 0
                 y += row_height + row_spacing
                 row_height = 0
-            element._x = self.x + int(self.scroll_x) + x
-            element._y = self.y + int(self.scroll_y) + y
-            x += element.tx + col_spacing
-            row_height = max(row_height, element.ty)
+            #
+            element.position.set_x(new_x=self.x + int(self.scroll_x) + x)
+            element.position.set_y(new_y=self.y + int(self.scroll_y) + y)
+            # element._x = self.x + int(self.scroll_x) + x
+            # element._y = self.y + int(self.scroll_y) + y
+            #
+            x += element.w + col_spacing
+            # x += element.tx + col_spacing
+            #
+            row_height = max(row_height, element.h)
+            # row_height = max(row_height, element.ty)
 
         self.content_width = self.w
         self.content_height = y + row_height
@@ -4049,7 +4074,7 @@ class ND_MultiLayer(ND_Elt):
         self.layers_keys: list[int] = sorted(list(self.elements_layers.keys()))
 
     #
-    def handle_event(self, event) -> None:
+    def handle_event(self, event: nd_event.ND_Event) -> None:
         #
         if event.blocked:
             return
@@ -4254,11 +4279,11 @@ class ND_CameraGrid(ND_Elt):
                         continue
                     #
                     old_position: ND_Position = elt.position
-                    if hasattr(elt, "transformations"):
-                        old_transformations: ND_Transformations = elt.transformations
-                        #
-                        if ND_Point(cx, cy) in grid_to_render.grid_transformations:
-                            elt.transformations = elt.transformations + grid_to_render.grid_transformations[ND_Point(cx, cy)]
+                    #
+                    old_transformations: ND_Transformations = elt.transformations
+                    #
+                    if ND_Point(cx, cy) in grid_to_render.grid_transformations:
+                        elt.transformations = elt.transformations + grid_to_render.grid_transformations[ND_Point(cx, cy)]
                     #
                     elt.position = ND_Position(dcx, dcy, int(gtx), int(gty))
                     #
@@ -4266,8 +4291,7 @@ class ND_CameraGrid(ND_Elt):
                     #
                     elt.position = old_position
                     #
-                    if hasattr(elt, "transformations"):
-                        elt.transformations = old_transformations
+                    elt.transformations = old_transformations
                     #
 
         #
@@ -4485,12 +4509,12 @@ class ND_RectGrid(ND_Elt):
         return
 
     #
-    def export_chunk_of_grid_to_numpy(self, x_0: int, y_0: int, x_1: int, y_1: int, fn_elt_to_value: Callable[[Optional[ND_Elt], Optional[int]], int | float], np_type: type = np.float32) -> np.ndarray:
+    def export_chunk_of_grid_to_numpy(self, x_0: int, y_0: int, x_1: int, y_1: int, fn_elt_to_value: Callable[[Optional[ND_Elt], Optional[int]], int | float], np_type: type = np.float32) -> np.ndarray[Any, Any]:
         #
         dtx: int = x_1 - x_0
         dty: int = y_1 - y_0
         #
-        grid: np.ndarray = np.zeros((dtx, dty), dtype=np_type)
+        grid: np.ndarray[Any, Any] = np.zeros((dtx, dty), dtype=np_type)
         #
         for dx in range(dtx):
             for dy in range(dty):
@@ -4522,7 +4546,7 @@ class ND_Position_RectGrid(ND_Position):
 
     #
     @w.setter
-    def w(self, new_value: int) -> None:
+    def w(self, new_w: int) -> None:
         # TODO
         pass
 
@@ -4533,7 +4557,7 @@ class ND_Position_RectGrid(ND_Position):
 
     #
     @h.setter
-    def h(self, new_value: int) -> None:
+    def h(self, new_h: int) -> None:
         # TODO
         pass
 
@@ -4559,7 +4583,7 @@ class ND_Position_FullWindow(ND_Position):
 
     #
     @x.setter
-    def x(self, new_value: int) -> None:
+    def x(self, new_x: int) -> None:
         # TODO
         pass
 
@@ -4570,7 +4594,7 @@ class ND_Position_FullWindow(ND_Position):
 
     #
     @y.setter
-    def y(self, new_value: int) -> None:
+    def y(self, new_y: int) -> None:
         # TODO
         pass
 
@@ -4581,7 +4605,7 @@ class ND_Position_FullWindow(ND_Position):
 
     #
     @w.setter
-    def w(self, new_value: int) -> None:
+    def w(self, new_w: int) -> None:
         # TODO
         pass
 
@@ -4592,7 +4616,7 @@ class ND_Position_FullWindow(ND_Position):
 
     #
     @h.setter
-    def h(self, new_value: int) -> None:
+    def h(self, new_h: int) -> None:
         # TODO
         pass
 
@@ -4673,7 +4697,7 @@ class ND_Position_Container(ND_Position):
 
     #
     @w.setter
-    def w(self, new_value: int) -> None:
+    def w(self, new_w: int) -> None:
         # TODO
         pass
 
@@ -4706,12 +4730,12 @@ class ND_Position_Container(ND_Position):
 
     #
     @h.setter
-    def h(self, new_value: int) -> None:
+    def h(self, new_h: int) -> None:
         # TODO
         pass
 
     #
-    def get_margin_left(self, space_around: int = -1) -> int:
+    def get_margin_left(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -4739,11 +4763,11 @@ class ND_Position_Container(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_left,
-                    int( space_around * pleft )
+                    int( space_left * pleft )
         )
 
     #
-    def get_margin_right(self, space_around: int = -1) -> int:
+    def get_margin_right(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -4771,11 +4795,11 @@ class ND_Position_Container(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_right,
-                    int( space_around * pval )
+                    int( space_left * pval )
         )
 
     #
-    def get_margin_top(self, space_around: int = -1) -> int:
+    def get_margin_top(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -4803,11 +4827,11 @@ class ND_Position_Container(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_top,
-                    int( space_around * pval )
+                    int( space_left * pval )
         )
 
     #
-    def get_margin_bottom(self, space_around: int = -1) -> int:
+    def get_margin_bottom(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -4835,7 +4859,7 @@ class ND_Position_Container(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_bottom,
-                    int( space_around * pval )
+                    int( space_left * pval )
         )
 
     #
@@ -4877,18 +4901,29 @@ class ND_Position_MultiLayer(ND_Position):
         self.w_str: Optional[str] = None
         self.h_str: Optional[str] = None
 
+        #
+        w_int: int = -1
+        h_int: int = -1
 
-        if w is not None and isinstance(w, str):
+        if isinstance(w, str):
             self.w_str = w
-            w = -1
+            w_int = -1
+        #
+        else:
+            #
+            w_int = int(w)
 
         #
-        if h is not None and isinstance(h, str):
+        if isinstance(h, str):
             self.h_str = h
-            h = -1
+            h_int = -1
+        #
+        else:
+            #
+            h_int = int(h)
 
         #
-        super().__init__(0, 0, w, h)
+        super().__init__(0, 0, w_int, h_int)
 
         #
         self.multilayer: ND_MultiLayer = multilayer
@@ -4937,7 +4972,7 @@ class ND_Position_MultiLayer(ND_Position):
         pass
 
     #
-    def get_margin_left(self, space_around: int = -1) -> int:
+    def get_margin_left(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -4965,11 +5000,11 @@ class ND_Position_MultiLayer(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_left,
-                    int( space_around * pleft )
+                    int( space_left * pleft )
         )
 
     #
-    def get_margin_right(self, space_around: int = -1) -> int:
+    def get_margin_right(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -4997,11 +5032,11 @@ class ND_Position_MultiLayer(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_right,
-                    int( space_around * pval )
+                    int( space_left * pval )
         )
 
     #
-    def get_margin_top(self, space_around: int = -1) -> int:
+    def get_margin_top(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -5029,11 +5064,11 @@ class ND_Position_MultiLayer(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_top,
-                    int( space_around * pval )
+                    int( space_left * pval )
         )
 
     #
-    def get_margin_bottom(self, space_around: int = -1) -> int:
+    def get_margin_bottom(self, space_left: int = -1) -> int:
         #
         if self.position_margins is None:
             return 0
@@ -5061,7 +5096,7 @@ class ND_Position_MultiLayer(ND_Position):
         #
         return max(
                     self.position_margins.min_margin_bottom,
-                    int( space_around * pval )
+                    int( space_left * pval )
         )
 
     #

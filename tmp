@@ -1,0 +1,217 @@
+Classes found and their file locations:
+- ND_EventsManager_SDL: /home/nathan/github/NappEngine_python/lib_nadisplay_sdl.py
+- ND_Window_GLFW: /home/nathan/github/NappEngine_python/lib_nadisplay_glfw.py
+- ND_EventsManager_GLFW: /home/nathan/github/NappEngine_python/lib_nadisplay_glfw.py
+- ND_Display_Pygame: /home/nathan/github/NappEngine_python/lib_nadisplay_pygame.py
+- ND_Window_Pygame: /home/nathan/github/NappEngine_python/lib_nadisplay_pygame.py
+- ND_EventsManager_Pygame: /home/nathan/github/NappEngine_python/lib_nadisplay_pygame.py
+- ND_MainApp: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Display: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Window: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_EventsManager: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Val: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Elt: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Quadtree: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Scene: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Text: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Clickable: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Rectangle: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Sprite: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_AtlasTexture: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Sprite_of_AtlasTexture: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_AnimatedSprite: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Button: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_H_ScrollBar: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_V_ScrollBar: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_LineEdit: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Checkbox: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_NumberInput: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_SelectOptions: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Container: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_MultiLayer: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_CameraScene: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_CameraGrid: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_RectGrid: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Position_RectGrid: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Position_FullWindow: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Position_Container: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Position_MultiLayer: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Elt_3D: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Space_3D: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- ND_Camera_3D: /home/nathan/github/NappEngine_python/lib_nadisplay.py
+- FontRenderer: /home/nathan/github/NappEngine_python/lib_nadisplay_sdl_opengl.py
+- ND_Display_GLFW_OPENGL: /home/nathan/github/NappEngine_python/lib_nadisplay_glfw_opengl.py
+- ND_Window_GLFW_OPENGL: /home/nathan/github/NappEngine_python/lib_nadisplay_glfw_opengl.py
+- ND_Color: /home/nathan/github/NappEngine_python/lib_nadisplay_colors.py
+- ND_Transformations: /home/nathan/github/NappEngine_python/lib_nadisplay_colors.py
+- ND_Event: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventQuit: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventKeyboard: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventKeyDown: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventKeyUp: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventMouse: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventMouseButtonDown: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventMouseButtonUp: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventMouseMotion: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventMouseWheelScrolled: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindow: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowMoved: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowResized: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowHidden: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowShown: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowFocusGained: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowFocusLost: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventWindowClose: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_EventEmpty: /home/nathan/github/NappEngine_python/lib_nadisplay_events.py
+- ND_Display_GLFW_VULKAN: /home/nathan/github/NappEngine_python/lib_nadisplay_glfw_vulkan.py
+- ND_Window_GLFW_VULKAN: /home/nathan/github/NappEngine_python/lib_nadisplay_glfw_vulkan.py
+- ND_Display_SDL_OPENGL: /home/nathan/github/NappEngine_python/lib_nadisplay_sdl_opengl.py
+- ND_Window_SDL_OPENGL: /home/nathan/github/NappEngine_python/lib_nadisplay_sdl_opengl.py
+- ND_Point: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Rect: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Position_Margins: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Position_Constraints: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Position: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- Collision: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Point_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Rect_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Sphere_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Line_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Circle_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Triangle_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Polygon_3D: /home/nathan/github/NappEngine_python/lib_nadisplay_rects.py
+- ND_Display_SDL_SDLGFX: /home/nathan/github/NappEngine_python/lib_nadisplay_sdl_sdlgfx.py
+- ND_Window_SDL_SDLGFX: /home/nathan/github/NappEngine_python/lib_nadisplay_sdl_sdlgfx.py
+
+Inheritance dependencies (Child -> Parents):
+- ND_EventsManager_SDL -> ND_EventsManager
+- ND_Window_GLFW -> ND_Window
+- ND_EventsManager_GLFW -> ND_EventsManager
+- ND_Display_Pygame -> ND_Display
+- ND_Window_Pygame -> ND_Window
+- ND_EventsManager_Pygame -> ND_EventsManager
+- ND_Val -> int
+- ND_Text -> ND_Elt
+- ND_Clickable -> ND_Elt
+- ND_Rectangle -> ND_Clickable
+- ND_Sprite -> ND_Clickable
+- ND_Sprite_of_AtlasTexture -> ND_Elt
+- ND_AnimatedSprite -> ND_Elt
+- ND_Button -> ND_Clickable
+- ND_H_ScrollBar -> ND_Elt
+- ND_V_ScrollBar -> ND_Elt
+- ND_LineEdit -> ND_Elt
+- ND_Checkbox -> ND_Elt
+- ND_NumberInput -> ND_Elt
+- ND_SelectOptions -> ND_Elt
+- ND_Container -> ND_Elt
+- ND_MultiLayer -> ND_Elt
+- ND_CameraScene -> ND_Elt
+- ND_CameraGrid -> ND_Elt
+- ND_RectGrid -> ND_Elt
+- ND_Position_RectGrid -> ND_Position
+- ND_Position_FullWindow -> ND_Position
+- ND_Position_Container -> ND_Position
+- ND_Position_MultiLayer -> ND_Position
+- ND_Space_3D -> ND_Elt
+- ND_Camera_3D -> ND_Elt
+- ND_Display_GLFW_OPENGL -> ND_Display
+- ND_Window_GLFW_OPENGL -> ND_Window_GLFW
+- ND_EventQuit -> ND_Event
+- ND_EventKeyboard -> ND_Event
+- ND_EventKeyDown -> ND_EventKeyboard
+- ND_EventKeyUp -> ND_EventKeyboard
+- ND_EventMouse -> ND_Event
+- ND_EventMouseButtonDown -> ND_EventMouse
+- ND_EventMouseButtonUp -> ND_EventMouse
+- ND_EventMouseMotion -> ND_EventMouse
+- ND_EventMouseWheelScrolled -> ND_EventMouse
+- ND_EventWindow -> ND_Event
+- ND_EventWindowMoved -> ND_EventWindow
+- ND_EventWindowResized -> ND_EventWindow
+- ND_EventWindowHidden -> ND_EventWindow
+- ND_EventWindowShown -> ND_EventWindow
+- ND_EventWindowFocusGained -> ND_EventWindow
+- ND_EventWindowFocusLost -> ND_EventWindow
+- ND_EventWindowClose -> ND_EventWindow
+- ND_EventEmpty -> ND_Event
+- ND_Display_GLFW_VULKAN -> ND_Display
+- ND_Window_GLFW_VULKAN -> ND_Window_GLFW
+- ND_Display_SDL_OPENGL -> ND_Display
+- ND_Window_SDL_OPENGL -> ND_Window
+- ND_Display_SDL_SDLGFX -> ND_Display
+- ND_Window_SDL_SDLGFX -> ND_Window
+
+Direct __init__ argument type dependencies (Class -> Types):
+- ND_EventsManager_SDL -> ND_MainApp
+- ND_Window_GLFW -> int, bool, str, ND_Display, Optional
+- ND_EventsManager_GLFW -> ND_MainApp
+- ND_Display_Pygame -> ND_MainApp, Type, ND_Window
+- ND_Window_Pygame -> int, bool, str, ND_Display, Optional
+- ND_EventsManager_Pygame -> ND_MainApp
+- ND_MainApp -> list, Type, str
+- ND_Display -> ND_MainApp, Type
+- ND_Window -> ND_Display, str, Optional, int
+- ND_EventsManager -> ND_MainApp
+- ND_Val -> int
+- ND_Elt -> ND_Position, str, ND_Window
+- ND_Quadtree -> Optional, int
+- ND_Scene -> ND_Point, int, str, ND_Elt, dict, Optional, ND_Window
+- ND_Text -> ND_Color, int, bool, str, ND_Position, Optional, ND_Window
+- ND_Clickable -> bool, str, Callable, ND_Position, Optional, ND_Window
+- ND_Rectangle -> ND_Color, int, bool, str, Callable, ND_Position, Optional, ND_Window
+- ND_Sprite -> bool, str, Callable, ND_Position, Optional, ND_Window
+- ND_AtlasTexture -> ND_Point, str, ND_Window
+- ND_Sprite_of_AtlasTexture -> int, str, ND_Position, ND_AtlasTexture, ND_Window
+- ND_AnimatedSprite -> list, float, str, dict, ND_Position, ND_Window
+- ND_Button -> ND_Transformations, ND_Color, int, bool, str, Callable, ND_Position, ND_Clickable, Optional, ND_Window
+- ND_H_ScrollBar -> float, ND_Color, int, str, Callable, ND_Position, Optional, ND_Window
+- ND_V_ScrollBar -> float, ND_Color, int, str, Callable, ND_Position, Optional, ND_Window
+- ND_LineEdit -> ND_Color, set, int, bool, str, Callable, ND_Position, Optional, ND_Window
+- ND_Checkbox -> bool, str, Callable, ND_Position, Optional, ND_Window
+- ND_NumberInput -> float, int, str, Callable, ND_Position, Optional, ND_Window
+- ND_SelectOptions -> set, int, str, Callable, ND_Position, Optional, ND_Window
+- ND_Container -> int, bool, str, dict, ND_Position, ND_Window
+- ND_MultiLayer -> int, str, ND_Elt, dict, ND_Position, ND_Window
+- ND_CameraScene -> float, str, ND_Scene, ND_Position, ND_Window
+- ND_CameraGrid -> list, float, str, ND_Position, ND_Window
+- ND_RectGrid -> ND_Color, int, str, ND_Position, ND_Window
+- ND_Position_RectGrid -> ND_RectGrid
+- ND_Position_FullWindow -> ND_Window
+- ND_Position_Container -> ND_Position_Margins, ND_Container, ND_Position_Constraints, Optional
+- ND_Position_MultiLayer -> ND_Position_Margins, ND_MultiLayer, ND_Position_Constraints, Optional
+- ND_Elt_3D -> ND_Point_3D
+- ND_Space_3D -> list, str, ND_Position, ND_Elt_3D, Optional, ND_Window
+- ND_Camera_3D -> ND_Space_3D, ND_Position, str, ND_Window
+- FontRenderer -> str
+- ND_Display_GLFW_OPENGL -> ND_MainApp, Type, ND_Window
+- ND_Window_GLFW_OPENGL -> int, bool, str, ND_Display, Optional
+- ND_Transformations -> Optional, bool, float, ND_Color
+- ND_Display_GLFW_VULKAN -> ND_MainApp, Type, ND_Window
+- ND_Window_GLFW_VULKAN -> int, bool, str, ND_Display, Optional
+- ND_Display_SDL_OPENGL -> ND_MainApp, Type, ND_Window
+- ND_Window_SDL_OPENGL -> int, bool, str, ND_Display, Optional
+- ND_Point -> int
+- ND_Rect -> int
+- ND_Position -> int
+- ND_Point_3D -> float
+- ND_Rect_3D -> ND_Point_3D
+- ND_Sphere_3D -> float, ND_Point_3D
+- ND_Line_3D -> ND_Point_3D
+- ND_Circle_3D -> float, ND_Point_3D
+- ND_Triangle_3D -> ND_Point_3D
+- ND_Polygon_3D -> list, ND_Point_3D
+- ND_Display_SDL_SDLGFX -> ND_MainApp, Type, ND_Window
+- ND_Window_SDL_SDLGFX -> int, bool, str, ND_Display, Optional
+
+Indirect __init__ attribute instantiation dependencies (Class -> Types):
+- ND_Window_Pygame -> ND_Rect
+- FontRenderer -> ortho
+- ND_Window_GLFW_OPENGL -> compileProgram, id
+- ND_Window_GLFW_VULKAN -> create_window, id
+- ND_Window_SDL_OPENGL -> SDL_GetWindowID, ND_Rect
+- ND_Window_SDL_SDLGFX -> SDL_CreateWindow, SDL_GetWindowID, ND_Rect
+Function main with the arguments (args=(), kwargs={'args': Namespace(path='./', recursive=0, ignore=[], visualize=False, allow_duplicate_class_names=True)}) took 0.7020s to execute.
+
+End of program.
+

@@ -8,7 +8,7 @@ Some utility classes for manipuling points, rects and base elements positions.
 """
 
 #
-from typing import Optional, Union
+from typing import Optional, Union, Any
 from dataclasses import dataclass
 #
 from math import sqrt
@@ -78,7 +78,7 @@ class ND_Point:
 
 
     #
-    def np_normalize(self) -> np.ndarray:
+    def np_normalize(self) -> np.ndarray[Any, Any]:
         #
         norm: float = self.x + self.y
         return np.array([self.x / norm, self.y / norm])
@@ -273,9 +273,9 @@ class ND_Position:
 
     #
     @x.setter
-    def x(self, value: int) -> None:
+    def x(self, new_x: int) -> None:
         #
-        self._x = value
+        self._x = new_x
 
     #
     @property
@@ -285,9 +285,9 @@ class ND_Position:
 
     #
     @y.setter
-    def y(self, value: int) -> None:
+    def y(self, new_y: int) -> None:
         #
-        self._y = value
+        self._y = new_y
 
     #
     @property
@@ -297,9 +297,9 @@ class ND_Position:
 
     #
     @w.setter
-    def w(self, value: int) -> None:
+    def w(self, new_w: int) -> None:
         #
-        self._w = value
+        self._w = new_w
 
     #
     @property
@@ -309,9 +309,9 @@ class ND_Position:
 
     #
     @h.setter
-    def h(self, value: int) -> None:
+    def h(self, new_h: int) -> None:
         #
-        self._h = value
+        self._h = new_h
 
     #
     @property
@@ -338,6 +338,56 @@ class ND_Position:
     #
     def set_h(self, new_h: int) -> None:
         self._h = new_h
+
+    #
+    def get_min_width(self) -> int:
+        #
+        return self._w
+
+    #
+    def get_max_width(self) -> int:
+        #
+        return self._w
+
+    #
+    def get_min_height(self) -> int:
+        #
+        return self._h
+
+    #
+    def get_max_height(self) -> int:
+        #
+        return self._h
+
+    #
+    def get_margin_top(self, space_left: int = -1) -> int:
+        #
+        return 0
+
+    #
+    def get_margin_bottom(self, space_left: int = -1) -> int:
+        #
+        return 0
+
+    #
+    def get_margin_left(self, space_left: int = -1) -> int:
+        #
+        return 0
+
+    #
+    def get_margin_right(self, space_left: int = -1) -> int:
+        #
+        return 0
+
+    #
+    def get_width_stretch_ratio(self) -> float:
+        #
+        return 1
+
+    #
+    def get_height_stretch_ratio(self) -> float:
+        #
+        return 1
 
 
 # --- Helper Collision Class ---
@@ -663,7 +713,7 @@ class ND_Point_3D:
         """
         return Collision.point_rect(self, rect) # Delegate to Collision helper
 
-    def np_normalize(self) -> np.ndarray:
+    def np_normalize(self) -> np.ndarray[Any, Any]:
         """
         Normalizes the 3D point vector to a unit vector using NumPy.
         Returns a NumPy array representing the normalized vector.
@@ -691,7 +741,7 @@ class ND_Point_3D:
         """
         return (self.x, self.y, self.z)
 
-    def to_numpy(self) -> np.ndarray:
+    def to_numpy(self) -> np.ndarray[Any, Any]:
         """
         Converts the ND_Point_3D instance to a NumPy array.
         """
@@ -1044,7 +1094,7 @@ class ND_Circle_3D:
         self.center: ND_Point_3D = center
         self.radius: float = float(radius)
         # Store the normal as a normalized NumPy array
-        self.normal: np.ndarray = normal_np / normal_magnitude
+        self.normal: np.ndarray[Any, Any] = normal_np / normal_magnitude
 
     def __hash__(self) -> int:
         # Hashing involves the center, radius, and normal (as a tuple for consistency)
@@ -1181,7 +1231,7 @@ class ND_Polygon_3D:
         # TODO: Add check for coplanarity and calculate normal.
         # TODO: Add check for simple polygon (non-self-intersecting)
         self.vertices: list[ND_Point_3D] = vertices
-        self.normal: Optional[np.ndarray] = None # Store calculated normal (TODO)
+        self.normal: Optional[np.ndarray[Any, Any]] = None # Store calculated normal (TODO)
         # Calculate normal if possible (requires coplanarity check)
         if len(vertices) >= 3:
              try:

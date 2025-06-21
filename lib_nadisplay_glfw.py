@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Author: CERISARA Nathan (https://github.com/nath54)
 
@@ -17,7 +19,7 @@ from lib_nadisplay import ND_EventsManager, ND_MainApp, ND_Window, ND_Display
 
 
 #
-def get_display_info() -> Optional[glfw._GLFWvidmode]:
+def get_display_info() -> Optional[glfw._GLFWvidmode]:  # type: ignore
     # Initialize GLFW
     if not glfw.init():
         return None
@@ -29,7 +31,7 @@ def get_display_info() -> Optional[glfw._GLFWvidmode]:
         return None
 
     # Get video mode of the primary monitor
-    video_mode = glfw.get_video_mode(monitor)
+    video_mode = glfw.get_video_mode(monitor)  # type: ignore
     if not video_mode:
         glfw.terminate()
         return None
@@ -53,7 +55,7 @@ class ND_Window_GLFW(ND_Window):
         #
         super().__init__(display=display, window_id=window_id, init_state=init_state)
         #
-        self.glw_window: glfw._GLFWwindow = None
+        self.glw_window: Optional[glfw._GLFWwindow] = None
 
 
 #

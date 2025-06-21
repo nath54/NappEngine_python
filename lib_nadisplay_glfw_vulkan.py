@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Author: CERISARA Nathan (https://github.com/nath54)
 

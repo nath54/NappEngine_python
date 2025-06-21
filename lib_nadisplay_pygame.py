@@ -197,7 +197,7 @@ class ND_Window_Pygame(ND_Window):
             self,
             display: ND_Display,
             window_id: int,
-            size: tuple[int, int] | str,
+            size: tuple[int, int] | str | None,
             title: str = "Pygame App",
             fullscreen: bool = False,
             init_state: Optional[str] = None
@@ -224,6 +224,7 @@ class ND_Window_Pygame(ND_Window):
                     self.height = int(float(screen_height) / 1.5)
         #
         elif isinstance(size, tuple):
+            #
             self.width = size[0]
             self.height = size[1]
 
@@ -359,28 +360,34 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def blit_texture(self, surface: pygame.Surface, dst_rect: ND_Rect) -> None:
+    def blit_texture(self, texture: Any, dst_rect: ND_Rect) -> None:
+
+        #
+        if not isinstance(texture, pygame.Surface):
+            #
+            return
+
         # Copy the texture into the window display buffer thanks to the renderer
 
         #
         if not self.display.initialized:
             return
 
-        # Get surface size
+        # Get texture size
         surf_width: int
         surf_height: int
-        surf_width, surf_height = surface.get_size()
+        surf_width, surf_height = texture.get_size()
 
-        # Resize surface if needed
+        # Resize texture if needed
         if (dst_rect.w > 0 and surf_width != dst_rect.w) or (dst_rect.h > 0 and surf_height != dst_rect.h):
             #
             resize_w: int = dst_rect.w if dst_rect.w > 0 else surf_width
             resize_h: int = dst_rect.h if dst_rect.h > 0 else surf_height
             #
-            surface = pygame.transform.scale(surface, (resize_w, resize_h))
+            texture = pygame.transform.scale(texture, (resize_w, resize_h))
 
         # Then blit texture
-        self.pygame_screen.blit(surface, pyrect(dst_rect))
+        self.pygame_screen.blit(texture, pyrect(dst_rect))
 
 
     #
@@ -395,7 +402,7 @@ class ND_Window_Pygame(ND_Window):
             font_name = self.display.default_font
 
         # Get font
-        font: Optional[pygame.font.Font] = cast(pygame.font.Font, self.display.get_font(font_name, font_size))
+        font: Optional[pygame.font.Font] = cast(Optional[pygame.font.Font], self.display.get_font(font_name, font_size))
 
         # Do nothing if not font got
         if font is None:
@@ -563,13 +570,13 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, line_color: ND_Color, border_thickness: int=1) -> None:
+    def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color, border_thickness: int=1) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        pygame.draw.rect(self.pygame_screen, pycl(line_color), (x, y, width, height), border_thickness)
+        pygame.draw.rect(self.pygame_screen, pycl(outline_color), (x, y, width, height), border_thickness)
 
 
     #
@@ -583,13 +590,13 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_unfilled_circle(self, x: int, y: int, radius: int, line_color: ND_Color, border_thickness: int=1) -> None:
+    def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color, border_thickness: int=1) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        pygame.draw.circle(self.pygame_screen, pycl(line_color), (x, y), radius, border_thickness)
+        pygame.draw.circle(self.pygame_screen, pycl(outline_color), (x, y), radius, border_thickness)
 
 
     #
@@ -603,13 +610,13 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, line_color: ND_Color, border_thickness: int = 1) -> None:
+    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color, border_thickness: int = 1) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        pygame.draw.ellipse(self.pygame_screen, pycl(line_color), (x-rx, y-ry, x+rx, y+rx), border_thickness)
+        pygame.draw.ellipse(self.pygame_screen, pycl(outline_color), (x-rx, y-ry, x+rx, y+rx), border_thickness)
 
 
     #
@@ -633,13 +640,13 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, line_color: ND_Color, line_thickness: int = 1) -> None:
+    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color, line_thickness: int = 1) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        self.draw_arc(x, y, radius, angle_start, angle_end, line_color, line_thickness)
+        self.draw_arc(x, y, radius, angle_start, angle_end, outline_color, line_thickness)
 
         # TODO: lines
 
@@ -655,13 +662,13 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, line_color: ND_Color, border_thickness: int = 1) -> None:
+    def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color, border_thickness: int = 1) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        self.draw_unfilled_polygon([x1, x2, x3], [y1, y2, y3], line_color, border_thickness)
+        self.draw_unfilled_polygon([x1, x2, x3], [y1, y2, y3], outline_color, border_thickness)
 
 
     #
@@ -675,7 +682,7 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, border_thickness: int = 1) -> None:
+    def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color, border_thickness: int = 1) -> None:
 
         #
         if not self.display.initialized:
@@ -689,7 +696,7 @@ class ND_Window_Pygame(ND_Window):
         n: int = len(x_coords)
 
         #
-        pygame.draw.polygon(self.pygame_screen, pycl(line_color), [(x_coords[i], y_coords[i]) for i in range(n)], border_thickness)
+        pygame.draw.polygon(self.pygame_screen, pycl(outline_color), [(x_coords[i], y_coords[i]) for i in range(n)], border_thickness)
 
 
     #
@@ -1029,7 +1036,7 @@ class ND_EventsManager_Pygame(ND_EventsManager):
             #
             nd_window_id: int = -1
             #
-            if self.main_app.display is not None:
+            if self.main_app.display is not None:  # type: ignore
                 #
                 window_id: int
                 window: Optional[ND_Window]

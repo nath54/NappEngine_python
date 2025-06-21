@@ -54,7 +54,7 @@ def convert_deg_to_rad(angle_in_deg: float) -> float:
 
 def earcut_triangulate_polygon(points: list[ND_Point]) -> list[tuple[ND_Point, ND_Point, ND_Point]]:
     #
-    triangles = []
+    triangles: list[tuple[ND_Point, ND_Point, ND_Point]] = []
     remaining = points[:]
     #
     while len(remaining) > 3:
@@ -91,7 +91,7 @@ def earcut_is_convex(a: ND_Point, b: ND_Point, c: ND_Point) -> bool:
 
 #
 def earcut_is_point_inside_triangle(p: ND_Point, a: ND_Point, b: ND_Point, c: ND_Point) -> bool:
-    def sign(p1, p2, p3):
+    def sign(p1: ND_Point, p2: ND_Point, p3: ND_Point):
         return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
 
     d1, d2, d3 = sign(p, a, b), sign(p, b, c), sign(p, c, a)
