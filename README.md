@@ -12,18 +12,18 @@ The project is separated into 2 large layers:
 
 - **The backend layer:** Its role is to use correctly the sub systems rendering engines like (`SDL2`, `GLFW`, `Pygame`) for windows management and (`OpenGL`, `Vulkan`) for rendering. The main classes for backend are:
 
-- `ND_Display`: Global display management and font gestion
-- `ND_Window`: Window specific management and core rendering functions
-- `ND_EventsManager`: Event manager system
+  - `ND_Display`: Global display management and font gestion
+  - `ND_Window`: Window specific management and core rendering functions
+  - `ND_EventsManager`: Event manager system
 
     For each possible combination (like `Pygame`,  `SDL2 + SDLGFX`, `SDL2 + OpenGL`, `GLFW + OpenGL`, `GLFW + Vulkan`), there are scripts where thoses specific classes are implemented.
 
 - **The frontend layer:** Its role is to propose an abstraction layer on common rendering functionnalities and to help design apps or games. The main classes for frontend are:
 
-- `ND_MainApp`
-- and the `ND_+Element_Name+` for each element given to use with the library, like `ND_Elt_TextInput` or `ND_Elt_Sprite` or `ND_Elt_Button`.
+  - `ND_MainApp`
+  - and the `ND_+Element_Name+` for each element given to use with the library, like `ND_Elt_TextInput` or `ND_Elt_Sprite` or `ND_Elt_Button`.
 
-The main classes are organized in the `lib_nadisplay_core.py`, and all the other classes are organized each in their `lib_nadisplay_???.py` file.
+  The main classes are organized in the `lib_nadisplay_core.py`, and all the other classes are organized each in their `lib_nadisplay_???.py` file.
 
 Some OpenGL shaders are stored in the folder `gl_shaders/`, the vulkan shaders will be store in the folder `vk_shaders/`.
 
