@@ -4,8 +4,8 @@ and extract the depency graph of the classes between themselves.
 
 There are three type of dependencies processed here :
 - First, the direct inheritance Child Class --[depend of parent]--> Parent Class
-- Second, the direct __init__ arguments types dependency
-- Third, the indirect __init__ attributes types dependency that are not initialized directly from the __init__ arguments.
+- Second, the direct class functions arguments types dependency
+- Third, the indirect class functions attributes types dependency that are not initialized directly from the class functions arguments.
 
 Author: Nathan Cerisara (https://github.com/nath54/)
 
@@ -849,7 +849,7 @@ def main(args: argparse.Namespace) -> None:
         lines.append("- None detected.")
 
     #
-    lines.append("\nDirect __init__ argument type dependencies (Class -> Types):")
+    lines.append("\nDirect class functions argument type dependencies (Class -> Types):")
     #
     if dependency_2_argument_type:
         #
@@ -862,7 +862,7 @@ def main(args: argparse.Namespace) -> None:
         lines.append("- None detected.")
 
     #
-    lines.append("\nIndirect __init__ attribute instantiation dependencies (Class -> Types):")
+    lines.append("\nIndirect class functions attribute instantiation dependencies (Class -> Types):")
     #
     if dependency_3_attribute_type:
         #

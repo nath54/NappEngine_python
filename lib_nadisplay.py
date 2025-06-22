@@ -5174,19 +5174,19 @@ class ND_Camera_3D(ND_Elt):
 ###########################################################################
 
 
-def prepare_backend(backend: str = "sdl_sdlgfx"):
+def prepare_backend(backend: str = "sdl2_sdlgfx"):
 
     #
-    if backend == "sdl_sdlgfx":
+    if backend == "sdl2_sdlgfx":
         #
-        from lib_nadisplay_sdl_sdlgfx import ND_Display_SDL_SDLGFX as DisplayClass, ND_Window_SDL_SDLGFX as WindowClass     # type: ignore
-        from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass     # type: ignore
+        from lib_nadisplay_sdl2_sdlgfx import ND_Display_SDL2_SDLGFX as DisplayClass, ND_Window_SDL2_SDLGFX as WindowClass     # type: ignore
+        from lib_nadisplay_sdl2 import ND_EventsManager_SDL as EventsManagerClass     # type: ignore
 
     #
-    elif backend == "sdl_opengl":
+    elif backend == "sdl2_opengl":
         #
-        from lib_nadisplay_sdl_opengl import ND_Display_SDL_OPENGL as DisplayClass, ND_Window_SDL_OPENGL as WindowClass     # type: ignore
-        from lib_nadisplay_sdl import ND_EventsManager_SDL as EventsManagerClass     # type: ignore
+        from lib_nadisplay_sdl2_opengl import ND_Display_SDL2_OPENGL as DisplayClass, ND_Window_SDL2_OPENGL as WindowClass     # type: ignore
+        from lib_nadisplay_sdl2 import ND_EventsManager_SDL as EventsManagerClass     # type: ignore
 
     #
     elif backend == "glfw_opengl":
@@ -5208,7 +5208,7 @@ def prepare_backend(backend: str = "sdl_sdlgfx"):
     #
     else:
         #
-        raise UserWarning(f"Unsupportend backend : `{backend}`.\n\nList of supported backends :\n\t- `sdl_sdlgfx`\n\t- `sdl_opengl`\n\t- `glfw_opengl`\n\t- `glfw_vulkan`\n\t- `pygame`\n")
+        raise UserWarning(f"Unsupportend backend : `{backend}`.\n\nList of supported backends :\n\t- `sdl2_sdlgfx`\n\t- `sdl2_opengl`\n\t- `glfw_opengl`\n\t- `glfw_vulkan`\n\t- `pygame`\n")
 
     #
     return DisplayClass, WindowClass, EventsManagerClass

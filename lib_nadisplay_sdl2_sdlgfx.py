@@ -28,11 +28,11 @@ from ctypes import c_int, byref
 from lib_nadisplay_colors import ND_Color, ND_Transformations
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_sdl import to_sdl_color, get_display_info
+from lib_nadisplay_sdl2 import to_sdl_color, get_display_info
 
 
 #
-class ND_Display_SDL_SDLGFX(ND_Display):
+class ND_Display_SDL2_SDLGFX(ND_Display):
 
     #
     def __init__(self, main_app: ND_MainApp, WindowClass: Type[ND_Window]) -> None:
@@ -199,7 +199,7 @@ class ND_Display_SDL_SDLGFX(ND_Display):
 
 
 #
-class ND_Window_SDL_SDLGFX(ND_Window):
+class ND_Window_SDL2_SDLGFX(ND_Window):
     #
     def __init__(
             self,
