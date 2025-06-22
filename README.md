@@ -10,13 +10,13 @@ All the files in the root directory beginning with `lib_nadisplay_` are the core
 
 The project is separated into 2 large layers:
 
-- **The backend layer:** Its role is to use correctly the sub systems rendering engines like (`SDL`, `GLFW`, `Pygame`) for windows management and (`OpenGL`, `Vulkan`) for rendering. The main classes for backend are:
+- **The backend layer:** Its role is to use correctly the sub systems rendering engines like (`SDL2`, `GLFW`, `Pygame`) for windows management and (`OpenGL`, `Vulkan`) for rendering. The main classes for backend are:
 
 - `ND_Display`: Global display management and font gestion
 - `ND_Window`: Window specific management and core rendering functions
 - `ND_EventsManager`: Event manager system
 
-    For each possible combination (like `Pygame`,  `SDL + SDLGFX`, `SDL + OpenGL`, `GLFW + OpenGL`, `GLFW + Vulkan`), there are scripts where thoses specific classes are implemented.
+    For each possible combination (like `Pygame`,  `SDL2 + SDLGFX`, `SDL2 + OpenGL`, `GLFW + OpenGL`, `GLFW + Vulkan`), there are scripts where thoses specific classes are implemented.
 
 - **The frontend layer:** Its role is to propose an abstraction layer on common rendering functionnalities and to help design apps or games. The main classes for frontend are:
 
@@ -41,13 +41,15 @@ The full python pip requirements required to run any python file in the project 
 
 ### Back-end
 
-Currently the only backend working is `SDL + SDLGFX`, the backend `Pygame` is somewhat usable but with major bugs and no multi windowing.
+Currently the backend that are working are :
 
-There are some efforts to quickly get the backend `SDL + OpenGL`, then the others working, but for now, some *OpenGL Context Errors* can't be debugged.
+- `SDL2 + SDLGFX`
+- `SDL2 + OPENGL`
+- `GLFW + OPENGL`
 
-Okay, finally, I successfully found the error: sdl2 + opengl on python doesn't work with Wayland ! Had to switch into x11 windows manager, but now got only a black screen.
+`Pygame` is working a little, but there are some bugs and no multi-windowing.
 
-I'm currently trying glfw + opengl to see what happens, currently developping it.
+**Note:** It is difficult to work on the `GLFW + Vulkan` because of no good Vulkan Wrapper for Python with good library and examples.
 
 ### Front-end
 
