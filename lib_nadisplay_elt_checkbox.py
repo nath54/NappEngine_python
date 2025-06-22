@@ -15,27 +15,27 @@ from lib_nadisplay_colors import cl
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Elt
 from lib_nadisplay_elt_clickable import ND_Elt_Clickable
-from lib_nadisplay_elt_button import ND_Button
+from lib_nadisplay_elt_button import ND_Elt_Button
 
 
-# ND_Checkbox
-class ND_Checkbox(ND_Elt):
+# ND_Elt_Checkbox
+class ND_Elt_Checkbox(ND_Elt):
     def __init__(
         self,
         window: ND_Window,
         elt_id: str,
         position: ND_Position,
         checked: bool = False,
-        on_pressed: Optional[Callable[["ND_Checkbox"], None]] = None
+        on_pressed: Optional[Callable[["ND_Elt_Checkbox"], None]] = None
     ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
-        self.on_pressed: Optional[Callable[["ND_Checkbox"], None]] = on_pressed
+        self.on_pressed: Optional[Callable[["ND_Elt_Checkbox"], None]] = on_pressed
         #
         self.checked: bool = checked
         #
-        self.bt_checked: ND_Button = ND_Button(
+        self.bt_checked: ND_Elt_Button = ND_Elt_Button(
             window=self.window,
             elt_id=f"{self.elt_id}_bt_checked",
             position=self.position,
@@ -46,7 +46,7 @@ class ND_Checkbox(ND_Elt):
             # TODO: style
         )
         #
-        self.bt_unchecked: ND_Button = ND_Button(
+        self.bt_unchecked: ND_Elt_Button = ND_Elt_Button(
             window=self.window,
             elt_id=f"{self.elt_id}_bt_unchecked",
             position=self.position,

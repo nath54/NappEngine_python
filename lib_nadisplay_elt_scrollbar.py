@@ -19,8 +19,8 @@ from lib_nadisplay_core import ND_Window, ND_Elt
 
 
 
-# ND_H_ScrollBar class implementation
-class ND_H_ScrollBar(ND_Elt):
+# ND_Elt_H_ScrollBar class implementation
+class ND_Elt_H_ScrollBar(ND_Elt):
     #
     def __init__(
                     self,
@@ -30,12 +30,12 @@ class ND_H_ScrollBar(ND_Elt):
                     content_width: int,
                     bg_cl: ND_Color = cl((10, 10, 10)),
                     fg_cl: ND_Color = cl("white"),
-                    on_value_changed: Optional[Callable[["ND_H_ScrollBar", float], None]] = None
+                    on_value_changed: Optional[Callable[["ND_Elt_H_ScrollBar", float], None]] = None
         ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
-        self.on_value_changed: Optional[Callable[[ND_H_ScrollBar, float], None]] = on_value_changed
+        self.on_value_changed: Optional[Callable[[ND_Elt_H_ScrollBar, float], None]] = on_value_changed
         #
         self.content_width: int = content_width
         self.scroll_position: float = 0
@@ -115,8 +115,8 @@ class ND_H_ScrollBar(ND_Elt):
                         self.on_value_changed(self, self.scroll_position)
 
 
-# ND_V_ScrollBar class implementation
-class ND_V_ScrollBar(ND_Elt):
+# ND_Elt_V_ScrollBar class implementation
+class ND_Elt_V_ScrollBar(ND_Elt):
     #
     def __init__(
                     self,
@@ -126,12 +126,12 @@ class ND_V_ScrollBar(ND_Elt):
                     content_height: int,
                     fg_color: ND_Color = cl("white"),
                     bg_color: ND_Color = cl("dark gray"),
-                    on_value_changed: Optional[Callable[["ND_V_ScrollBar", float], None]] = None
+                    on_value_changed: Optional[Callable[["ND_Elt_V_ScrollBar", float], None]] = None
         ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
-        self.on_value_changed: Optional[Callable[[ND_V_ScrollBar, float], None]] = on_value_changed
+        self.on_value_changed: Optional[Callable[[ND_Elt_V_ScrollBar, float], None]] = on_value_changed
         #
         self.content_height = content_height
         self.scroll_position = 0

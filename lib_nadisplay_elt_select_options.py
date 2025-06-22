@@ -15,13 +15,13 @@ from lib_nadisplay_point import ND_Point
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Elt
 from lib_nadisplay_elt_clickable import ND_Elt_Clickable
-from lib_nadisplay_elt_button import ND_Button
-from lib_nadisplay_elt_container import ND_Container, ND_Position_Container
+from lib_nadisplay_elt_button import ND_Elt_Button
+from lib_nadisplay_elt_container import ND_Elt_Container, ND_Position_Container
 
 
 
-# ND_SelectOptions
-class ND_SelectOptions(ND_Elt):
+# ND_Elt_SelectOptions
+class ND_Elt_SelectOptions(ND_Elt):
     def __init__(
         self,
         window: ND_Window,
@@ -30,7 +30,7 @@ class ND_SelectOptions(ND_Elt):
         value: str,
         options: set[str],
         option_list_buttons_height: int = 300,
-        on_value_selected: Optional[Callable[["ND_SelectOptions", str], None]] = None,
+        on_value_selected: Optional[Callable[["ND_Elt_SelectOptions", str], None]] = None,
         font_size: int = 24,
         font_name: Optional[str] = None
     ) -> None:
@@ -40,12 +40,12 @@ class ND_SelectOptions(ND_Elt):
         self.font_name: Optional[str] = font_name
         self.font_size: int = font_size
         #
-        self.on_value_selected: Optional[Callable[[ND_SelectOptions, str], None]] = on_value_selected
+        self.on_value_selected: Optional[Callable[[ND_Elt_SelectOptions, str], None]] = on_value_selected
         #
         self.value: str = value
         self.options: set[str] = options
         #
-        self.options_bts: dict[str, ND_Button] = {}
+        self.options_bts: dict[str, ND_Elt_Button] = {}
         #
         self.option_list_buttons_height: int = option_list_buttons_height
         #
@@ -53,7 +53,7 @@ class ND_SelectOptions(ND_Elt):
         #
         # 1st side: the main button to show which element is selected, and if clicked, hide itself and show the 2nd part of it
         #
-        self.main_button: ND_Button = ND_Button(
+        self.main_button: ND_Elt_Button = ND_Elt_Button(
             window=self.window,
             elt_id=f"{self.elt_id}_main_button",
             position=self.position,
@@ -65,7 +65,7 @@ class ND_SelectOptions(ND_Elt):
         #
         # 2nd side: the buttons list to select a new option / see all the available options
         #
-        self.bts_options_container: ND_Container = ND_Container(
+        self.bts_options_container: ND_Elt_Container = ND_Elt_Container(
             window=self.window,
             elt_id=f"{self.elt_id}_bts_options_container",
             position=ND_Position(x=self.x, y=self.y, w=self.w, h=self.option_list_buttons_height),
@@ -77,7 +77,7 @@ class ND_SelectOptions(ND_Elt):
         #
         option: str
         for option in self.options:
-            self.options_bts[option] = ND_Button(
+            self.options_bts[option] = ND_Elt_Button(
                 window=self.window,
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
@@ -124,7 +124,7 @@ class ND_SelectOptions(ND_Elt):
         self.options.add(option_value)
 
         #
-        self.options_bts[option_value] = ND_Button(
+        self.options_bts[option_value] = ND_Elt_Button(
             window=self.window,
             elt_id=f"{self.elt_id}_bt_option_{option_value}",
             position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
@@ -180,7 +180,7 @@ class ND_SelectOptions(ND_Elt):
         #
         option: str
         for option in self.options:
-            self.options_bts[option] = ND_Button(
+            self.options_bts[option] = ND_Elt_Button(
                 window=self.window,
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),

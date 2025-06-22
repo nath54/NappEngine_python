@@ -19,8 +19,8 @@ from lib_nadisplay_core import ND_Window, ND_Elt
 
 
 
-# ND_MultiLayer class implementation
-class ND_MultiLayer(ND_Elt):
+# ND_Elt_MultiLayer class implementation
+class ND_Elt_MultiLayer(ND_Elt):
     #
     def __init__(
                     self,
@@ -177,7 +177,7 @@ class ND_Position_MultiLayer(ND_Position):
     #
     def __init__(
                     self,
-                    multilayer: ND_MultiLayer,
+                    multilayer: ND_Elt_MultiLayer,
                     w: int | str = -1,
                     h: int | str = -1,
                     position_constraints: Optional[ND_Position_Constraints] = None,
@@ -213,7 +213,7 @@ class ND_Position_MultiLayer(ND_Position):
         super().__init__(0, 0, w_int, h_int)
 
         #
-        self.multilayer: ND_MultiLayer = multilayer
+        self.multilayer: ND_Elt_MultiLayer = multilayer
         #
         self.positions_constraints: Optional[ND_Position_Constraints] = position_constraints
         self.position_margins: Optional[ND_Position_Margins] = position_margins

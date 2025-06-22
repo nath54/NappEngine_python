@@ -19,8 +19,8 @@ from lib_nadisplay_elt_clickable import ND_Elt_Clickable
 
 
 
-# ND_Button class implementation
-class ND_Button(ND_Elt_Clickable):
+# ND_Elt_Button class implementation
+class ND_Elt_Button(ND_Elt_Clickable):
 
     #
     def __init__(

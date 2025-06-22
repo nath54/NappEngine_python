@@ -27,13 +27,13 @@ from lib_nadisplay_transformation import ND_Transformation
 
 
 #
-class ND_CameraGrid(ND_Elt):
+class ND_Elt_CameraGrid(ND_Elt):
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, grids_to_render: list["ND_RectGrid"], zoom_x: float = 1.0, zoom_y: float = 1.0) -> None:
+    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, grids_to_render: list["ND_Elt_RectGrid"], zoom_x: float = 1.0, zoom_y: float = 1.0) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
-        self.grids_to_render: list[ND_RectGrid] = grids_to_render
+        self.grids_to_render: list[ND_Elt_RectGrid] = grids_to_render
         #
         self.origin: ND_Point = ND_Point(0, 0)
         self.zoom_x: float = zoom_x
@@ -44,7 +44,7 @@ class ND_CameraGrid(ND_Elt):
         #
         self.grid_lines_width: int = 0
         self.grid_lines_color: ND_Color = ND_Color(255, 255, 255)
-        grid_to_render: ND_RectGrid
+        grid_to_render: ND_Elt_RectGrid
         for grid_to_render in self.grids_to_render:
             if grid_to_render.grid_lines_width > self.grid_lines_width:
                 self.grid_lines_width = grid_to_render.grid_lines_width
@@ -102,7 +102,7 @@ class ND_CameraGrid(ND_Elt):
             )
 
         #
-        grid_to_render: ND_RectGrid
+        grid_to_render: ND_Elt_RectGrid
         for grid_to_render in self.grids_to_render:
 
             # Dessin des éléments
@@ -158,7 +158,7 @@ class ND_CameraGrid(ND_Elt):
 
 
 #
-class ND_RectGrid(ND_Elt):
+class ND_Elt_RectGrid(ND_Elt):
     #
     def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, grid_tx: int, grid_ty: int, grid_lines_width: int = 0, grid_lines_color: ND_Color = ND_Color(0, 0, 0)) -> None:
         #
@@ -373,11 +373,11 @@ class ND_RectGrid(ND_Elt):
 #
 class ND_Position_RectGrid(ND_Position):
     #
-    def __init__(self, rect_grid: ND_RectGrid) -> None:
+    def __init__(self, rect_grid: ND_Elt_RectGrid) -> None:
         #
         super().__init__()
         #
-        self.rect_grid: ND_RectGrid = rect_grid
+        self.rect_grid: ND_Elt_RectGrid = rect_grid
         #
 
     #

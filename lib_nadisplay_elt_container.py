@@ -15,12 +15,12 @@ from lib_nadisplay_point import ND_Point
 from lib_nadisplay_position import ND_Position, ND_Position_Constraints, ND_Position_Margins
 from lib_nadisplay_utils import clamp, get_percentage_from_str
 from lib_nadisplay_core import ND_Window, ND_Elt
-from lib_nadisplay_elt_scrollbar import ND_H_ScrollBar, ND_V_ScrollBar
+from lib_nadisplay_elt_scrollbar import ND_Elt_H_ScrollBar, ND_Elt_V_ScrollBar
 
 
 
-# ND_Container class implementation
-class ND_Container(ND_Elt):
+# ND_Elt_Container class implementation
+class ND_Elt_Container(ND_Elt):
     #
     def __init__(
             self,
@@ -75,8 +75,8 @@ class ND_Container(ND_Elt):
         self.elements_by_id: dict[str, ND_Elt] = {}
 
         # Elements that represents the scrollbar if there is one
-        self.w_scrollbar: Optional[ND_H_ScrollBar] = None
-        self.h_scrollbar: Optional[ND_V_ScrollBar] = None
+        self.w_scrollbar: Optional[ND_Elt_H_ScrollBar] = None
+        self.h_scrollbar: Optional[ND_Elt_V_ScrollBar] = None
 
         #
         self.scrollbar_w_height: int = scrollbar_w_height
@@ -196,7 +196,7 @@ class ND_Container(ND_Elt):
             if self.content_width > self.w:
                 #
                 if not self.w_scrollbar:
-                    self.w_scrollbar = ND_H_ScrollBar(
+                    self.w_scrollbar = ND_Elt_H_ScrollBar(
                                                         window=self.window,
                                                         elt_id=f"{self.elt_id}_wscroll",
                                                         position=ND_Position(self.x, self.y + self.h - self.scrollbar_w_height, self.w, self.scrollbar_w_height),
@@ -222,7 +222,7 @@ class ND_Container(ND_Elt):
             if self.content_height > self.h:
                 #
                 if not self.h_scrollbar:
-                    self.h_scrollbar = ND_V_ScrollBar(
+                    self.h_scrollbar = ND_Elt_V_ScrollBar(
                                                         window=self.window,
                                                         elt_id=f"{self.elt_id}_hscroll",
                                                         position=ND_Position(self.x + self.w - self.scrollbar_h_width, self.y, self.scrollbar_h_width, self.h),
@@ -667,7 +667,7 @@ class ND_Position_Container(ND_Position):
                     self,
                     w: int | str,
                     h: int | str,
-                    container: ND_Container,
+                    container: ND_Elt_Container,
                     position_constraints: Optional[ND_Position_Constraints] = None,
                     position_margins: Optional[ND_Position_Margins] = None
     ) -> None:
@@ -694,7 +694,7 @@ class ND_Position_Container(ND_Position):
         super().__init__(0, 0, w, h)
 
         #
-        self.container: ND_Container = container
+        self.container: ND_Elt_Container = container
         #
         self.positions_constraints: Optional[ND_Position_Constraints] = position_constraints
         self.position_margins: Optional[ND_Position_Margins] = position_margins

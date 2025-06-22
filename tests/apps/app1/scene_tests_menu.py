@@ -22,7 +22,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     )
 
     #
-    tests_menu_container: nd.ND_Container = nd.ND_Container(
+    tests_menu_container: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="tests_menu_container",
         position=nd.ND_Position_FullWindow(win),
@@ -33,7 +33,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     ### HEADER ###
 
     #
-    header: nd.ND_Container = nd.ND_Container(
+    header: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="header",
         position=nd.ND_Position_Container(w="100%", h="10%", container=tests_menu_container),
@@ -42,7 +42,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     tests_menu_container.add_element(header)
 
     #
-    bt_back: nd.ND_Button = nd.ND_Button(
+    bt_back: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="bt_back",
         position=nd.ND_Position_Container(w=150, h=40, container=header, position_margins=nd.ND_Position_Margins(margin=15, margin_bottom="50%", margin_top="50%")),
@@ -64,7 +64,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     ### BODY ###
 
     #
-    body: nd.ND_Container = nd.ND_Container(
+    body: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="body",
         position=nd.ND_Position_Container(w="100%", h="90%", container=tests_menu_container),
@@ -73,7 +73,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     tests_menu_container.add_element(body)
 
     #
-    bt_tests_container: nd.ND_Container = nd.ND_Container(
+    bt_tests_container: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="bt_tests_container",
         position=nd.ND_Position_Container(w="80%", h="80%", container=body, position_margins=margin_center),
@@ -82,7 +82,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     body.add_element(bt_tests_container)
 
     #
-    bt_test1: nd.ND_Button = nd.ND_Button(
+    bt_test1: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="bt_test1",
         position=nd.ND_Position_Container(w=150, h=30, container=bt_tests_container, position_margins=margin_center),

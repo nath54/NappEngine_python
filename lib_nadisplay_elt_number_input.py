@@ -15,14 +15,14 @@ from lib_nadisplay_position import ND_Position
 from lib_nadisplay_utils import clamp
 from lib_nadisplay_core import ND_Window, ND_Elt
 from lib_nadisplay_elt_clickable import ND_Elt_Clickable
-from lib_nadisplay_elt_button import ND_Button
-from lib_nadisplay_elt_line_edit import ND_LineEdit
-from lib_nadisplay_elt_container import ND_Container, ND_Position_Container
+from lib_nadisplay_elt_button import ND_Elt_Button
+from lib_nadisplay_elt_line_edit import ND_Elt_LineEdit
+from lib_nadisplay_elt_container import ND_Elt_Container, ND_Position_Container
 
 
 
-# ND_NumberInput
-class ND_NumberInput(ND_Elt):
+# ND_Elt_NumberInput
+class ND_Elt_NumberInput(ND_Elt):
     def __init__(
         self,
         window: ND_Window,
@@ -33,12 +33,12 @@ class ND_NumberInput(ND_Elt):
         max_value: float = 100,
         step: float = 1,
         digits_after_comma: int = 0,
-        on_new_value_validated: Optional[Callable[["ND_NumberInput", float], None]] = None
+        on_new_value_validated: Optional[Callable[["ND_Elt_NumberInput", float], None]] = None
     ) -> None:
         #
         super().__init__(window=window, elt_id=elt_id, position=position)
         #
-        self.on_new_value_validated: Optional[Callable[["ND_NumberInput", float], None]] = on_new_value_validated
+        self.on_new_value_validated: Optional[Callable[["ND_Elt_NumberInput", float], None]] = on_new_value_validated
         #
         self.min_value: float = min_value
         self.max_value: float = max_value
@@ -49,14 +49,14 @@ class ND_NumberInput(ND_Elt):
         else:
             self.value = int(clamp(value, self.min_value, self.max_value))
         #
-        self.main_row_container: ND_Container = ND_Container(
+        self.main_row_container: ND_Elt_Container = ND_Elt_Container(
             window=self.window,
             elt_id=f"{self.elt_id}_main_row_container",
             position=self.position,
             element_alignment="row"
         )
         #
-        self.line_edit: ND_LineEdit = ND_LineEdit(
+        self.line_edit: ND_Elt_LineEdit = ND_Elt_LineEdit(
             window=self.window,
             elt_id=f"{self.elt_id}_line_edit",
             position=ND_Position_Container(w="80%", h="100%", container=self.main_row_container),
@@ -70,14 +70,14 @@ class ND_NumberInput(ND_Elt):
         #
         self.main_row_container.add_element(self.line_edit)
         #
-        self.col_bts_container: ND_Container = ND_Container(
+        self.col_bts_container: ND_Elt_Container = ND_Elt_Container(
             window=self.window,
             elt_id=f"{self.elt_id}_col_bts_container",
             position=ND_Position_Container(w="20%", h="100%", container=self.main_row_container)
         )
         self.main_row_container.add_element(self.col_bts_container)
         #
-        self.bt_up: ND_Button = ND_Button(
+        self.bt_up: ND_Elt_Button = ND_Elt_Button(
             window=self.window,
             elt_id=f"{self.elt_id}_bt_up",
             position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
@@ -88,7 +88,7 @@ class ND_NumberInput(ND_Elt):
         )
         self.col_bts_container.add_element(self.bt_up)
         #
-        self.bt_down: ND_Button = ND_Button(
+        self.bt_down: ND_Elt_Button = ND_Elt_Button(
             window=self.window,
             elt_id=f"{self.elt_id}_bt_down",
             position=ND_Position_Container(w="100%", h="50%", container=self.col_bts_container),
@@ -158,7 +158,7 @@ class ND_NumberInput(ND_Elt):
         self.line_edit.set_text(str(self.value))
 
     #
-    def on_line_edit_validated(self, line_edit: ND_LineEdit, value: str) -> None:
+    def on_line_edit_validated(self, line_edit: ND_Elt_LineEdit, value: str) -> None:
         #
         try:
             new_value: float = float(self.line_edit.text)
@@ -177,7 +177,7 @@ class ND_NumberInput(ND_Elt):
                 self.on_new_value_validated(self, self.value)
 
     #
-    def on_line_edit_escaped(self, line_edit: ND_LineEdit) -> None:
+    def on_line_edit_escaped(self, line_edit: ND_Elt_LineEdit) -> None:
         #
         value: str = self.line_edit.text
         #

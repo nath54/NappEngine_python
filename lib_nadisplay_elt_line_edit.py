@@ -14,13 +14,13 @@ import lib_nadisplay_events as nd_event
 from lib_nadisplay_colors import ND_Color, cl
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Elt
-from lib_nadisplay_elt_scrollbar import ND_H_ScrollBar
+from lib_nadisplay_elt_scrollbar import ND_Elt_H_ScrollBar
 
 
 
 
 #
-class ND_LineEdit(ND_Elt):
+class ND_Elt_LineEdit(ND_Elt):
     def __init__(
         self,
         window: ND_Window,
@@ -42,8 +42,8 @@ class ND_LineEdit(ND_Elt):
         clicked_fg_color: Optional[ND_Color] = None,
         characters_restrictions: Optional[set[str]] = None,
         password_mode: bool = False,
-        on_line_edit_validated: Optional[Callable[["ND_LineEdit", str], None]] = None,
-        on_line_edit_escaped: Optional[Callable[["ND_LineEdit"], None]] = None
+        on_line_edit_validated: Optional[Callable[["ND_Elt_LineEdit", str], None]] = None,
+        on_line_edit_escaped: Optional[Callable[["ND_Elt_LineEdit"], None]] = None
     ) -> None:
         super().__init__(window=window, elt_id=elt_id, position=position)
         self.state: str = "normal"
@@ -66,14 +66,14 @@ class ND_LineEdit(ND_Elt):
         self.max_text_length: int = max_text_length
         self.characters_restrictions: Optional[set[str]] = characters_restrictions   # Do not accept others character that theses
         self.password_mode: bool = password_mode
-        self.on_line_edit_validated: Optional[Callable[[ND_LineEdit, str], None]] = on_line_edit_validated
-        self.on_line_edit_escaped: Optional[Callable[[ND_LineEdit], None]] = on_line_edit_escaped
+        self.on_line_edit_validated: Optional[Callable[[ND_Elt_LineEdit, str], None]] = on_line_edit_validated
+        self.on_line_edit_escaped: Optional[Callable[[ND_Elt_LineEdit], None]] = on_line_edit_escaped
 
         # Scrollbar-related
         self.scrollbar_height: int = 10
         self.full_text_width: int = 0
         self.scroll_offset: int = 0
-        self.scrollbar: ND_H_ScrollBar = ND_H_ScrollBar(
+        self.scrollbar: ND_Elt_H_ScrollBar = ND_Elt_H_ScrollBar(
             window = self.window,
             elt_id = f"scrollbar_{self.elt_id}",
             position = ND_Position(self.x, self.y + self.h - self.scrollbar_height, self.w, self.scrollbar_height),

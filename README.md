@@ -20,7 +20,7 @@ The project is separated into 2 large layers:
 
 - **The frontend layer:** Its role is to propose an abstraction layer on common rendering functionnalities and to help design apps or games. The main classes for frontend are:
     - `ND_MainApp`
-    - and the `ND_+Element_Name+` for each element given to use with the library, like `ND_Elt_TextInput` or `ND_Elt_Sprite` or `ND_Button`.
+    - and the `ND_+Element_Name+` for each element given to use with the library, like `ND_Elt_TextInput` or `ND_Elt_Sprite` or `ND_Elt_Button`.
 
     Due to issues about circular references, all class implementations are currently in a single `lib_nadisplay.py` file.
 
@@ -60,17 +60,17 @@ Currently, there are the following usable classes for creating apps and games wi
 - `ND_AtlasTexture`
 - `ND_Elt_Sprite_of_AtlasTexture`
 - `ND_Elt_AnimatedSprite`
-- `ND_Button`
-- `ND_H_ScrollBar`
-- `ND_V_ScrollBar`
-- `ND_LineEdit`
-- `ND_Checkbox`
-- `ND_NumberInput`
-- `ND_SelectOptions`
-- `ND_Container`
-- `ND_MultiLayer`
-- `ND_CameraGrid`
-- `ND_RectGrid`
+- `ND_Elt_Button`
+- `ND_Elt_H_ScrollBar`
+- `ND_Elt_V_ScrollBar`
+- `ND_Elt_LineEdit`
+- `ND_Elt_Checkbox`
+- `ND_Elt_NumberInput`
+- `ND_Elt_SelectOptions`
+- `ND_Elt_Container`
+- `ND_Elt_MultiLayer`
+- `ND_Elt_CameraGrid`
+- `ND_Elt_RectGrid`
 
 A lot of new element classes are planned to be added in the future.
 

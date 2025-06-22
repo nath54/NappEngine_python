@@ -20,7 +20,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     )
 
     #
-    main_menu_container: nd.ND_Container = nd.ND_Container(
+    main_menu_container: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="main_menu_container",
         position=nd.ND_Position_FullWindow(win),
@@ -40,7 +40,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     main_menu_container.add_element(game_title)
 
     #
-    bottom_row_container: nd.ND_Container = nd.ND_Container(
+    bottom_row_container: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="bottom_row_container",
         position=nd.ND_Position_Container(w="100%", h="75%", container=main_menu_container),
@@ -49,7 +49,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     main_menu_container.add_element(bottom_row_container)
 
     #
-    bts_container: nd.ND_Container = nd.ND_Container(
+    bts_container: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="bts_container",
         position=nd.ND_Position_Container(w="30%", h="100%", container=bottom_row_container),
@@ -61,7 +61,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     win.main_app.global_vars_set("main_menu_title", game_title)
 
     #
-    bt_tests: nd.ND_Button = nd.ND_Button(
+    bt_tests: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="bt_tests",
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
@@ -72,7 +72,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     bts_container.add_element(bt_tests)
 
     #
-    bt_quit: nd.ND_Button = nd.ND_Button(
+    bt_quit: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="bt_quit",
         position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),

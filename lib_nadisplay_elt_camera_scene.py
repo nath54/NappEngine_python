@@ -13,7 +13,7 @@ from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Scene, ND_Elt
 
 #
-class ND_CameraScene(ND_Elt):
+class ND_Elt_CameraScene(ND_Elt):
     #
     def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, scene_to_render: ND_Scene, zoom: float = 1.0) -> None:
         #

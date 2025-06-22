@@ -45,12 +45,12 @@ class ND_Space_3D(ND_Elt):
 
     #
     def render(self) -> None:
-        # Will be rendered by a ND_Camera_3D
+        # Will be rendered by a ND_Elt_Camera_3D
         pass
 
 
 #
-class ND_Camera_3D(ND_Elt):
+class ND_Elt_Camera_3D(ND_Elt):
 
     #
     def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, space_3D: ND_Space_3D) -> None:
