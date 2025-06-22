@@ -21,7 +21,7 @@ import glfw  # type: ignore
 import vulkan as vk  # type: ignore
 
 from lib_nadisplay_rects import ND_Point, ND_Rect
-from lib_nadisplay_colors import ND_Transformations
+from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
@@ -402,7 +402,7 @@ class ND_Window_GLFW_VULKAN(ND_Window_GLFW):
 
 
     #
-    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformations = ND_Transformations()) -> None:
+    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height: int, transformations: ND_Transformation = ND_Transformation()) -> None:
 
         #
         if not self.display.initialized:

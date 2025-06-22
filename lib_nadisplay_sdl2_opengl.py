@@ -49,7 +49,7 @@ import glm
 
 # Import lib_nadisplay functions
 from lib_nadisplay_colors import ND_Color
-from lib_nadisplay_colors import ND_Transformations
+from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_sdl2 import to_sdl_color, get_display_info
@@ -686,7 +686,7 @@ class ND_Window_SDL2_OPENGL(ND_Window):
         return texture_id
 
     #
-    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformations = ND_Transformations()) -> None:
+    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformation = ND_Transformation()) -> None:
 
         #
         if not self.display.initialized:

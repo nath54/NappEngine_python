@@ -16,7 +16,7 @@ import os
 import pygame
 
 from lib_nadisplay_colors import ND_Color
-from lib_nadisplay_colors import ND_Transformations
+from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_rects import ND_Rect, ND_Point
 from lib_nadisplay import ND_MainApp, ND_Display, ND_EventsManager, ND_Window, ND_Scene
 import lib_nadisplay_events as nd_event
@@ -453,7 +453,7 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int = -1, height: int = -1, transformations: ND_Transformations = ND_Transformations()) -> None:
+    def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int = -1, height: int = -1, transformations: ND_Transformation = ND_Transformation()) -> None:
         #
         # TODO: add Transformations
 
