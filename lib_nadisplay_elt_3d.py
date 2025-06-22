@@ -3,13 +3,13 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Main file for lib_nadisplay, all front-end elements and abstract classes of front-end classes.
+_summary_
 
 """
 
 
 #
-from typing import Optional
+from typing import Optional, Any
 #
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Elt
@@ -35,10 +35,10 @@ class ND_Elt_3D:
 class ND_Space_3D(ND_Elt):
 
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, elts: Optional[list[ND_Elt_3D]] = None ) -> None:
+    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, style_name: str ="default", styles_override: Optional[dict[str, Any]] = None, elts: Optional[list[ND_Elt_3D]] = None ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override=)
 
         #
         self.elts: list[ND_Elt_3D] = elts if elts is not None else []
@@ -53,9 +53,9 @@ class ND_Space_3D(ND_Elt):
 class ND_Elt_Camera_3D(ND_Elt):
 
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, space_3D: ND_Space_3D) -> None:
+    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, space_3D: ND_Space_3D, style_name: str ="default", styles_override: Optional[dict[str, Any]] = None) -> None:
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override)
         #
         self.space_3D: ND_Space_3D = space_3D
 

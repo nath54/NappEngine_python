@@ -3,7 +3,7 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Main file for lib_nadisplay, all front-end elements and abstract classes of front-end classes.
+_summary_
 
 """
 
@@ -20,6 +20,7 @@ import os
 import pickle
 
 from lib_nadisplay_colors import ND_Color
+from lib_nadisplay_style import ND_Style
 from lib_nadisplay_point import ND_Point
 from lib_nadisplay_rects import ND_Rect
 from lib_nadisplay_position import ND_Position
@@ -987,7 +988,9 @@ class ND_Window:
             self,
             display: ND_Display,
             window_id: int,
-            init_state: Optional[str] = None
+            init_state: Optional[str] = None,
+            styles: Optional[dict[str, ND_Style]] = None,
+            default_style: str = "default"
         ):
 
         #
@@ -1023,6 +1026,48 @@ class ND_Window:
 
         #
         self.next_texture_id: int = 0
+
+        #
+        ### Styles management. ###
+        #
+        self.styles: dict[str, ND_Style] = styles if styles is not None else {}
+        #
+        self._default_style: str = default_style
+        #
+        if self._default_style not in self.styles:
+            #
+            self.styles[self._default_style] = ND_Style()
+
+    #
+    def get_style_attribute(self, style_name: str, attribute_name: str, elt_state: str = "normal", styles_override: Optional[dict[str, Any]] = None) -> Optional[Any]:
+        #
+        style: ND_Style = self.get_style(style_name=style_name)
+        #
+        return style.get_attribute(attribute_name=attribute_name, elt_state=elt_state, styles_override=styles_override)
+
+    #
+    def get_default_style(self) -> ND_Style:
+        #
+        return self.styles[self._default_style]
+
+    #
+    def set_default_style(self, new_style: ND_Style) -> None:
+        #
+        self.styles[self._default_style] = new_style
+
+    #
+    def get_style(self, style_name: str) -> ND_Style:
+        #
+        if style_name not in self.styles:
+            #
+            return self.styles[self._default_style]
+        #
+        return self.styles[style_name]
+
+    #
+    def add_style(self, style_name: str, new_style: ND_Style) -> None:
+        #
+        self.styles[style_name] = new_style
 
     #
     def push_to_clip_rect_stack(self, x: int, y: int, w: int, h: int) -> None:
@@ -1331,10 +1376,134 @@ class ND_EventsManager:
         return ND_Point(0, 0)
 
 
+
+#
+class ND_EventsHandler_Elts:
+
+    #
+    def __init__(
+        self,
+
+        #
+        ### Function on elt click. ###
+        #
+        fn_on_click: Optional[ Callable[["ND_Elt"], None] ] = None,
+
+        #
+        ### Function on mouse hover enter. ###
+        #
+        fn_on_mouse_hover_enter: Optional[ Callable[["ND_Elt"], None] ] = None,
+
+        #
+        ### Function on mouse hover leave. ###
+        #
+        fn_on_mouse_hover_leave: Optional[ Callable[["ND_Elt"], None] ] = None,
+
+        #
+        ### Attribute to specify if to block events below or not. ###
+        #
+        block_events_below: bool = True,
+
+    ) -> None:
+
+        #
+        ### Function on elt click. ###
+        #
+        self.fn_on_click: Optional[ Callable[[ND_Elt], None] ] = fn_on_click
+
+        #
+        ### Function on mouse hover enter. ###
+        #
+        self.fn_on_mouse_hover_enter: Optional[ Callable[[ND_Elt], None] ] = fn_on_mouse_hover_enter
+
+        #
+        ### Function on mouse hover leave. ###
+        #
+        self.fn_on_mouse_hover_leave: Optional[ Callable[[ND_Elt], None] ] = fn_on_mouse_hover_leave
+
+        #
+        ### Attribute to specify if to block events below or not. ###
+        #
+        self.block_events_below: bool = block_events_below
+
+
+    #
+    def handle_event(self, event: nd_event.ND_Event, elt: "ND_Elt") -> None:
+
+        #
+        if event.blocked:
+            return
+        #
+        if not elt.visible:
+            elt.elt_state = "normal"
+            return
+        #
+        if not elt.active:
+            self.state = "deactivated"
+            return
+        #
+        if isinstance(event, nd_event.ND_EventMouseMotion):
+            #
+            if elt.position.rect.contains_point(ND_Point(event.x, event.y)):
+                #
+                if elt.elt_state != "hover":
+                    #
+                    elt.elt_state = "hover"
+                    #
+                    if self.fn_on_mouse_hover_enter is not None:
+                        #
+                        self.fn_on_mouse_hover_enter( elt )
+            else:
+                #
+                if elt.elt_state == "hover" and self.fn_on_mouse_hover_leave is not None:
+                    #
+                    self.fn_on_mouse_hover_leave( elt )
+                #
+                elt.elt_state = "normal"
+        #
+        elif isinstance(event, nd_event.ND_EventMouseButtonDown):
+            if event.button_id == 1:
+                if elt.position.rect.contains_point(ND_Point(event.x, event.y)):
+                    #
+                    elt.elt_state = "clicked"
+                    #
+                    elt.mouse_bt_down_on_hover = True
+                else:
+                    elt.mouse_bt_down_on_hover = False
+        #
+        elif isinstance(event, nd_event.ND_EventMouseButtonUp):
+            if event.button_id == 1:
+                #
+                elt.elt_state = "hover" if elt.position.rect.contains_point(ND_Point(event.x, event.y)) else "normal"
+                #
+                if self.state == "hover" and elt.mouse_bt_down_on_hover:
+                    #
+                    if self.block_events_below:
+                        event.blocked = True
+                    #
+                    if self.fn_on_click is not None:
+                        #
+                        self.fn_on_click( elt )
+            #
+            elt.mouse_bt_down_on_hover = False
+
+
+
 #
 class ND_Elt:
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position):
+    def __init__(
+        self,
+        window: ND_Window,
+        elt_id: str,
+        position: ND_Position,
+        style_name: str = "default",
+        styles_override: Optional[dict[str, Any]] = None,
+        events_handler: Optional[ND_EventsHandler_Elts] = None,
+        visible: bool = True,
+        active: bool = True,
+    ) -> None:
+
         #
         self.window: ND_Window = window
         #
@@ -1342,10 +1511,28 @@ class ND_Elt:
         #
         self.position: ND_Position = position
         #
-        self._visible: bool = True
-        self.clickable: bool = True
+        self._visible: bool = visible
+        self.active: bool = active
         #
-        self.transformations: ND_Transformation = ND_Transformation()
+        self.mouse_bt_down_on_hover: bool = False
+        #
+        self.elt_state: str = "normal"
+        #
+        self.style_name: str = style_name
+        self.styles_override: Optional[dict[str, Any]] = styles_override
+        #
+        self.events_handler: Optional[ND_EventsHandler_Elts] = events_handler
+
+    #
+    @property
+    def transformation(self) -> ND_Transformation:
+        #
+        return cast(ND_Transformation, self.window.get_style_attribute(
+            style_name=self.style_name,
+            attribute_name="transformation",
+            elt_state=self.elt_state,
+            styles_override=self.styles_override
+        ) )
 
     #
     @property
@@ -1380,8 +1567,12 @@ class ND_Elt:
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
-        # Abstract class, so do nothing
-        return
+        #
+        if self.events_handler is None:
+            #
+            return
+        #
+        self.events_handler.handle_event(event=event, elt=self)
 
     #
     @property

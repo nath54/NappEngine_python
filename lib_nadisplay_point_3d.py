@@ -3,7 +3,7 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Some utility classes for manipuling points, rects and base elements positions.
+_summary_
 
 """
 

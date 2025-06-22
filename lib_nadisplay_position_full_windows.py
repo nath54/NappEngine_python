@@ -3,10 +3,9 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Main file for lib_nadisplay, all front-end elements and abstract classes of front-end classes.
+_summary_
 
 """
-
 
 #
 from lib_nadisplay_position import ND_Position

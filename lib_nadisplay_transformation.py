@@ -3,7 +3,7 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Some utility functions for manipulating colors, and a database of common color names and their associated RGB codes.
+_summary_
 
 """
 

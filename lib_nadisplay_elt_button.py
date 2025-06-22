@@ -3,24 +3,23 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Main file for lib_nadisplay, all front-end elements and abstract classes of front-end classes.
+_summary_
 
 """
 
 #
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 #
 from lib_nadisplay_colors import ND_Color, cl
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_utils import get_font_size
-from lib_nadisplay_core import ND_Window
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_transformation import ND_Transformation
-from lib_nadisplay_elt_clickable import ND_Elt_Clickable
 
 
 
 # ND_Elt_Button class implementation
-class ND_Elt_Button(ND_Elt_Clickable):
+class ND_Elt_Button(ND_Elt):
 
     #
     def __init__(
@@ -28,27 +27,14 @@ class ND_Elt_Button(ND_Elt_Clickable):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable[[ND_Elt_Clickable], None]],
             text: str,
-            mouse_active: bool = True,
-            font_name: Optional[str] = None,
-            font_size: int = 24,
-            border_radius: int = 5,
-            border: bool = True,
-            base_bg_color: Optional[ND_Color] = None,
-            base_fg_color: Optional[ND_Color] = None,
-            base_bg_texture: Optional[int | str] = None,
-            hover_bg_color: Optional[ND_Color] = None,
-            hover_fg_color: Optional[ND_Color] = None,
-            hover_bg_texture: Optional[int | str] = None,
-            clicked_bg_color: Optional[ND_Color] = None,
-            clicked_fg_color: Optional[ND_Color] = None,
-            clicked_bg_texture: Optional[int | str] = None,
-            texture_transformations: ND_Transformation = ND_Transformation()
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.text: str = text
         self.font_name: Optional[str] = font_name

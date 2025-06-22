@@ -5,7 +5,7 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-SDL + OPENGL backend for lib_nadisplay.
+SDL3 + OPENGL backend for lib_nadisplay.
 
 """
 

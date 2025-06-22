@@ -1,3 +1,12 @@
+"""
+Author: CERISARA Nathan (https://github.com/nath54)
+
+File Description:
+
+_summary_
+
+"""
+
 #
 from math import sin, cos, atan, pi
 #

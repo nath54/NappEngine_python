@@ -3,7 +3,7 @@ Author: CERISARA Nathan (https://github.com/nath54)
 
 File Description:
 
-Main file for lib_nadisplay, all front-end elements and abstract classes of front-end classes.
+_summary_
 
 """
 
@@ -30,11 +30,13 @@ class ND_Elt_AnimatedSprite(ND_Elt):
             animations: dict[str, list[int | ND_Elt_Sprite_of_AtlasTexture]],
             animations_speed: dict[str, float],
             default_animation_speed: float = 0.1,
-            default_animation: str = ""
+            default_animation: str = "",
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override)
         #
         self.animations: dict[str, list[Any]] = animations
         self.animations_speed: dict[str, float] = animations_speed
