@@ -14,7 +14,7 @@ from typing import Optional
 from queue import Queue
 from lib_nadisplay_rects import ND_Point
 import lib_nadisplay_events as nd_event
-from lib_nadisplay import ND_EventsManager, ND_MainApp, ND_Window, ND_Display
+from lib_nadisplay_core import ND_EventsManager, ND_MainApp, ND_Window, ND_Display
 
 
 

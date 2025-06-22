@@ -28,8 +28,8 @@ from ctypes import c_int, byref
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_rects import ND_Rect, ND_Point
-from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_sdl2 import to_sdl_color, get_display_info
+from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Scene
+from lib_nadisplay_backend_sdl2 import to_sdl_color, get_display_info
 
 
 #

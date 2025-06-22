@@ -158,7 +158,7 @@
        style="stroke-width:0.528902"
        x="2007.5685"
        y="1346.5737"
-       id="tspan14">ND_Rectangle</tspan></text>
+       id="tspan14">ND_Elt_Rectangle</tspan></text>
   <text
      xml:space="preserve"
      style="font-size:11.2889px;font-family:Cantarell;-inkscape-font-specification:Cantarell;text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.528902;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:0.472414"
@@ -279,7 +279,7 @@
        id="tspan11"
        style="stroke-width:0.528902"
        x="1747.9067"
-       y="1461.662">ND_Text</tspan></text>
+       y="1461.662">ND_Elt_Text</tspan></text>
   <path
      style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5875;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
      d="m 1776.4276,1461.1527 59.5881,65.6997"
@@ -295,7 +295,7 @@
        style="stroke-width:0.528902"
        x="1977.2687"
        y="1475.2537"
-       id="tspan13">ND_Clickable</tspan></text>
+       id="tspan13">ND_Elt_Clickable</tspan></text>
   <path
      style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5875;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker23)"
      d="m 1966.4139,1485.7895 -28.5518,38.5473"
@@ -336,7 +336,7 @@
        style="stroke-width:0.528902"
        x="2052.7107"
        y="1371.1438"
-       id="tspan17">ND_Sprite</tspan></text>
+       id="tspan17">ND_Elt_Sprite</tspan></text>
   <path
      style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5875;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
      d="m 2019.2699,1373.2564 -26.4392,77.9229"
@@ -372,7 +372,7 @@
        style="stroke-width:0.528902"
        x="2167.2996"
        y="1522.5763"
-       id="tspan21">ND_Sprite_of_AtlasTexture</tspan></text>
+       id="tspan21">ND_Elt_Sprite_of_AtlasTexture</tspan></text>
   <path
      style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5875;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
      d="m 2086.4987,1522.0671 -123.8144,29.9836"
@@ -388,7 +388,7 @@
        style="stroke-width:0.528902"
        x="2105.9446"
        y="1475.4131"
-       id="tspan22">ND_AnimatedSprite</tspan></text>
+       id="tspan22">ND_Elt_AnimatedSprite</tspan></text>
   <path
      style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5875;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
      d="m 2049.4124,1479.9968 -99.3135,63.6625"

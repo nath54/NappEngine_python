@@ -53,7 +53,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
 
 
     #
-    page_title: nd.ND_Text = nd.ND_Text(
+    page_title: nd.ND_Elt_Text = nd.ND_Elt_Text(
         window=win,
         elt_id="page_title",
         position=nd.ND_Position_Container(w=250, h=40, container=header, position_margins=margin_center),

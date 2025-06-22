@@ -20,7 +20,7 @@ The project is separated into 2 large layers:
 
 - **The frontend layer:** Its role is to propose an abstraction layer on common rendering functionnalities and to help design apps or games. The main classes for frontend are:
     - `ND_MainApp`
-    - and the `ND_+Element_Name+` for each element given to use with the library, like `ND_TextInput` or `ND_Sprite` or `ND_Button`.
+    - and the `ND_+Element_Name+` for each element given to use with the library, like `ND_Elt_TextInput` or `ND_Elt_Sprite` or `ND_Button`.
 
     Due to issues about circular references, all class implementations are currently in a single `lib_nadisplay.py` file.
 
@@ -54,12 +54,12 @@ I'm currently trying glfw + opengl to see what happens, currently developping it
 
 Currently, there are the following usable classes for creating apps and games with the lib_nadisplay :
 
-- `ND_Text`
-- `ND_Rectangle`
-- `ND_Sprite`
+- `ND_Elt_Text`
+- `ND_Elt_Rectangle`
+- `ND_Elt_Sprite`
 - `ND_AtlasTexture`
-- `ND_Sprite_of_AtlasTexture`
-- `ND_AnimatedSprite`
+- `ND_Elt_Sprite_of_AtlasTexture`
+- `ND_Elt_AnimatedSprite`
 - `ND_Button`
 - `ND_H_ScrollBar`
 - `ND_V_ScrollBar`

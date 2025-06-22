@@ -29,7 +29,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     main_menu_scene.add_element(0, main_menu_container)
 
     #
-    game_title: nd.ND_Text = nd.ND_Text(
+    game_title: nd.ND_Elt_Text = nd.ND_Elt_Text(
                             window=win,
                             elt_id="game_title",
                             position=nd.ND_Position_Container(w="100%", h="20%", container=main_menu_container, position_margins=ND_Position_Margins(margin_top=25, margin_bottom=25)),

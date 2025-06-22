@@ -14,7 +14,7 @@ from typing import Optional
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_rects import ND_Point
 import lib_nadisplay_events as nd_event
-from lib_nadisplay import ND_EventsManager, ND_MainApp, ND_Window
+from lib_nadisplay_core import ND_EventsManager, ND_MainApp, ND_Window
 import ctypes  # type: ignore
 import sdl2  # type: ignore
 

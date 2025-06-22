@@ -49,9 +49,9 @@ import glm
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_rects import ND_Rect, ND_Point
-from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_opengl import compile_shaders
-from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
+from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Scene
+from lib_nadisplay_backend_opengl import compile_shaders
+from lib_nadisplay_backend_glfw import get_display_info, ND_Window_GLFW
 from lib_nadisplay_math import calc_rad_agl_about_h_axis, calc_point_with_angle_and_distance_from_another_point, convert_deg_to_rad, earcut_triangulate_polygon
 from lib_font_renderer_opengl import FontRenderer
 

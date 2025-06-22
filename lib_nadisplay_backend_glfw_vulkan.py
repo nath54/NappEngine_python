@@ -23,9 +23,9 @@ import vulkan as vk  # type: ignore
 from lib_nadisplay_rects import ND_Point, ND_Rect
 from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_colors import ND_Color
-from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
-from lib_nadisplay_glfw import get_display_info, ND_Window_GLFW
-from lib_nadisplay_vulkan import init_vulkan
+from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Scene
+from lib_nadisplay_backend_glfw import get_display_info, ND_Window_GLFW
+from lib_nadisplay_backend_vulkan import init_vulkan
 
 
 #

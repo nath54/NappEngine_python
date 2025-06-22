@@ -31,7 +31,7 @@ import glm
 
 # Import lib_nadisplay functions
 from lib_nadisplay_colors import ND_Color
-from lib_nadisplay_opengl import compile_shaders
+from lib_nadisplay_backend_opengl import compile_shaders
 
 
 #

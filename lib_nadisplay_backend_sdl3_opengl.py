@@ -48,9 +48,9 @@ import glm
 from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_rects import ND_Rect, ND_Point
-from lib_nadisplay import ND_MainApp, ND_Display, ND_Window, ND_Scene
+from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_SDL3 import to_sdl_color, get_display_info
-from lib_nadisplay_opengl import create_and_validate_gl_shader_program
+from lib_nadisplay_backend_opengl import create_and_validate_gl_shader_program
 from lib_font_renderer_opengl import FontRenderer
 
 #
