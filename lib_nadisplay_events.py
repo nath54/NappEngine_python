@@ -8,106 +8,176 @@ Bases abstract unified classes for events.
 """
 
 
-from dataclasses import dataclass
-
-
-@dataclass
+#
 class ND_Event:
-    blocked: bool = False
+
+    def __init__(self) -> None:
+        #
+        self.blocked: bool = False
 
 
-@dataclass
+#
 class ND_EventQuit(ND_Event):
-    pass
+
+    def __init__(self) -> None:
+        #
+        super().__init__()
 
 
-@dataclass
+#
 class ND_EventKeyboard(ND_Event):
-    keyboard_id: int = 0
-    key: str = ""
+
+    def __init__(self, keyboard_id: int = 0, key: str = "") -> None:
+        #
+        super().__init__()
+        #
+        self.keyboard_id: int = keyboard_id
+        self.key: str = key
 
 
-@dataclass
+#
 class ND_EventKeyDown(ND_EventKeyboard):
-    pass
+
+    def __init__(self, keyboard_id: int = 0, key: str = "") -> None:
+        #
+        super().__init__(keyboard_id=keyboard_id, key=key)
 
 
-@dataclass
+#
 class ND_EventKeyUp(ND_EventKeyboard):
-    pass
+
+    def __init__(self, keyboard_id: int = 0, key: str = "") -> None:
+        #
+        super().__init__(keyboard_id=keyboard_id, key=key)
 
 
-@dataclass
+#
 class ND_EventMouse(ND_Event):
-    mouse_id: int = 0
-    x: int = 0
-    y: int = 0
+
+    def __init__(self, mouse_id: int = 0, x: int = 0, y: int = 0) -> None:
+        #
+        super().__init__()
+        #
+        self.mouse_id: int = mouse_id
+        self.x: int = x
+        self.y: int = y
 
 
-@dataclass
+#
 class ND_EventMouseButtonDown(ND_EventMouse):
-    button_id: int = 0
+
+    def __init__(self, mouse_id: int = 0, x: int = 0, y: int = 0, button_id: int = 0) -> None:
+        #
+        super().__init__(mouse_id=mouse_id, x=x, y=y)
+        #
+        self.button_id: int = button_id
 
 
-@dataclass
+#
 class ND_EventMouseButtonUp(ND_EventMouse):
-    button_id: int = 0
+
+    def __init__(self, mouse_id: int = 0, x: int = 0, y: int = 0, button_id: int = 0) -> None:
+        #
+        super().__init__(mouse_id=mouse_id, x=x, y=y)
+        #
+        self.button_id: int = button_id
 
 
-@dataclass
+#
 class ND_EventMouseMotion(ND_EventMouse):
-    rel_x: int = 0
-    rel_y: int = 0
+
+    def __init__(self, mouse_id: int = 0, x: int = 0, y: int = 0, rel_x: int = 0, rel_y: int = 0) -> None:
+        #
+        super().__init__(mouse_id=mouse_id, x=x, y=y)
+        #
+        self.rel_x: int = rel_x
+        self.rel_y: int = rel_y
 
 
-@dataclass
+#
 class ND_EventMouseWheelScrolled(ND_EventMouse):
-    scroll_x: int = 0
-    scroll_y: int = 0
+
+    def __init__(self, mouse_id: int = 0, x: int = 0, y: int = 0, scroll_x: int = 0, scroll_y: int = 0) -> None:
+        #
+        super().__init__(mouse_id=mouse_id, x=x, y=y)
+        #
+        self.scroll_x: int = scroll_x
+        self.scroll_y: int = scroll_y
 
 
-@dataclass
+#
 class ND_EventWindow(ND_Event):
-    window_id: int = 0
+
+    def __init__(self, window_id: int = 0) -> None:
+        #
+        self.window_id: int = window_id
 
 
-@dataclass
+#
 class ND_EventWindowMoved(ND_EventWindow):
-    x: int = 0
-    y: int = 0
+
+    def __init__(self, window_id: int = 0, x: int = 0, y: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
+        #
+        self.x: int = x
+        self.y: int = y
 
 
-@dataclass
+#
 class ND_EventWindowResized(ND_EventWindow):
-    w: int = 0
-    h: int = 0
+
+    def __init__(self, window_id: int = 0, w: int = 0, h: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
+        #
+        self.w: int = w
+        self.h: int = h
 
 
-@dataclass
+#
 class ND_EventWindowHidden(ND_EventWindow):
-    pass
+
+    def __init__(self, window_id: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
 
 
-@dataclass
+#
 class ND_EventWindowShown(ND_EventWindow):
-    pass
+
+    def __init__(self, window_id: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
 
 
-@dataclass
+#
 class ND_EventWindowFocusGained(ND_EventWindow):
-    pass
+
+    def __init__(self, window_id: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
 
 
-@dataclass
+#
 class ND_EventWindowFocusLost(ND_EventWindow):
-    pass
+
+    def __init__(self, window_id: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
 
 
-@dataclass
+#
 class ND_EventWindowClose(ND_EventWindow):
-    pass
+
+    def __init__(self, window_id: int = 0) -> None:
+        #
+        super().__init__(window_id=window_id)
 
 
-@dataclass
+#
 class ND_EventEmpty(ND_Event):
-    pass
+
+    def __init__(self) -> None:
+        #
+        super().__init__()

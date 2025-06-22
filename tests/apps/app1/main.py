@@ -6,7 +6,7 @@ from typing import Optional
 import lib_nadisplay as nd
 
 #
-DisplayClass, WindowClass, EventsManagerClass = nd.prepare_backend("sdl2_sdlgfx")
+DisplayClass, WindowClass, EventsManagerClass = nd.prepare_backend("glfw_opengl")
 
 #
 from scene_main_menu import create_main_menu_scene

@@ -7,10 +7,6 @@ Some utility functions for manipulating colors, and a database of common color n
 
 """
 
-#
-from dataclasses import dataclass
-
-
 
 #
 def clamp(val: float | int, mini: int = 0, maxi: int = 255) -> int:
@@ -24,12 +20,15 @@ def clamp(val: float | int, mini: int = 0, maxi: int = 255) -> int:
 
 
 # General purpose color class
-@dataclass
 class ND_Color:
-    r: int = 0
-    g: int = 0
-    b: int = 0
-    a: int = 255
+
+    #
+    def __init__(self, r: int = 0, g: int = 0, b: int = 0, a: int = 255) -> None:
+        #
+        self.r: int = r
+        self.g: int = g
+        self.b: int = b
+        self.a: int = a
 
     #
     def __add__(self, c: 'ND_Color') -> 'ND_Color':

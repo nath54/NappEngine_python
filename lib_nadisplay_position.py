@@ -9,7 +9,6 @@ Some utility classes for manipuling points, rects and base elements positions.
 
 #
 from typing import Optional
-from dataclasses import dataclass
 #
 from lib_nadisplay_rects import ND_Rect
 
@@ -19,39 +18,66 @@ EPSILON: float = 1e-6
 
 
 #
-@dataclass
 class ND_Position_Margins:
     """
     if is int, it is pixel value, else if is string, is "value_float%",
     where it indicates the repartition of available empty space between the element to share between his sides.
     """
 
-    margin: Optional[int | str] = None
-    margin_left: Optional[int | str] = None
-    margin_right: Optional[int | str] = None
-    margin_top: Optional[int | str] = None
-    margin_bottom: Optional[int | str] = None
-    #
-    min_margin_left: int = 0
-    min_margin_right: int = 0
-    min_margin_top: int = 0
-    min_margin_bottom: int = 0
-    #
-    width_stretch_ratio: float = 1.0
-    height_stretch_ratio: float = 1.0
+    def __init__(
+        self,
+        margin: Optional[int | str] = None,
+        margin_left: Optional[int | str] = None,
+        margin_right: Optional[int | str] = None,
+        margin_top: Optional[int | str] = None,
+        margin_bottom: Optional[int | str] = None,
+        #
+        min_margin_left: int = 0,
+        min_margin_right: int = 0,
+        min_margin_top: int = 0,
+        min_margin_bottom: int = 0,
+        #
+        width_stretch_ratio: float = 1.0,
+        height_stretch_ratio: float = 1.0
+    ) -> None:
+
+        #
+        self.margin: Optional[int | str] = margin
+        self.margin_left: Optional[int | str] = margin_left
+        self.margin_right: Optional[int | str] = margin_right
+        self.margin_top: Optional[int | str] = margin_top
+        self.margin_bottom: Optional[int | str] = margin_bottom
+        #
+        self.min_margin_left: int = min_margin_left
+        self.min_margin_right: int = min_margin_right
+        self.min_margin_top: int = min_margin_top
+        self.min_margin_bottom: int = min_margin_bottom
+        #
+        self.width_stretch_ratio: float = width_stretch_ratio
+        self.height_stretch_ratio: float = height_stretch_ratio
 
 
 #
-@dataclass
 class ND_Position_Constraints:
     """
     If is int, it is pixel value, else if is string, it is "value_float%" where it indicates the percentage of the containers row or column size.
     If the min and max values are both specified and of the same value, it forces the size to be that value.
     """
-    min_width: Optional[int] = None
-    max_width: Optional[int] = None
-    min_height: Optional[int] = None
-    max_height: Optional[int] = None
+
+    #
+    def __init__(
+        self,
+        min_width: Optional[int] = None,
+        max_width: Optional[int] = None,
+        min_height: Optional[int] = None,
+        max_height: Optional[int] = None,
+    ) -> None:
+
+        #
+        self.min_width: Optional[int] = min_width
+        self.max_width: Optional[int] = max_width
+        self.min_height: Optional[int] = min_height
+        self.max_height: Optional[int] = max_height
 
 
 #
