@@ -8,43 +8,36 @@ _summary_
 """
 
 
-from typing import Callable, Optional
+from typing import Optional, Any
 #
 from lib_nadisplay_position import ND_Position
-from lib_nadisplay_core import ND_Window
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_transformation import ND_Transformation
-from lib_nadisplay_val import ND_Val  # type: ignore
-from lib_nadisplay_core import ND_MainApp, ND_Display, ND_EventsManager  # type: ignore
-from lib_nadisplay_elt_text import ND_Elt_Text  # type: ignore
-from lib_nadisplay_elt_clickable import ND_Elt_Clickable  # type: ignore
-from lib_nadisplay_elt_rectangle import ND_Elt_Rectangle  # type: ignore
-from lib_nadisplay_elt_text import ND_Elt_Text  # type: ignore
-from lib_nadisplay_elt_text import ND_Elt_Text  # type: ignore
 
 
 
 # ND_Elt_Sprite class implementation
-class ND_Elt_Sprite(ND_Elt_Clickable):
+class ND_Elt_Sprite(ND_Elt):
     #
     def __init__(
             self,
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            onclick: Optional[Callable[["ND_Elt_Clickable"], None]] = None,
-            mouse_active: bool = True,
             base_texture: Optional[int | str] = None,
             hover_texture: Optional[int | str] = None,
-            clicked_texture: Optional[int | str] = None
+            clicked_texture: Optional[int | str] = None,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, onclick=onclick, active=mouse_active)
-        self.base_texture: Optional[int | str] = base_texture
-        self.hover_texture: Optional[int | str] = self.window.prepare_image_to_render(hover_texture) if isinstance(hover_texture, str) else hover_texture
-        self.clicked_texture: Optional[int | str] = self.window.prepare_image_to_render(clicked_texture) if isinstance(clicked_texture, str) else clicked_texture
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
-        self.transformations = ND_Transformation()
+        self.base_texture: Optional[int] = self.window.prepare_image_to_render(base_texture) if isinstance(base_texture, str) else base_texture
+        self.hover_texture: Optional[int] = self.window.prepare_image_to_render(hover_texture) if isinstance(hover_texture, str) else hover_texture
+        self.clicked_texture: Optional[int] = self.window.prepare_image_to_render(clicked_texture) if isinstance(clicked_texture, str) else clicked_texture
 
     #
     def render(self) -> None:
@@ -55,25 +48,23 @@ class ND_Elt_Sprite(ND_Elt_Clickable):
         #
         texture: Optional[int] = None
 
-        # Getting the right colors along the state
-        if self.state == "hover" and self.hover_texture is not None:
-            if isinstance(self.hover_texture, str):
-                self.hover_texture = self.window.prepare_image_to_render(self.hover_texture)
+        #
+        if self.elt_state == "hover" and self.hover_texture is not None:
             #
             texture = self.hover_texture
-        elif self.state == "clicked" and self.clicked_texture is not None:
-            if isinstance(self.clicked_texture, str):
-                self.clicked_texture = self.window.prepare_image_to_render(self.clicked_texture)
+        #
+        elif self.elt_state == "clicked" and self.clicked_texture is not None:
             #
             texture = self.clicked_texture
         #
-        if texture is None:
-            if isinstance(self.base_texture, str):
-                self.base_texture = self.window.prepare_image_to_render(self.base_texture)
+        if texture is not None:
             #
             texture = self.base_texture
+
+        #
+        transformation: ND_Transformation = self.get_style_attribute_transformation(attribute_name="transformation")
 
         # Drawing the background rect color or texture
         if texture is not None:
             # print(f"DEBUG | rendering texture id {texture} at x={self.x}, y={self.y}, w={self.w}, h={self.h}")
-            self.window.render_prepared_texture(texture, self.x, self.y, self.w, self.h, self.transformations)
+            self.window.render_prepared_texture(texture_id=texture, x=self.x, y=self.y, width=self.w, height=self.h, transformations=transformation)

@@ -8,12 +8,12 @@ _summary_
 """
 
 
-from typing import Optional
+from typing import Optional, Any
 #
 from lib_nadisplay_point import ND_Point
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_utils import clamp
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_transformation import ND_Transformation
 
 
@@ -78,10 +78,14 @@ class ND_Elt_Sprite_of_AtlasTexture(ND_Elt):
             tile_x: int,
             tile_y: int,
             nb_tiles_x: int = 1,
-            nb_tiles_y: int = 1
+            nb_tiles_y: int = 1,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
+
         #
-        super().__init__(window, elt_id, position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.atlas_texture: ND_AtlasTexture = atlas_texture
         #

@@ -10,7 +10,7 @@ _summary_
 #
 ###
 #
-from typing import Any
+from typing import Any, Optional
 
 
 #
@@ -40,3 +40,25 @@ def get_percentage_from_str(t: str) -> float:
 #
 def get_font_size(txt: str, font_size: int, font_ratio: float = 3.0 / 4.0) -> tuple[int, int]:
     return (len(txt) * int(float(font_size) * font_ratio), font_size)
+
+
+
+#
+def dict_sum(dict_a: Optional[dict[str, Any]], dict_b: Optional[dict[str, Any]]) -> dict[str, Any]:
+    #
+    res: dict[str, Any] = {}
+    #
+    if dict_a is not None:
+        #
+        for k, v in dict_a.items():
+            #
+            res[k] = v
+    #
+    if dict_b is not None:
+        #
+        for k, v in dict_b.items():
+            #
+            res[k] = v
+    #
+    return res
+

@@ -558,7 +558,7 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
-    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_thickness: int=1) -> None:
+    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_size: int=1) -> None:
 
         #
         if not self.display.initialized:
@@ -566,7 +566,7 @@ class ND_Window_Pygame(ND_Window):
 
         #
         pygame.draw.rect(self.pygame_screen, pycl(fill_color), (x, y, width, height), 0, radius)
-        pygame.draw.rect(self.pygame_screen, pycl(border_color), (x, y, width, height), border_thickness, radius)
+        pygame.draw.rect(self.pygame_screen, pycl(border_color), (x, y, width, height), border_size, radius)
 
 
     #

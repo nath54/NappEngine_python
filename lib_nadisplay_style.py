@@ -31,7 +31,7 @@ class ND_Style:
             #
             ## Font Name. ##
             #
-            font_name: Optional[str] = None,
+            font_name: str = "FreeSans",
             font_name_hover: Optional[str] = None,
             font_name_clicked: Optional[str] = None,
             font_name_deactivated: Optional[str] = None,
@@ -77,10 +77,18 @@ class ND_Style:
             #
             ### Background color for buttons / LineEdit / Checkbox / SelectOption / NumberInput / ... ###
             #
-            bg_color: ND_Color = cl("light grey"),
-            bg_color_hover: Optional[ND_Color] = None,
-            bg_color_clicked: Optional[ND_Color] = None,
-            bg_color_deactivated: Optional[ND_Color] = None,
+            bg_color: ND_Color = ND_Color(160, 160, 160),
+            bg_color_hover: Optional[ND_Color] = ND_Color(180, 180, 180),
+            bg_color_clicked: Optional[ND_Color] = ND_Color(140, 140, 140),
+            bg_color_deactivated: Optional[ND_Color] = ND_Color(100, 100, 100),
+
+            #
+            ### Foreground color for scrollbars / ... ###
+            #
+            fg_color: ND_Color = ND_Color(40, 40, 40),
+            fg_color_hover: Optional[ND_Color] = ND_Color(60, 60, 60),
+            fg_color_clicked: Optional[ND_Color] = ND_Color(50, 50, 50),
+            fg_color_deactivated: Optional[ND_Color] = ND_Color(80, 80, 80),
 
             #
             ### Background texture for buttons / Checkbox / ... ###
@@ -157,6 +165,14 @@ class ND_Style:
         self.bg_color_deactivated: Optional[ND_Color] = bg_color_deactivated
 
         #
+        ### Foreground color for scrollbars / ... ###
+        #
+        self.fg_color: ND_Color = fg_color
+        self.fg_color_hover: Optional[ND_Color] = fg_color_hover
+        self.fg_color_clicked: Optional[ND_Color] = fg_color_clicked
+        self.fg_color_deactivated: Optional[ND_Color] = fg_color_deactivated
+
+        #
         ### Background texture for buttons / Checkbox / ... ###
         #
         self.bg_texture: Optional[int | str] = bg_texture
@@ -193,14 +209,16 @@ class ND_Style:
                 return styles_override[attribute_name_with_state_full]
 
         #
-        if not hasattr(self, attribute_name):
+        if hasattr(self, attribute_name):
             #
-            return None
+            if not hasattr(self, attribute_name_with_state) or getattr(self, attribute_name_with_state) is None:
+                #
+                return getattr(self, attribute_name)
 
         #
-        if not hasattr(self, attribute_name_with_state) or getattr(self, attribute_name_with_state) is None:
+        if hasattr(self, attribute_name_with_state):
             #
-            return getattr(self, attribute_name)
+            return getattr(self, attribute_name_with_state)
 
         #
-        return getattr(self, attribute_name_with_state)
+        return None

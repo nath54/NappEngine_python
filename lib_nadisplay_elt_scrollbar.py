@@ -8,14 +8,14 @@ _summary_
 """
 
 #
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 #
 import lib_nadisplay_events as nd_event
-from lib_nadisplay_colors import ND_Color, cl
+from lib_nadisplay_colors import ND_Color
 from lib_nadisplay_point import ND_Point
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_utils import clamp
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 
 
 
@@ -23,17 +23,19 @@ from lib_nadisplay_core import ND_Window, ND_Elt
 class ND_Elt_H_ScrollBar(ND_Elt):
     #
     def __init__(
-                    self,
-                    window: ND_Window,
-                    elt_id: str,
-                    position: ND_Position,
-                    content_width: int,
-                    bg_cl: ND_Color = cl((10, 10, 10)),
-                    fg_cl: ND_Color = cl("white"),
-                    on_value_changed: Optional[Callable[["ND_Elt_H_ScrollBar", float], None]] = None
+            self,
+            window: ND_Window,
+            elt_id: str,
+            position: ND_Position,
+            content_width: int,
+            on_value_changed: Optional[Callable[["ND_Elt_H_ScrollBar", float], None]] = None,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
+
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.on_value_changed: Optional[Callable[[ND_Elt_H_ScrollBar, float], None]] = on_value_changed
         #
@@ -41,9 +43,6 @@ class ND_Elt_H_ScrollBar(ND_Elt):
         self.scroll_position: float = 0
         self.dragging: bool = False
         self.prep_dragging: bool = False
-        #
-        self.bg_cl: ND_Color = bg_cl
-        self.fg_cl: ND_Color = fg_cl
 
     #
     def get_scroll_ratio(self) -> float:
@@ -61,14 +60,18 @@ class ND_Elt_H_ScrollBar(ND_Elt):
         if not self.visible:
             return
 
-        # Draw background
-        self.window.draw_filled_rect(self.x, self.y, self.w, self.h, self.bg_cl)
         #
-        self.window.draw_unfilled_rect(self.x, self.y, self.w, self.h, self.fg_cl)
+        bg_color: ND_Color = self.get_style_attribute_color(attribute_name="bg_color")
+        fg_color: ND_Color = self.get_style_attribute_color(attribute_name="fg_color")
+
+        # Draw background
+        self.window.draw_filled_rect(self.x, self.y, self.w, self.h, bg_color)
+        #
+        self.window.draw_unfilled_rect(self.x, self.y, self.w, self.h, fg_color)
 
         # Draw thumb
         thumb_x = self.x + int(self.scroll_position * (self.w - self.thumb_width) / (self.content_width - self.w))
-        self.window.draw_filled_rect(thumb_x, self.y, self.thumb_width, self.h, self.fg_cl)
+        self.window.draw_filled_rect(thumb_x, self.y, self.thumb_width, self.h, fg_color)
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:
@@ -119,26 +122,25 @@ class ND_Elt_H_ScrollBar(ND_Elt):
 class ND_Elt_V_ScrollBar(ND_Elt):
     #
     def __init__(
-                    self,
-                    window: ND_Window,
-                    elt_id: str,
-                    position: ND_Position,
-                    content_height: int,
-                    fg_color: ND_Color = cl("white"),
-                    bg_color: ND_Color = cl("dark gray"),
-                    on_value_changed: Optional[Callable[["ND_Elt_V_ScrollBar", float], None]] = None
+            self,
+            window: ND_Window,
+            elt_id: str,
+            position: ND_Position,
+            content_height: int,
+            on_value_changed: Optional[Callable[["ND_Elt_V_ScrollBar", float], None]] = None,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
+
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.on_value_changed: Optional[Callable[[ND_Elt_V_ScrollBar, float], None]] = on_value_changed
         #
         self.content_height = content_height
         self.scroll_position = 0
         self.dragging = False
-        #
-        self.fg_color: ND_Color = fg_color
-        self.bg_color: ND_Color = bg_color
 
     #
     def get_scroll_ratio(self) -> float:
@@ -151,15 +153,20 @@ class ND_Elt_V_ScrollBar(ND_Elt):
 
     #
     def render(self) -> None:
+        #
         if not self.visible:
             return
 
+        #
+        bg_color: ND_Color = self.get_style_attribute_color(attribute_name="bg_color")
+        fg_color: ND_Color = self.get_style_attribute_color(attribute_name="fg_color")
+
         # Draw background
-        self.window.draw_filled_rect(self.x, self.y, self.w, self.h, self.bg_color)
+        self.window.draw_filled_rect(self.x, self.y, self.w, self.h, bg_color)
 
         # Draw thumb
         thumb_y = self.y + int(self.scroll_position * (self.h - self.thumb_height) / (self.content_height))
-        self.window.draw_filled_rect(self.x, thumb_y, self.w, self.thumb_height, self.fg_color)
+        self.window.draw_filled_rect(self.x, thumb_y, self.w, self.thumb_height, fg_color)
 
     #
     def handle_event(self, event: nd_event.ND_Event) -> None:

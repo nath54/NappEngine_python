@@ -8,13 +8,13 @@ _summary_
 """
 
 
-from typing import Optional
+from typing import Optional, Any
 
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_point import ND_Point
 from lib_nadisplay_position import ND_Position, ND_Position_Constraints, ND_Position_Margins
 from lib_nadisplay_utils import clamp, get_percentage_from_str
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_elt_scrollbar import ND_Elt_H_ScrollBar, ND_Elt_V_ScrollBar
 
 
@@ -38,11 +38,14 @@ class ND_Elt_Container(ND_Elt):
             scrollbar_w_height: int = 20,
             scrollbar_h_width: int = 20,
             scroll_speed_w: int = 4,
-            scroll_speed_h: int = 4
+            scroll_speed_h: int = 4,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
 
         # If the elements overflows are hidden or not (only used in the render() function)
         self.overflow_hidden: bool = overflow_hidden

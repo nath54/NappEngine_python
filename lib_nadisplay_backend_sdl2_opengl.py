@@ -1006,7 +1006,7 @@ class ND_Window_SDL2_OPENGL(ND_Window):
         )
 
     #
-    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, corner_nb_points: int = 6) -> None:
+    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_size: int = 1, corner_nb_points: int = 6) -> None:
         #
         self.draw_filled_rect(x=x + radius, y=y, width=width - 2 * radius, height=height, fill_color=fill_color)
         self.draw_filled_rect(x=x, y=y + radius, width=radius, height=height - 2 * radius, fill_color=fill_color)

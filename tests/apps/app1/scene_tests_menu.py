@@ -1,9 +1,6 @@
 
-from lib_nadisplay_colors import cl, ND_Color  # type: ignore
-from lib_nadisplay_transformation import ND_Transformation  # type: ignore
 from lib_nadisplay_point import ND_Point
-from lib_nadisplay_rects import ND_Rect  # type: ignore
-from lib_nadisplay_position import ND_Position_Margins, ND_Position_Constraints  # type: ignore
+from lib_nadisplay_core import ND_EventsHandler_Elts
 
 import lib_nadisplay as nd
 
@@ -47,7 +44,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
         elt_id="bt_back",
         position=nd.ND_Position_Container(w=150, h=40, container=header, position_margins=nd.ND_Position_Margins(margin=15, margin_bottom="50%", margin_top="50%")),
         text="Back",
-        onclick=lambda _: win.set_state("main_menu")
+        events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.set_state("main_menu"))
     )
     header.add_element(bt_back)
 
@@ -87,7 +84,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
         elt_id="bt_test1",
         position=nd.ND_Position_Container(w=150, h=30, container=bt_tests_container, position_margins=margin_center),
         text="test 1",
-        onclick=lambda _: win.set_state("test_1")
+        events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.set_state("test_1"))
     )
     bt_tests_container.add_element(bt_test1)
 

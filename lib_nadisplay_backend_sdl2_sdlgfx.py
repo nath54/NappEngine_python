@@ -761,7 +761,7 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
-    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
+    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_size: int = 1) -> None:
         #
         if not self.display.initialized:
             return

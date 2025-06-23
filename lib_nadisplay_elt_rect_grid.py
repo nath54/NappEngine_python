@@ -20,7 +20,7 @@ from lib_nadisplay_point import ND_Point
 from lib_nadisplay_rects import ND_Rect
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_utils import clamp
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_transformation import ND_Transformation
 
 
@@ -29,9 +29,21 @@ from lib_nadisplay_transformation import ND_Transformation
 #
 class ND_Elt_CameraGrid(ND_Elt):
     #
-    def __init__(self, window: ND_Window, elt_id: str, position: ND_Position, grids_to_render: list["ND_Elt_RectGrid"], zoom_x: float = 1.0, zoom_y: float = 1.0) -> None:
+    def __init__(
+            self,
+            window: ND_Window,
+            elt_id: str,
+            position: ND_Position,
+            grids_to_render: list["ND_Elt_RectGrid"],
+            zoom_x: float = 1.0,
+            zoom_y: float = 1.0,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
+        ) -> None:
+
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.grids_to_render: list[ND_Elt_RectGrid] = grids_to_render
         #
@@ -121,10 +133,17 @@ class ND_Elt_CameraGrid(ND_Elt):
                     #
                     old_position: ND_Position = elt.position
                     #
-                    old_transformations: ND_Transformation = elt.transformations
+                    old_transform_in_override: bool = (elt.styles_override is not None) and ("transformation" in elt.styles_override)
+                    #
+                    old_transformations: ND_Transformation = self.get_style_attribute_transformation(attribute_name="transformation")
                     #
                     if ND_Point(cx, cy) in grid_to_render.grid_transformations:
-                        elt.transformations = elt.transformations + grid_to_render.grid_transformations[ND_Point(cx, cy)]
+                        #
+                        if elt.styles_override is None:
+                            #
+                            elt.styles_override = {}
+                        #
+                        elt.styles_override["transformation"] = grid_to_render.grid_transformations[ND_Point(cx, cy)] + old_transformations
                     #
                     elt.position = ND_Position(dcx, dcy, int(gtx), int(gty))
                     #
@@ -132,8 +151,13 @@ class ND_Elt_CameraGrid(ND_Elt):
                     #
                     elt.position = old_position
                     #
-                    elt.transformations = old_transformations
+                    if old_transform_in_override and elt.styles_override is not None:
+                        #
+                        elt.styles_override["transformation"] = old_transformations
                     #
+                    elif elt.styles_override is not None:
+                        #
+                        del( elt.styles_override["transformation"] )
 
         #
         self.window.disable_area_drawing_constraints()

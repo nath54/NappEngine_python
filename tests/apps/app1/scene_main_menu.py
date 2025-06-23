@@ -1,9 +1,8 @@
 
-from lib_nadisplay_colors import cl, ND_Color  # type: ignore
-from lib_nadisplay_transformation import ND_Transformation  # type: ignore
+from lib_nadisplay_colors import cl
 from lib_nadisplay_point import ND_Point
-from lib_nadisplay_rects import ND_Rect  # type: ignore
-from lib_nadisplay_position import ND_Position_Margins, ND_Position_Constraints  # type: ignore
+from lib_nadisplay_position import ND_Position_Margins
+from lib_nadisplay_core import ND_EventsHandler_Elts
 
 import lib_nadisplay as nd
 
@@ -34,8 +33,7 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
                             elt_id="game_title",
                             position=nd.ND_Position_Container(w="100%", h="20%", container=main_menu_container, position_margins=ND_Position_Margins(margin_top=25, margin_bottom=25)),
                             text="Test",
-                            font_size=50,
-                            font_color=cl("violet"),
+                            styles_override={"font_color_normal": cl("violet"), "font_size": 45}
     )
     main_menu_container.add_element(game_title)
 
@@ -64,10 +62,10 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     bt_tests: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="bt_tests",
-        position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
-        onclick=lambda _: win.set_state("tests_menu"),
         text="Tests",
-        font_size=35
+        position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
+        styles_override={"font_size": 35},
+        events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.set_state("tests_menu"))
     )
     bts_container.add_element(bt_tests)
 
@@ -75,10 +73,10 @@ def create_main_menu_scene(win: nd.ND_Window) -> None:
     bt_quit: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="bt_quit",
-        position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
-        onclick=lambda _: win.main_app.quit(),
         text="Quit",
-        font_size=35
+        position=nd.ND_Position_Container(w=250, h=100, container=bts_container, position_margins=ND_Position_Margins(margin_left="50%", margin_top=25, margin_bottom=25)),
+        styles_override={"font_size": 35},
+        events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.main_app.quit())
     )
     bts_container.add_element(bt_quit)
 

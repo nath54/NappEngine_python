@@ -1229,7 +1229,7 @@ class ND_Window:
         return
 
     #
-    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color) -> None:
+    def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_size: int = 1) -> None:
         #
         return
 
@@ -1439,7 +1439,7 @@ class ND_EventsHandler_Elts:
             return
         #
         if not elt.active:
-            self.state = "deactivated"
+            elt.elt_state = "deactivated"
             return
         #
         if isinstance(event, nd_event.ND_EventMouseMotion):
@@ -1476,7 +1476,7 @@ class ND_EventsHandler_Elts:
                 #
                 elt.elt_state = "hover" if elt.position.rect.contains_point(ND_Point(event.x, event.y)) else "normal"
                 #
-                if self.state == "hover" and elt.mouse_bt_down_on_hover:
+                if elt.elt_state == "hover" and elt.mouse_bt_down_on_hover:
                     #
                     if self.block_events_below:
                         event.blocked = True
@@ -1711,6 +1711,165 @@ class ND_Elt:
         #
         pass
 
+    #
+    def get_style_attribute_str(self, attribute_name: str) -> str:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            raise UserWarning(f"Error: elt.get_style_attribute_str(`{attribute_name}`) with style=`{self.style_name}` and elt_state=`{self.elt_state}` and styles_override={self.styles_override} is None !")
+        #
+        return str( r )
+
+    #
+    def get_style_attribute_opt_str(self, attribute_name: str) -> Optional[str]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        return str( r )
+
+    #
+    def get_style_attribute_int(self, attribute_name: str) -> int:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            raise UserWarning(f"Error: elt.get_style_attribute_int(`{attribute_name}`) with style=`{self.style_name}` and elt_state=`{self.elt_state}` and styles_override={self.styles_override} is None !")
+        #
+        return int( r )
+
+    #
+    def get_style_attribute_opt_int(self, attribute_name: str) -> Optional[int]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        return int( r )
+
+    #
+    def get_style_attribute_float(self, attribute_name: str) -> float:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            raise UserWarning(f"Error: elt.get_style_attribute_float(`{attribute_name}`) with style=`{self.style_name}` and elt_state=`{self.elt_state}` and styles_override={self.styles_override} is None !")
+        #
+        return float( r )
+
+    #
+    def get_style_attribute_opt_float(self, attribute_name: str) -> Optional[float]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        return float( r )
+
+    #
+    def get_style_attribute_bool(self, attribute_name: str) -> bool:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            raise UserWarning(f"Error: elt.get_style_attribute_float(`{attribute_name}`) with style=`{self.style_name}` and elt_state=`{self.elt_state}` and styles_override={self.styles_override} is None !")
+        #
+        return bool( r )
+
+    #
+    def get_style_attribute_opt_bool(self, attribute_name: str) -> Optional[bool]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        return bool( r )
+
+    #
+    def get_style_attribute_color(self, attribute_name: str) -> ND_Color:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            raise UserWarning(f"Error: elt.get_style_attribute_float(`{attribute_name}`) with style=`{self.style_name}` and elt_state=`{self.elt_state}` and styles_override={self.styles_override} is None !")
+        #
+        return cast( ND_Color, r )
+
+    #
+    def get_style_attribute_opt_color(self, attribute_name: str) -> Optional[ND_Color]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        return cast( ND_Color, r )
+
+    #
+    def get_style_attribute_transformation(self, attribute_name: str) -> ND_Transformation:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            raise UserWarning(f"Error: elt.get_style_attribute_transformation(`{attribute_name}`) with style=`{self.style_name}` and elt_state=`{self.elt_state}` and styles_override={self.styles_override} is None !")
+        #
+        return cast( ND_Transformation, r )
+
+    #
+    def get_style_attribute_opt_transformation(self, attribute_name: str) -> Optional[ND_Transformation]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        return cast( ND_Transformation, r )
+
+    #
+    def get_style_attribute_texture_id(self, attribute_name: str) -> Optional[int]:
+        #
+        r: Optional[Any] = self.window.get_style_attribute( style_name=self.style_name, attribute_name=attribute_name,
+                                                            elt_state=self.elt_state, styles_override=self.styles_override )
+        #
+        if r is None:
+            #
+            return None
+        #
+        if isinstance(r, str):
+            #
+            r = self.window.prepare_image_to_render(r)
+        #
+        return int( r )
 
 
 #

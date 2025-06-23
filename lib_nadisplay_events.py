@@ -110,6 +110,8 @@ class ND_EventWindow(ND_Event):
 
     def __init__(self, window_id: int = 0) -> None:
         #
+        super().__init__()
+        #
         self.window_id: int = window_id
 
 

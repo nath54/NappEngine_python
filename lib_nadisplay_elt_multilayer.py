@@ -8,12 +8,12 @@ _summary_
 """
 
 #
-from typing import Optional
+from typing import Optional, Any
 #
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_position import ND_Position, ND_Position_Constraints, ND_Position_Margins
 from lib_nadisplay_utils import get_percentage_from_str
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 
 
 
@@ -23,15 +23,18 @@ from lib_nadisplay_core import ND_Window, ND_Elt
 class ND_Elt_MultiLayer(ND_Elt):
     #
     def __init__(
-                    self,
-                    window: ND_Window,
-                    elt_id: str,
-                    position: ND_Position,
-                    elements_layers: dict[int, ND_Elt] = {}
-    ) -> None:
+            self,
+            window: ND_Window,
+            elt_id: str,
+            position: ND_Position,
+            elements_layers: dict[int, ND_Elt] = {},
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
+        ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
 
 
         # list of elements sorted by render importance with layers (ascending order)

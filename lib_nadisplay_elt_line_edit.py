@@ -13,7 +13,7 @@ from typing import Callable, Any, Optional
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_colors import ND_Color, cl
 from lib_nadisplay_position import ND_Position
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_elt_scrollbar import ND_Elt_H_ScrollBar
 
 
@@ -22,52 +22,40 @@ from lib_nadisplay_elt_scrollbar import ND_Elt_H_ScrollBar
 #
 class ND_Elt_LineEdit(ND_Elt):
     def __init__(
-        self,
-        window: ND_Window,
-        elt_id: str,
-        position: ND_Position,
-        text: str = "",
-        place_holder: str = "",
-        max_text_length: int = -1,
-        mouse_active: bool = True,
-        font_name: Optional[str] = None,
-        font_size: int = 24,
-        border_radius: int = 5,
-        border: bool = True,
-        base_bg_color: Optional[ND_Color] = None,
-        base_fg_color: Optional[ND_Color] = None,
-        hover_bg_color: Optional[ND_Color] = None,
-        hover_fg_color: Optional[ND_Color] = None,
-        clicked_bg_color: Optional[ND_Color] = None,
-        clicked_fg_color: Optional[ND_Color] = None,
-        characters_restrictions: Optional[set[str]] = None,
-        password_mode: bool = False,
-        on_line_edit_validated: Optional[Callable[["ND_Elt_LineEdit", str], None]] = None,
-        on_line_edit_escaped: Optional[Callable[["ND_Elt_LineEdit"], None]] = None
-    ) -> None:
-        super().__init__(window=window, elt_id=elt_id, position=position)
+            self,
+            window: ND_Window,
+            elt_id: str,
+            position: ND_Position,
+            text: str = "",
+            place_holder: str = "",
+            max_text_length: int = -1,
+            characters_restrictions: Optional[set[str]] = None,
+            password_mode: bool = False,
+            on_line_edit_validated: Optional[Callable[["ND_Elt_LineEdit", str], None]] = None,
+            on_line_edit_escaped: Optional[Callable[["ND_Elt_LineEdit"], None]] = None,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
+        ) -> None:
+
+        #
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
+        #
         self.state: str = "normal"
         self.text: str = text
         self.place_holder: str = place_holder
-        self.font_name: Optional[str] = font_name
-        self.font_size: int = font_size
-        self.base_bg_color: ND_Color = base_bg_color if base_bg_color else cl("gray")
-        self.base_fg_color: ND_Color = base_fg_color if base_fg_color else cl("black")
-        self.hover_bg_color: ND_Color = hover_bg_color if hover_bg_color else cl("dark gray")
-        self.hover_fg_color: ND_Color = hover_fg_color if hover_fg_color else cl("black")
-        self.clicked_bg_color: ND_Color = clicked_bg_color if clicked_bg_color else cl("very dark gray")
-        self.clicked_fg_color: ND_Color = clicked_fg_color if clicked_fg_color else cl("black")
-        self.border: bool = border
-        self.border_radius: int = border_radius
         self.cursor: int = len(text)
         self.cursor_width: int = 2
-        self.cursor_height: int = self.font_size
         self.focused: bool = False
         self.max_text_length: int = max_text_length
         self.characters_restrictions: Optional[set[str]] = characters_restrictions   # Do not accept others character that theses
         self.password_mode: bool = password_mode
         self.on_line_edit_validated: Optional[Callable[[ND_Elt_LineEdit, str], None]] = on_line_edit_validated
         self.on_line_edit_escaped: Optional[Callable[[ND_Elt_LineEdit], None]] = on_line_edit_escaped
+
+        #
+        font_name: str = self.get_style_attribute_str(attribute_name="font_name")
+        font_size: int = self.get_style_attribute_int(attribute_name="font_size")
 
         # Scrollbar-related
         self.scrollbar_height: int = 10
@@ -77,7 +65,7 @@ class ND_Elt_LineEdit(ND_Elt):
             window = self.window,
             elt_id = f"scrollbar_{self.elt_id}",
             position = ND_Position(self.x, self.y + self.h - self.scrollbar_height, self.w, self.scrollbar_height),
-            content_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+            content_width = self.window.get_text_size_with_font(self.text, font_size, font_name).x
         )
 
     #
@@ -101,35 +89,35 @@ class ND_Elt_LineEdit(ND_Elt):
         if not self.visible:
             return
 
-        # Determine background and text color based on the state
-        bg_color = self.base_bg_color
-        fg_color = self.base_fg_color
-        if self.state == "hover":
-            bg_color = self.hover_bg_color
-            fg_color = self.hover_fg_color
-        elif self.state == "clicked":
-            bg_color = self.clicked_bg_color
-            fg_color = self.clicked_fg_color
+        #
+        font_name: str = self.get_style_attribute_str(attribute_name="font_name")
+        font_size: int = self.get_style_attribute_int(attribute_name="font_size")
+        font_color: ND_Color = self.get_style_attribute_color(attribute_name="font_color")
+        bg_color: ND_Color = self.get_style_attribute_color(attribute_name="bg_color")
+        border_color: ND_Color = self.get_style_attribute_color(attribute_name="border_color")
+        border_size: int = self.get_style_attribute_int(attribute_name="border_size")
+        border_radius: int = self.get_style_attribute_int(attribute_name="border_radius")
 
         # Draw the background rectangle
-        if self.border:
+        if border_size > 0:
             self.window.draw_rounded_rect(
-                self.x, self.y, self.w, self.h, self.border_radius, bg_color, fg_color
+                x = self.x, y = self.y, width = self.w, height = self.h,
+                radius = border_radius, fill_color = bg_color, border_color = border_color, border_size = border_size
             )
         else:
-            self.window.draw_filled_rect(self.x, self.y, self.w, self.h, bg_color)
+            self.window.draw_filled_rect(x = self.x, y = self.y, width = self.w, height = self.h, fill_color = bg_color)
 
         # Determine the visible portion of the text
         render_text = self.text if self.text else self.place_holder
-        text_color = fg_color if self.text else cl("light gray")
+        text_color = font_color if self.text else cl("light gray")
 
-        self.full_text_width = self.window.get_text_size_with_font(render_text, self.font_size, self.font_name).x
+        self.full_text_width = self.window.get_text_size_with_font(render_text, font_size, font_name).x
 
         #
         if self.scrollbar.scroll_position > 0:
             size_hidden: int
             count_hidden: int
-            size_hidden, count_hidden = self.window.get_count_of_renderable_chars_fitting_given_width(txt=render_text, given_width=int(self.scrollbar.scroll_position), font_name=self.font_name, font_size=self.font_size)
+            size_hidden, count_hidden = self.window.get_count_of_renderable_chars_fitting_given_width(txt=render_text, given_width=int(self.scrollbar.scroll_position), font_name=font_name, font_size=font_size)
             #
             if count_hidden > 0:
                 render_text = render_text[count_hidden:]
@@ -143,7 +131,7 @@ class ND_Elt_LineEdit(ND_Elt):
         if self.full_text_width > self.w:
             while visible_text_width > self.w:
                 visible_text = visible_text[1:]
-                visible_text_width = self.window.get_text_size_with_font(visible_text, self.font_size, self.font_name).x
+                visible_text_width = self.window.get_text_size_with_font(visible_text, font_size, font_name).x
 
         # TODO: correct the text that is displayed and visible
 
@@ -152,19 +140,19 @@ class ND_Elt_LineEdit(ND_Elt):
         self.window.draw_text(
             txt=visible_text,
             x=self.x + 5 - self.scroll_offset,
-            y=self.y + (self.h - self.cursor_height) // 2,
-            font_size=self.font_size,
+            y=self.y + (self.h - font_size) // 2,
+            font_size=font_size,
             font_color=text_color,
-            font_name=self.font_name,
+            font_name=font_name,
         )
 
         # Render the cursor if focused
         if self.focused and len(self.text) >= self.cursor:
 
-            txt_before_cursor_width: int = self.window.get_text_size_with_font(self.text[: self.cursor], self.font_size, self.font_name).x
+            txt_before_cursor_width: int = self.window.get_text_size_with_font(self.text[: self.cursor], font_size, font_name).x
 
             cursor_x = self.x + 5 + txt_before_cursor_width - self.scroll_offset
-            self.window.draw_filled_rect(cursor_x, self.y + 5, self.cursor_width, self.cursor_height, fg_color)
+            self.window.draw_filled_rect(cursor_x, self.y + 5, self.cursor_width, font_size, font_color)
 
         # Render horizontal scrollbar if necessary
         if self.full_text_width > self.w:
@@ -173,13 +161,16 @@ class ND_Elt_LineEdit(ND_Elt):
     #
     def write(self, char: str) -> None:
         #
+        font_name: str = self.get_style_attribute_str(attribute_name="font_name")
+        font_size: int = self.get_style_attribute_int(attribute_name="font_size")
+        #
         if self.max_text_length > 0 and len(self.text) + len(char) > self.max_text_length:
             return
         #
         self.text = self.text[: self.cursor] + char + self.text[self.cursor :]
         self.cursor += len(char)
         #
-        self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+        self.full_text_width = self.window.get_text_size_with_font(self.text, font_size, font_name).x
         self.scrollbar.content_width = self.full_text_width
 
     #
@@ -198,6 +189,9 @@ class ND_Elt_LineEdit(ND_Elt):
         #
         if not self.visible:
             return
+        #
+        font_name: str = self.get_style_attribute_str(attribute_name="font_name")
+        font_size: int = self.get_style_attribute_int(attribute_name="font_size")
         #
         if isinstance(event, nd_event.ND_EventMouse):
             if event.x >= self.x and event.x <= self.x + self.w and event.y >= self.y and event.y <= self.y + self.h:
@@ -245,7 +239,7 @@ class ND_Elt_LineEdit(ND_Elt):
             elif event.key == "backspace" and self.cursor > 0:
                 self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
                 self.cursor -= 1
-                self.full_text_width = self.window.get_text_size_with_font(self.text, self.font_size, self.font_name).x
+                self.full_text_width = self.window.get_text_size_with_font(self.text, font_size, font_name).x
                 self.scrollbar.content_width = self.full_text_width
             #
             elif event.key == "left arrow" and self.cursor > 0:
@@ -253,7 +247,7 @@ class ND_Elt_LineEdit(ND_Elt):
             #
             elif event.key == "right arrow" and self.cursor < len(self.text):
                 self.cursor += 1
-                text_width = self.window.get_text_size_with_font(self.text[:self.cursor], self.font_size, self.font_name).x
+                text_width = self.window.get_text_size_with_font(self.text[:self.cursor], font_size, font_name).x
                 if text_width - self.scroll_offset > self.w:
                     self.scroll_offset = text_width - self.w
             #

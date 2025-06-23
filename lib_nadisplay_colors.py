@@ -121,18 +121,18 @@ def cl(c: str | list[int | float | None] | tuple[int | float | None, ...] | None
         #
         if len(c) == 3:
             #
-            if (isinstance(c[0], int) or isinstance(c[0], float)) and \
-               (isinstance(c[1], int) or isinstance(c[1], float)) and \
-               (isinstance(c[2], int) or isinstance(c[2], float)):
+            if  (isinstance(c[0], int) or isinstance(c[0], float)) and \
+                (isinstance(c[1], int) or isinstance(c[1], float)) and \
+                (isinstance(c[2], int) or isinstance(c[2], float)):
                 #
                 return ND_Color(int(c[0]), int(c[1]), int(c[2]), 255)
         #
         elif len(c) == 4:
             #
-            if (isinstance(c[0], int) or isinstance(c[0], float)) and \
-               (isinstance(c[1], int) or isinstance(c[1], float)) and \
-               (isinstance(c[2], int) or isinstance(c[2], float)) and \
-               (isinstance(c[3], int) or isinstance(c[3], float)):
+            if  (isinstance(c[0], int) or isinstance(c[0], float)) and \
+                (isinstance(c[1], int) or isinstance(c[1], float)) and \
+                (isinstance(c[2], int) or isinstance(c[2], float)) and \
+                (isinstance(c[3], int) or isinstance(c[3], float)):
                 #
                 return ND_Color(int(c[0]), int(c[1]), int(c[2]), int(c[3]))
 

@@ -13,7 +13,7 @@ from typing import Any, Optional
 import time
 
 from lib_nadisplay_position import ND_Position
-from lib_nadisplay_core import ND_Window, ND_Elt
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_transformation import ND_Transformation
 from lib_nadisplay_elt_sprite_of_atlas_texture import ND_Elt_Sprite_of_AtlasTexture
 
@@ -32,11 +32,12 @@ class ND_Elt_AnimatedSprite(ND_Elt):
             default_animation_speed: float = 0.1,
             default_animation: str = "",
             style_name: str ="default",
-            styles_override: Optional[dict[str, Any]] = None
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
         ) -> None:
 
         #
-        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override)
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.animations: dict[str, list[Any]] = animations
         self.animations_speed: dict[str, float] = animations_speed

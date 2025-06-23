@@ -13,8 +13,7 @@ from typing import Callable, Any, Optional
 import lib_nadisplay_events as nd_event
 from lib_nadisplay_point import ND_Point
 from lib_nadisplay_position import ND_Position
-from lib_nadisplay_core import ND_Window, ND_Elt
-from lib_nadisplay_elt_clickable import ND_Elt_Clickable
+from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_elt_button import ND_Elt_Button
 from lib_nadisplay_elt_container import ND_Elt_Container, ND_Position_Container
 
@@ -23,22 +22,21 @@ from lib_nadisplay_elt_container import ND_Elt_Container, ND_Position_Container
 # ND_Elt_SelectOptions
 class ND_Elt_SelectOptions(ND_Elt):
     def __init__(
-        self,
-        window: ND_Window,
-        elt_id: str,
-        position: ND_Position,
-        value: str,
-        options: set[str],
-        option_list_buttons_height: int = 300,
-        on_value_selected: Optional[Callable[["ND_Elt_SelectOptions", str], None]] = None,
-        font_size: int = 24,
-        font_name: Optional[str] = None
-    ) -> None:
+            self,
+            window: ND_Window,
+            elt_id: str,
+            position: ND_Position,
+            value: str,
+            options: set[str],
+            option_list_buttons_height: int = 300,
+            on_value_selected: Optional[Callable[["ND_Elt_SelectOptions", str], None]] = None,
+            style_name: str ="default",
+            styles_override: Optional[dict[str, Any]] = None,
+            events_handler: Optional[ND_EventsHandler_Elts] = None
+        ) -> None:
+
         #
-        super().__init__(window=window, elt_id=elt_id, position=position)
-        #
-        self.font_name: Optional[str] = font_name
-        self.font_size: int = font_size
+        super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
         #
         self.on_value_selected: Optional[Callable[[ND_Elt_SelectOptions, str], None]] = on_value_selected
         #
@@ -58,9 +56,9 @@ class ND_Elt_SelectOptions(ND_Elt):
             elt_id=f"{self.elt_id}_main_button",
             position=self.position,
             text=self.value,
-            onclick=self.on_main_button_clicked,
-            font_name=font_name,
-            font_size=font_size
+            style_name=style_name,
+            styles_override=styles_override,
+            events_handler=ND_EventsHandler_Elts(fn_on_click=self.on_main_button_clicked)
         )
         #
         # 2nd side: the buttons list to select a new option / see all the available options
@@ -82,9 +80,9 @@ class ND_Elt_SelectOptions(ND_Elt):
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
                 text=option,
-                onclick=lambda x, option=option: self.on_option_button_clicked(option), # type: ignore
-                font_name=self.font_name,
-                font_size=self.font_size
+                style_name=style_name,
+                styles_override=styles_override,
+                events_handler=ND_EventsHandler_Elts(fn_on_click=lambda x, option=option: self.on_option_button_clicked(option))
             )
             self.bts_options_container.add_element(self.options_bts[option])
 
@@ -129,9 +127,9 @@ class ND_Elt_SelectOptions(ND_Elt):
             elt_id=f"{self.elt_id}_bt_option_{option_value}",
             position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
             text=option_value,
-            onclick=lambda x, option=option_value: self.on_option_button_clicked(option), # type: ignore
-            font_name=self.font_name,
-            font_size=self.font_size
+            style_name=self.style_name,
+            styles_override=self.styles_override,
+            events_handler=ND_EventsHandler_Elts(fn_on_click=lambda x, option=option_value: self.on_option_button_clicked(option))
         )
         self.bts_options_container.add_element(self.options_bts[option_value])
 
@@ -185,9 +183,9 @@ class ND_Elt_SelectOptions(ND_Elt):
                 elt_id=f"{self.elt_id}_bt_option_{option}",
                 position=ND_Position_Container(w=self.w, h=self.h, container=self.bts_options_container),
                 text=option,
-                onclick=lambda x, option=option: self.on_option_button_clicked(option), # type: ignore
-                font_name=self.font_name,
-                font_size=self.font_size
+                style_name=self.style_name,
+                styles_override=self.styles_override,
+                events_handler=ND_EventsHandler_Elts(fn_on_click=lambda x, option=option: self.on_option_button_clicked(option))
             )
             self.bts_options_container.add_element(self.options_bts[option])
 
@@ -236,7 +234,7 @@ class ND_Elt_SelectOptions(ND_Elt):
                     self.set_state_base()
 
     #
-    def on_main_button_clicked(self, clickable: ND_Elt_Clickable) -> None:
+    def on_main_button_clicked(self, elt: ND_Elt) -> None:
         #
         self.set_state_selection()
 
