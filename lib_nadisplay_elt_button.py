@@ -61,6 +61,7 @@ class ND_Elt_Button(ND_Elt):
         #
         texture_transformations: ND_Transformation = self.get_style_attribute_transformation(attribute_name="transformation")
 
+        #
         # Drawing the background rect color or texture
         #
         if bg_texture:

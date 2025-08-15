@@ -8,10 +8,10 @@ _summary_
 """
 
 #
-from typing import Callable, Any, Optional
+from typing import Any, Optional
 #
 import lib_nadisplay_events as nd_event
-from lib_nadisplay_colors import cl
+from lib_nadisplay_colors import cl, ND_Color
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
 from lib_nadisplay_elt_button import ND_Elt_Button
@@ -27,7 +27,6 @@ class ND_Elt_Checkbox(ND_Elt):
             elt_id: str,
             position: ND_Position,
             checked: bool = False,
-            on_pressed: Optional[Callable[["ND_Elt_Checkbox"], None]] = None,
             style_name: str ="default",
             styles_override: Optional[dict[str, Any]] = None,
             events_handler: Optional[ND_EventsHandler_Elts] = None
@@ -35,8 +34,6 @@ class ND_Elt_Checkbox(ND_Elt):
 
         #
         super().__init__(window=window, elt_id=elt_id, position=position, style_name=style_name, styles_override=styles_override, events_handler=events_handler)
-        #
-        self.on_pressed: Optional[Callable[["ND_Elt_Checkbox"], None]] = on_pressed
         #
         self.checked: bool = checked
         #
@@ -49,15 +46,16 @@ class ND_Elt_Checkbox(ND_Elt):
             styles_override=dict_sum(self.styles_override, {
                 "font_color_normal": cl("dark green"),
                 "font_color_hover": cl("green"),
-                "font_color_clicked": cl("white"),
+                "font_color_clicked": cl("black"),
                 "font_color_deactivated": cl("black"),
-                "bg_color_normal": cl("#222222"),
-                "bg_color_hover": cl("#333333"),
+                "border_color": cl("white"),
+                "bg_color_normal": ND_Color(40, 40, 40),
+                "bg_color_hover": ND_Color(100, 100, 100),
                 "bg_color_clicked": cl("white"),
-                "bg_color_deactivated": cl("#303030"),
+                "bg_color_deactivated": ND_Color(60, 60, 60),
                 "border_color": cl("black"),
                 "border_radius": 3,
-                "border_size": 1
+                "border_size": 2
             }),
             events_handler=ND_EventsHandler_Elts( fn_on_click=self.on_bt_checked_pressed )
         )
@@ -71,15 +69,16 @@ class ND_Elt_Checkbox(ND_Elt):
             styles_override=dict_sum(self.styles_override, {
                 "font_color_normal": cl("dark red"),
                 "font_color_hover": cl("red"),
-                "font_color_clicked": cl("white"),
+                "font_color_clicked": cl("black"),
                 "font_color_deactivated": cl("black"),
-                "bg_color_normal": cl("#222222"),
-                "bg_color_hover": cl("#333333"),
+                "border_color": cl("white"),
+                "bg_color_normal": ND_Color(40, 40, 40),
+                "bg_color_hover": ND_Color(100, 100, 100),
                 "bg_color_clicked": cl("white"),
-                "bg_color_deactivated": cl("#303030"),
+                "bg_color_deactivated": ND_Color(60, 60, 60),
                 "border_color": cl("black"),
                 "border_radius": 3,
-                "border_size": 1
+                "border_size": 2
             }),
             events_handler=ND_EventsHandler_Elts( fn_on_click=self.on_bt_unchecked_pressed )
         )
@@ -108,9 +107,6 @@ class ND_Elt_Checkbox(ND_Elt):
         #
         self.bt_checked.visible = False
         self.bt_unchecked.visible = True
-        #
-        if self.on_pressed is not None:
-            self.on_pressed(self)
 
     #
     def on_bt_unchecked_pressed(self, elt: ND_Elt) -> None:
@@ -119,9 +115,6 @@ class ND_Elt_Checkbox(ND_Elt):
         #
         self.bt_checked.visible = True
         self.bt_unchecked.visible = False
-        #
-        if self.on_pressed is not None:
-            self.on_pressed(self)
 
     #
     def is_checked(self) -> bool:

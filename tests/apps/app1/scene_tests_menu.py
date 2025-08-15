@@ -117,7 +117,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
         bt_testi: nd.ND_Elt_Button = nd.ND_Elt_Button(
             window=win,
             elt_id=f"bt_{scene_id}",
-            position=nd.ND_Position_Container(w=250, h=70, container=bt_tests_container, position_margins=margin_center),
+            position=nd.ND_Position_Container(w=350, h=100, container=bt_tests_container, position_margins=margin_center),
             text=name,
             events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _, s_id=scene_id: win.set_state(s_id))
         )

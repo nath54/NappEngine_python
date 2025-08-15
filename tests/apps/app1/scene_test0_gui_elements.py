@@ -93,7 +93,7 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     button_to_test: nd.ND_Elt_Button = nd.ND_Elt_Button(
         window=win,
         elt_id="button_to_test",
-        position=nd.ND_Position_Container(w=300, h=200, container=body, position_margins=margin_center),
+        position=nd.ND_Position_Container(w=250, h=50, container=body, position_margins=margin_center),
         text="0",
         events_handler=nd.ND_EventsHandler_Elts(
             fn_on_click=lambda bt_elt: setattr(bt_elt, "text", str( int( getattr(bt_elt, "text") ) + 1 ) )
@@ -101,6 +101,39 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     )
     #
     body.add_element(button_to_test)
+
+    #
+    row_checkbox: nd.ND_Elt_Container = nd.ND_Elt_Container(
+        window=win,
+        elt_id="row_checkbox",
+        position=nd.ND_Position_Container(w="60%", h=100, container=body, position_margins=margin_center)
+    )
+    #
+    body.add_element(row_checkbox)
+
+    #
+    txt_checkbox: nd.ND_Elt_Text = nd.ND_Elt_Text(
+        window=win,
+        elt_id="text_checkbox_to_test",
+        position=nd.ND_Position_Container(w=350, h=50, container=row_checkbox, position_margins=nd.ND_Position_Margins(margin=10, margin_right="100%", min_margin_left=10, margin_top="50%", margin_bottom="50%")),
+        text="Not pressed",
+        styles_override={
+            "font_color": nd.cl("white")
+        }
+    )
+
+    #
+    checkbox_to_test: nd.ND_Elt_Checkbox = nd.ND_Elt_Checkbox(
+        window=win,
+        elt_id="checkbox_to_test",
+        position=nd.ND_Position_Container(w=50, h=50, container=row_checkbox, position_margins=nd.ND_Position_Margins(margin=10, margin_left="100%", min_margin_right=10, margin_top="50%", margin_bottom="50%")),
+        events_handler=nd.ND_EventsHandler_Elts(
+            fn_on_click=lambda cb_elt: setattr(txt_checkbox, "text", "Pressed" if getattr(cb_elt, "checked") else "Not pressed")
+        )
+    )
+    #
+    row_checkbox.add_element(checkbox_to_test)
+    row_checkbox.add_element(txt_checkbox)
 
     #
     win.add_scene( tests_scene )
