@@ -86,7 +86,10 @@ class ND_Elt_LineEdit(ND_Elt):
 
     #
     def render(self) -> None:
+
+        #
         if not self.visible:
+            #
             return
 
         #
@@ -100,11 +103,13 @@ class ND_Elt_LineEdit(ND_Elt):
 
         # Draw the background rectangle
         if border_size > 0:
+            #
             self.window.draw_rounded_rect(
                 x = self.x, y = self.y, width = self.w, height = self.h,
                 radius = border_radius, fill_color = bg_color, border_color = border_color, border_size = border_size
             )
         else:
+            #
             self.window.draw_filled_rect(x = self.x, y = self.y, width = self.w, height = self.h, fill_color = bg_color)
 
         # Determine the visible portion of the text
@@ -115,6 +120,7 @@ class ND_Elt_LineEdit(ND_Elt):
 
         #
         if self.scrollbar.scroll_position > 0:
+            #
             size_hidden: int
             count_hidden: int
             size_hidden, count_hidden = self.window.get_count_of_renderable_chars_fitting_given_width(txt=render_text, given_width=int(self.scrollbar.scroll_position), font_name=font_name, font_size=font_size)
@@ -157,6 +163,9 @@ class ND_Elt_LineEdit(ND_Elt):
         # Render horizontal scrollbar if necessary
         if self.full_text_width > self.w:
             self.scrollbar.render()
+
+        #
+        print(f"DEBUG | line edit render | x = {self.x} | y = {self.y} | w = {self.w} | h = {self.h} | bg_color = {bg_color} | visible_text = {visible_text} | text_color = {text_color}")
 
     #
     def write(self, char: str) -> None:

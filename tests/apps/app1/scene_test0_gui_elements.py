@@ -137,4 +137,14 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     row_checkbox.add_element(txt_checkbox)
 
     #
+    line_edit_to_test: nd.ND_Elt_LineEdit = nd.ND_Elt_LineEdit(
+        window=win,
+        elt_id="line_edit_to_test",
+        position=nd.ND_Position_Container(w=400, h=60, container=body, position_margins=margin_center),
+        place_holder="edit me !"
+    )
+    #
+    body.add_element(line_edit_to_test)
+
+    #
     win.add_scene( tests_scene )
