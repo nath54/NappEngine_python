@@ -108,6 +108,11 @@ class ND_Elt_Checkbox(ND_Elt):
         self.bt_checked.visible = False
         self.bt_unchecked.visible = True
 
+        #
+        if self.events_handler and self.events_handler.fn_on_click:
+            #
+            self.events_handler.fn_on_click(self)
+
     #
     def on_bt_unchecked_pressed(self, elt: ND_Elt) -> None:
         #
@@ -115,6 +120,11 @@ class ND_Elt_Checkbox(ND_Elt):
         #
         self.bt_checked.visible = True
         self.bt_unchecked.visible = False
+
+        #
+        if self.events_handler and self.events_handler.fn_on_click:
+            #
+            self.events_handler.fn_on_click(self)
 
     #
     def is_checked(self) -> bool:
@@ -128,6 +138,7 @@ class ND_Elt_Checkbox(ND_Elt):
         #
         if not self.visible:
             return
+
         #
         if self.checked:
             self.bt_checked.handle_event(event)

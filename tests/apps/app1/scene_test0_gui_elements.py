@@ -115,20 +115,21 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     txt_checkbox: nd.ND_Elt_Text = nd.ND_Elt_Text(
         window=win,
         elt_id="text_checkbox_to_test",
-        position=nd.ND_Position_Container(w=350, h=50, container=row_checkbox, position_margins=nd.ND_Position_Margins(margin=10, margin_right="100%", min_margin_left=10, margin_top="50%", margin_bottom="50%")),
+        position=nd.ND_Position_Container(w=150, h=50, container=row_checkbox, position_margins=nd.ND_Position_Margins(margin=10, margin_right="100%", min_margin_left=10, margin_top="50%", margin_bottom="50%")),
         text="Not pressed",
         styles_override={
             "font_color": nd.cl("white")
-        }
+        },
+        text_h_align="left"
     )
 
     #
     checkbox_to_test: nd.ND_Elt_Checkbox = nd.ND_Elt_Checkbox(
         window=win,
         elt_id="checkbox_to_test",
-        position=nd.ND_Position_Container(w=50, h=50, container=row_checkbox, position_margins=nd.ND_Position_Margins(margin=10, margin_left="100%", min_margin_right=10, margin_top="50%", margin_bottom="50%")),
+        position=nd.ND_Position_Container(w=40, h=40, container=row_checkbox, position_margins=nd.ND_Position_Margins(margin=10, margin_left="100%", min_margin_right=10, margin_top="50%", margin_bottom="50%")),
         events_handler=nd.ND_EventsHandler_Elts(
-            fn_on_click=lambda cb_elt: setattr(txt_checkbox, "text", "Pressed" if getattr(cb_elt, "checked") else "Not pressed")
+            fn_on_click=lambda cb_elt: setattr(txt_checkbox, "text", "Pressed" if cb_elt.get_value() else "Not pressed")
         )
     )
     #
