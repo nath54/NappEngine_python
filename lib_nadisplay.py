@@ -10,7 +10,7 @@ Main file for lib_nadisplay, all front-end elements and abstract classes of fron
 """
 
 #
-from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Elt, ND_Scene, ND_EventsManager
+from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Elt, ND_Scene, ND_EventsManager, ND_EventsHandler_Elts
 #
 from lib_nadisplay_prepare_backend import prepare_backend
 #

@@ -11,6 +11,10 @@ DisplayClass, WindowClass, EventsManagerClass = nd.prepare_backend("sdl2_sdlgfx"
 #
 from scene_main_menu import create_main_menu_scene
 from scene_tests_menu import create_tests_menu_scene
+from scene_test0_gui_elements import create_test0_scene
+from scene_test1_sprites import create_test1_scene
+from scene_test2_rect_grid import create_test2_scene
+from scene_test3_3d_shapes import create_test3_scene
 
 #
 MAIN_WINDOW_ID: int = 0
@@ -49,6 +53,10 @@ if __name__ == "__main__":
     #
     create_main_menu_scene(win)
     create_tests_menu_scene(win)
+    create_test0_scene(win)
+    create_test1_scene(win)
+    create_test2_scene(win)
+    create_test3_scene(win)
 
     #
     app.run()

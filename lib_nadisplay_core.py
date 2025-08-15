@@ -1144,6 +1144,8 @@ class ND_Window:
     def set_state(self, state: str) -> None:
         #
         self.state = state
+        #
+        print(f"DEBUG | new state = {self.state}")
 
     #
     def is_hovered_by_mouse(self) -> bool:

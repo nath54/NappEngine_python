@@ -14,6 +14,8 @@ test_scenes: dict[str, str] = {
 
     "Test 2 - Rect Grid": "test2_rect_grid",
 
+    "Test 3 - 3d shapes": "test3_3d_shapes"
+
 }
 
 
@@ -92,7 +94,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="body",
         position=nd.ND_Position_Container(w="100%", h="90%", container=tests_menu_container),
-        element_alignment="row"
+        element_alignment="col"
     )
     tests_menu_container.add_element(body)
 
@@ -101,7 +103,7 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_tests_container",
         position=nd.ND_Position_Container(w="80%", h="80%", container=body, position_margins=margin_center),
-        element_alignment="column",
+        element_alignment="col",
         min_space_height_containing_elements=10,
         min_space_width_containing_elements=10,
         scroll_h=True
@@ -109,15 +111,15 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     body.add_element(bt_tests_container)
 
     #
-    for i in range(20):
+    for name, scene_id in test_scenes.items():
 
         #
         bt_testi: nd.ND_Elt_Button = nd.ND_Elt_Button(
             window=win,
-            elt_id=f"bt_test{i}",
-            position=nd.ND_Position_Container(w=150, h=30, container=bt_tests_container, position_margins=margin_center),
-            text=f"test {i}",
-            events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.set_state("test_1"))
+            elt_id=f"bt_{scene_id}",
+            position=nd.ND_Position_Container(w=250, h=70, container=bt_tests_container, position_margins=margin_center),
+            text=name,
+            events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _, s_id=scene_id: win.set_state(s_id))
         )
         bt_tests_container.add_element(bt_testi)
 
