@@ -6,9 +6,30 @@ import lib_nadisplay as nd
 
 
 #
+test_scenes: dict[str, str] = {
+
+    "Test 0 - GUI Elements": "test0_gui_elements",
+
+    "Test 1 - Sprites": "test1_sprites",
+
+    "Test 2 - Rect Grid": "test2_rect_grid",
+
+}
+
+
+#
 def create_tests_menu_scene(win: nd.ND_Window) -> None:
+
     #
-    margin_center: nd.ND_Position_Margins = nd.ND_Position_Margins(margin_left="50%", margin_right="50%", margin_top="50%", margin_bottom="50%")
+    ### Useful margin center item ! ###
+    #
+    margin_center: nd.ND_Position_Margins = nd.ND_Position_Margins(
+        margin_left="50%", margin_right="50%", margin_top="50%", margin_bottom="50%",
+        min_margin_bottom=10, min_margin_top=10, min_margin_left=10, min_margin_right=10
+    )
+
+    #
+    ### Test menu scene. ###
     #
     tests_menu_scene: nd.ND_Scene = nd.ND_Scene(
         window=win,
@@ -19,6 +40,8 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     )
 
     #
+    ### Main Scene Container. ###
+    #
     tests_menu_container: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="tests_menu_container",
@@ -27,7 +50,9 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     )
     tests_menu_scene.add_element(0, tests_menu_container)
 
-    ### HEADER ###
+    #
+    ### HEADER: title + bt go back ###
+    #
 
     #
     header: nd.ND_Elt_Container = nd.ND_Elt_Container(
@@ -58,7 +83,9 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
     )
     header.add_element(page_title)
 
-    ### BODY ###
+    #
+    ### BODY: column of buttons to go to different test scenes.  ###
+    #
 
     #
     body: nd.ND_Elt_Container = nd.ND_Elt_Container(
@@ -74,19 +101,25 @@ def create_tests_menu_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="bt_tests_container",
         position=nd.ND_Position_Container(w="80%", h="80%", container=body, position_margins=margin_center),
-        element_alignment="row_wrap"
+        element_alignment="column",
+        min_space_height_containing_elements=10,
+        min_space_width_containing_elements=10,
+        scroll_h=True
     )
     body.add_element(bt_tests_container)
 
     #
-    bt_test1: nd.ND_Elt_Button = nd.ND_Elt_Button(
-        window=win,
-        elt_id="bt_test1",
-        position=nd.ND_Position_Container(w=150, h=30, container=bt_tests_container, position_margins=margin_center),
-        text="test 1",
-        events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.set_state("test_1"))
-    )
-    bt_tests_container.add_element(bt_test1)
+    for i in range(20):
+
+        #
+        bt_testi: nd.ND_Elt_Button = nd.ND_Elt_Button(
+            window=win,
+            elt_id=f"bt_test{i}",
+            position=nd.ND_Position_Container(w=150, h=30, container=bt_tests_container, position_margins=margin_center),
+            text=f"test {i}",
+            events_handler=ND_EventsHandler_Elts(fn_on_click=lambda _: win.set_state("test_1"))
+        )
+        bt_tests_container.add_element(bt_testi)
 
     #
     win.add_scene( tests_menu_scene )
