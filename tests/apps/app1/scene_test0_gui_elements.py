@@ -205,7 +205,7 @@ def create_test0_scene(win: nd.ND_Window) -> None:
         window=win,
         elt_id="v_scrollbar_to_test",
         position=nd.ND_Position_Container(w=30, h=200, container=col1),
-        content_height=5,
+        content_height=500,
         scroll_position=1
     )
     #
@@ -215,8 +215,8 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     h_scroll_to_test: nd.ND_Elt_H_ScrollBar = nd.ND_Elt_H_ScrollBar(
         window=win,
         elt_id="h_scrollbar_to_test",
-        position=nd.ND_Position_Container(w=30, h=30, container=col2),
-        content_width=5,
+        position=nd.ND_Position_Container(w=200, h=30, container=col2),
+        content_width=500,
         scroll_position=1
     )
     #
