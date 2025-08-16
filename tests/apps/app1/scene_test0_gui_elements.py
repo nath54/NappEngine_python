@@ -160,4 +160,67 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     body.add_element(select_option_to_test)
 
     #
+    number_input_to_test: nd.ND_Elt_NumberInput = nd.ND_Elt_NumberInput(
+        window=win,
+        elt_id="number_input_to_test",
+        position=nd.ND_Position_Container(w=400, h=60, container=body, position_margins=margin_center),
+        value=42,
+        min_value=0,
+        max_value=50
+    )
+    #
+    body.add_element(number_input_to_test)
+
+    #
+    row_cols: nd.ND_Elt_Container = nd.ND_Elt_Container(
+        window=win,
+        elt_id="row_cols",
+        position=nd.ND_Position_Container(w="100%", h=250, container=body, position_margins=margin_center),
+        element_alignment="row"
+    )
+    #
+    body.add_element(row_cols)
+
+    #
+    col1: nd.ND_Elt_Container = nd.ND_Elt_Container(
+        window=win,
+        elt_id="col1",
+        position=nd.ND_Position_Container(w=100, h=250, container=body),
+        element_alignment="col"
+    )
+    #
+    row_cols.add_element(col1)
+
+    col2: nd.ND_Elt_Container = nd.ND_Elt_Container(
+        window=win,
+        elt_id="col2",
+        position=nd.ND_Position_Container(w=250, h=250, container=body),
+        element_alignment="col"
+    )
+    #
+    row_cols.add_element(col2)
+
+    #
+    v_scroll_to_test: nd.ND_Elt_V_ScrollBar = nd.ND_Elt_V_ScrollBar(
+        window=win,
+        elt_id="v_scrollbar_to_test",
+        position=nd.ND_Position_Container(w=30, h=200, container=col1),
+        content_height=5,
+        scroll_position=1
+    )
+    #
+    col1.add_element(v_scroll_to_test)
+
+    #
+    h_scroll_to_test: nd.ND_Elt_H_ScrollBar = nd.ND_Elt_H_ScrollBar(
+        window=win,
+        elt_id="h_scrollbar_to_test",
+        position=nd.ND_Position_Container(w=30, h=30, container=col2),
+        content_width=5,
+        scroll_position=1
+    )
+    #
+    col2.add_element(h_scroll_to_test)
+
+    #
     win.add_scene( tests_scene )

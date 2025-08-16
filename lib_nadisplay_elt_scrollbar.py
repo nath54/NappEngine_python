@@ -28,6 +28,7 @@ class ND_Elt_H_ScrollBar(ND_Elt):
             elt_id: str,
             position: ND_Position,
             content_width: int,
+            scroll_position: float = 0,
             on_value_changed: Optional[Callable[["ND_Elt_H_ScrollBar", float], None]] = None,
             style_name: str ="default",
             styles_override: Optional[dict[str, Any]] = None,
@@ -40,7 +41,7 @@ class ND_Elt_H_ScrollBar(ND_Elt):
         self.on_value_changed: Optional[Callable[[ND_Elt_H_ScrollBar, float], None]] = on_value_changed
         #
         self.content_width: int = content_width
-        self.scroll_position: float = 0
+        self.scroll_position: float = scroll_position
         self.dragging: bool = False
         self.prep_dragging: bool = False
 
@@ -127,6 +128,7 @@ class ND_Elt_V_ScrollBar(ND_Elt):
             elt_id: str,
             position: ND_Position,
             content_height: int,
+            scroll_position: float = 0,
             on_value_changed: Optional[Callable[["ND_Elt_V_ScrollBar", float], None]] = None,
             style_name: str ="default",
             styles_override: Optional[dict[str, Any]] = None,
@@ -139,7 +141,7 @@ class ND_Elt_V_ScrollBar(ND_Elt):
         self.on_value_changed: Optional[Callable[[ND_Elt_V_ScrollBar, float], None]] = on_value_changed
         #
         self.content_height = content_height
-        self.scroll_position = 0
+        self.scroll_position = scroll_position
         self.dragging = False
 
     #
