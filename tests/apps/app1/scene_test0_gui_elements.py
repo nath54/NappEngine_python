@@ -106,7 +106,7 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     row_checkbox: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="row_checkbox",
-        position=nd.ND_Position_Container(w="60%", h=100, container=body, position_margins=margin_center),
+        position=nd.ND_Position_Container(w="60%", h=60, container=body, position_margins=margin_center),
         overflow_hidden=False
     )
     #
@@ -146,6 +146,18 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     )
     #
     body.add_element(line_edit_to_test)
+
+    #
+    select_option_to_test: nd.ND_Elt_SelectOptions = nd.ND_Elt_SelectOptions(
+        window=win,
+        elt_id="select_option_to_test",
+        position=nd.ND_Position_Container(w=400, h=60, container=body, position_margins=margin_center),
+        value="option A",
+        options=set(["option A", "option B", "option C"]),
+        option_list_buttons_height=180,
+    )
+    #
+    body.add_element(select_option_to_test)
 
     #
     win.add_scene( tests_scene )

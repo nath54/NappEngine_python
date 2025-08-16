@@ -716,7 +716,7 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
             return (-1, -1)
         #
         extent, count = c_int(0), c_int(0)
-        sdlttf.TTF_MeasureUTF8(font, txt.encode("utf-8"), byref(extent), byref(count))
+        sdlttf.TTF_MeasureUTF8(font, txt.encode("utf-8"), given_width, byref(extent), byref(count))
         return extent.value, count.value
 
 
