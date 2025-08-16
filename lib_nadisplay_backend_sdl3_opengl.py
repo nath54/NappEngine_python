@@ -1193,7 +1193,7 @@ class ND_Window_SDL3_OPENGL(ND_Window):
         # TODO
 
     #
-    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
+    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color, nb_interpolations: int = 3) -> None:
 
         #
         if not self.display.initialized:

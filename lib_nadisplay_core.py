@@ -1086,6 +1086,7 @@ class ND_Window:
     def remove_top_of_clip_rect_stack(self) -> None:
         #
         if self.clip_rect_stack:
+            #
             self.clip_rect_stack.pop(-1)
 
     #
@@ -1306,7 +1307,7 @@ class ND_Window:
         return
 
     #
-    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
+    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
         return
 

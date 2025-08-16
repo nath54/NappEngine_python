@@ -17,7 +17,7 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     ### Useful margin center item ! ###
     #
     margin_center: nd.ND_Position_Margins = nd.ND_Position_Margins(
-        margin_left="50%", margin_right="50%", margin_top="50%", margin_bottom="50%",
+        margin_left="50%", margin_right="50%", margin_top=10, margin_bottom=10,
         min_margin_bottom=10, min_margin_top=10, min_margin_left=10, min_margin_right=10
     )
 
@@ -84,7 +84,7 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     body: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="body",
-        position=nd.ND_Position_Container(w="100%", h="90%", container=test_container),
+        position=nd.ND_Position_Container(w="100%", h="100%", container=test_container),
         element_alignment="col"
     )
     test_container.add_element(body)
@@ -106,7 +106,8 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     row_checkbox: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="row_checkbox",
-        position=nd.ND_Position_Container(w="60%", h=100, container=body, position_margins=margin_center)
+        position=nd.ND_Position_Container(w="60%", h=100, container=body, position_margins=margin_center),
+        overflow_hidden=False
     )
     #
     body.add_element(row_checkbox)

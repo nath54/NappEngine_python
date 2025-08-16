@@ -27,7 +27,7 @@ class ND_Elt_Container(ND_Elt):
             window: ND_Window,
             elt_id: str,
             position: ND_Position,
-            overflow_hidden: bool = True,
+            overflow_hidden: bool = False,
             scroll_w: bool = False,
             scroll_h: bool = False,
             element_alignment: str = "row_wrap",
@@ -590,6 +590,7 @@ class ND_Elt_Container(ND_Elt):
 
         #
         if self.overflow_hidden:
+            #
             self.window.enable_area_drawing_constraints(self.x, self.y, self.w, self.h)
 
         # Render each element with the scrollbar offsets applied
@@ -609,6 +610,7 @@ class ND_Elt_Container(ND_Elt):
 
         # Remove clipping
         if self.overflow_hidden:
+            #
             self.window.disable_area_drawing_constraints()
 
         # Render scrollbars

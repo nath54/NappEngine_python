@@ -32,6 +32,16 @@ from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_backend_sdl2 import to_sdl_color, get_display_info
 
 
+
+#
+def to_sdlfgx_coords(xa: int, ya: int, xb: int, yb: int) -> tuple[int, int, int, int]:
+
+    #
+    return xb, ya, xa, yb
+
+
+
+
 #
 class ND_Display_SDL2_SDLGFX(ND_Display):
 
@@ -767,20 +777,20 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
             return
 
         # Draw filled rounded rectangle
-        sdlgfx.roundedBoxRGBA(self.renderer, x, y, x + width, y + height, radius, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
+        sdlgfx.roundedBoxRGBA(self.renderer, *to_sdlfgx_coords(x, y, x+width, y+height), radius, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
         # Draw border with rounded corners
-        sdlgfx.roundedRectangleRGBA(self.renderer, x, y, x + width, y + height, radius, border_color.r, border_color.g, border_color.b, border_color.a)
+        sdlgfx.roundedRectangleRGBA(self.renderer, *to_sdlfgx_coords(x, y, x+width, y+height), radius, border_color.r, border_color.g, border_color.b, border_color.a)
 
 
     #
-    def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, line_color: ND_Color) -> None:
+    def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        sdlgfx.rectangleRGBA(self.renderer, x, y, x+width, y+height, line_color.r, line_color.g, line_color.b, line_color.a)
+        sdlgfx.rectangleRGBA(self.renderer, *to_sdlfgx_coords(x, y, x+width, y+height), outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #
@@ -790,17 +800,17 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
             return
 
         #
-        sdlgfx.boxRGBA(self.renderer, x, y, x+width, y+height, fill_color.r, fill_color.g, fill_color.b, fill_color.a)
+        sdlgfx.boxRGBA(self.renderer, *to_sdlfgx_coords(x, y, x+width, y+height), fill_color.r, fill_color.g, fill_color.b, fill_color.a)
 
 
     #
-    def draw_unfilled_circle(self, x: int, y: int, radius: int, line_color: ND_Color) -> None:
+    def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        sdlgfx.CircleRGBA(self.renderer, x, y, radius, line_color.r, line_color.g, line_color.b, line_color.a)
+        sdlgfx.CircleRGBA(self.renderer, x, y, radius, outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #
@@ -814,13 +824,13 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
-    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, line_color: ND_Color) -> None:
+    def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        sdlgfx.ellipseRGBA(self.renderer, x, y, rx, ry, line_color.r, line_color.g, line_color.b, line_color.a)
+        sdlgfx.ellipseRGBA(self.renderer, x, y, rx, ry, outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #
@@ -844,13 +854,13 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
-    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, line_color: ND_Color) -> None:
+    def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        sdlgfx.pieRGBA(self.renderer, x, y, radius, angle_start, angle_end, line_color.r, line_color.g, line_color.b, line_color.a)
+        sdlgfx.pieRGBA(self.renderer, x, y, radius, angle_start, angle_end, outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #
@@ -864,13 +874,13 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
-    def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, line_color: ND_Color) -> None:
+    def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
 
         #
-        sdlgfx.trigonRGBA(self.renderer, x1, y1, x2, y2, x3, y3, line_color.r, line_color.g, line_color.b, line_color.a)
+        sdlgfx.trigonRGBA(self.renderer, x1, y1, x2, y2, x3, y3, outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #
@@ -884,7 +894,7 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
-    def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color) -> None:
+    def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
             return
@@ -904,9 +914,9 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
             y1: int = y_coords[i]
             y2: int = y_coords[(i+1)%n]
             #
-            self.draw_line(x1, y1, x2, y2, line_color)
+            self.draw_line(x1, y1, x2, y2, outline_color)
         #
-        # sdlgfx.polygonRGBA(self.renderer, vx, vy, n, line_color.r, line_color.g, line_color.b, line_color.a)
+        # sdlgfx.polygonRGBA(self.renderer, vx, vy, n, outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #
@@ -949,7 +959,7 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
-    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], line_color: ND_Color, nb_interpolations: int = 3) -> None:
+    def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
         if not self.display.initialized:
             return
@@ -964,7 +974,7 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
         vy: object = (ctypes.c_int16 * n)(*y_coords)
 
         #
-        sdlgfx.bezierRGBA(self.renderer, vx, vy, n, nb_interpolations, line_color.r, line_color.g, line_color.b, line_color.a)
+        sdlgfx.bezierRGBA(self.renderer, vx, vy, n, nb_interpolations, outline_color.r, outline_color.g, outline_color.b, outline_color.a)
 
 
     #

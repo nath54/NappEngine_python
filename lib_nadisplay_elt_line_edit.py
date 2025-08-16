@@ -101,7 +101,9 @@ class ND_Elt_LineEdit(ND_Elt):
         border_size: int = self.get_style_attribute_int(attribute_name="border_size")
         border_radius: int = self.get_style_attribute_int(attribute_name="border_radius")
 
+        #
         # Draw the background rectangle
+        #
         if border_size > 0:
             #
             self.window.draw_rounded_rect(
@@ -112,10 +114,12 @@ class ND_Elt_LineEdit(ND_Elt):
             #
             self.window.draw_filled_rect(x = self.x, y = self.y, width = self.w, height = self.h, fill_color = bg_color)
 
+        #
         # Determine the visible portion of the text
+        #
         render_text = self.text if self.text else self.place_holder
         text_color = font_color if self.text else cl("light gray")
-
+        #
         self.full_text_width = self.window.get_text_size_with_font(render_text, font_size, font_name).x
 
         #
@@ -126,16 +130,21 @@ class ND_Elt_LineEdit(ND_Elt):
             size_hidden, count_hidden = self.window.get_count_of_renderable_chars_fitting_given_width(txt=render_text, given_width=int(self.scrollbar.scroll_position), font_name=font_name, font_size=font_size)
             #
             if count_hidden > 0:
+                #
                 render_text = render_text[count_hidden:]
                 self.scroll_offset = int(self.scrollbar.scroll_position) - size_hidden
         else:
+            #
             self.scroll_offset = 0
 
         visible_text = render_text
 
         visible_text_width: int = self.full_text_width
+        #
         if self.full_text_width > self.w:
+            #
             while visible_text_width > self.w:
+                #
                 visible_text = visible_text[1:]
                 visible_text_width = self.window.get_text_size_with_font(visible_text, font_size, font_name).x
 
@@ -162,10 +171,8 @@ class ND_Elt_LineEdit(ND_Elt):
 
         # Render horizontal scrollbar if necessary
         if self.full_text_width > self.w:
+            #
             self.scrollbar.render()
-
-        #
-        print(f"DEBUG | line edit render | x = {self.x} | y = {self.y} | w = {self.w} | h = {self.h} | bg_color = {bg_color} | visible_text = {visible_text} | text_color = {text_color}")
 
     #
     def write(self, char: str) -> None:
