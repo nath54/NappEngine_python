@@ -133,6 +133,9 @@ def create_test1_scene(win: nd.ND_Window) -> None:
         elt_id="grid_camera",
         position=nd.ND_Position_MultiLayer(w="100%", h="100%", multilayer=multilayer),
         grids_to_render=[grid],
+        zoom_x=10,
+        zoom_y=10,
+        zoom_grid=False
     )
     #
     multilayer.add_element(layer_id=0, elt=grid_camera)

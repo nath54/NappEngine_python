@@ -38,6 +38,7 @@ class ND_Elt_CameraGrid(ND_Elt):
             camera_origin: ND_Point = ND_Point(0, 0),
             zoom_x: float = 1.0,
             zoom_y: float = 1.0,
+            zoom_grid: bool = True,
             style_name: str ="default",
             styles_override: Optional[dict[str, Any]] = None,
             events_handler: Optional[ND_EventsHandler_Elts] = None
@@ -54,6 +55,8 @@ class ND_Elt_CameraGrid(ND_Elt):
         #
         self.min_zoom: float = 0.1
         self.max_zoom: float = 100
+        #
+        self.zoom_grid: bool = zoom_grid
         #
         self.grid_lines_width: int = 0
         self.grid_lines_color: ND_Color = ND_Color(255, 255, 255)
@@ -79,7 +82,14 @@ class ND_Elt_CameraGrid(ND_Elt):
         #
         lines_width: int = 0
         if self.grid_lines_width > 0:
-            lines_width = max( 1, round( max(zx, zy) * self.grid_lines_width ) )
+            #
+            if self.zoom_grid:
+                #
+                lines_width = max( 1, round( max(zx, zy) * self.grid_lines_width ) )
+            #
+            else:
+                #
+                lines_width = self.grid_lines_width
         #
         tcx: int = gtx + lines_width
         tcy: int = gty + lines_width
@@ -91,8 +101,8 @@ class ND_Elt_CameraGrid(ND_Elt):
         #
         deb_x: int = math.ceil( self.origin.x / tcx )
         deb_y: int = math.ceil( self.origin.y / tcy )
-        fin_x: int = math.ceil( (self.origin.x + self.w) / tcx ) + 6
-        fin_y: int = math.ceil( (self.origin.y + self.h) / tcy ) + 3
+        fin_x: int = math.ceil( (self.origin.x + self.w) / (tcx*0.95) )
+        fin_y: int = math.ceil( (self.origin.y + self.h) / (tcy*0.95) )
 
         #
         print(f"DEBUG | deb_x = {deb_x} | fin_x = {fin_x} | deb_y = {deb_y} | fin_y = {fin_y}")
