@@ -154,7 +154,7 @@ def mainloop_scene_test1(main_app: nd.ND_MainApp, delta_time: float):
         return
 
     #
-    speed: float = 0.001 * delta_time
+    speed: float = 0.0005 * delta_time
 
     #
     print(f"DEBUG | origin : {grid_camera.origin} | zoom = {grid_camera.zoom_x}")
@@ -162,19 +162,19 @@ def mainloop_scene_test1(main_app: nd.ND_MainApp, delta_time: float):
     #
     if main_app.events_manager.is_key_pressed("up arrow"):
         #
-        grid_camera.origin.y -= int(speed)
+        grid_camera.origin.y += int(speed)
     #
     if main_app.events_manager.is_key_pressed("down arrow"):
         #
-        grid_camera.origin.y += int(speed)
+        grid_camera.origin.y -= int(speed)
     #
     if main_app.events_manager.is_key_pressed("left arrow"):
         #
-        grid_camera.origin.x -= int(speed)
+        grid_camera.origin.x += int(speed)
     #
     if main_app.events_manager.is_key_pressed("right arrow"):
         #
-        grid_camera.origin.x += int(speed)
+        grid_camera.origin.x -= int(speed)
     #
     if main_app.events_manager.is_key_pressed("a"):
         #

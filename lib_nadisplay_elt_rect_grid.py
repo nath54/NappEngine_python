@@ -81,16 +81,25 @@ class ND_Elt_CameraGrid(ND_Elt):
         if self.grid_lines_width > 0:
             lines_width = max( 1, round( max(zx, zy) * self.grid_lines_width ) )
         #
-        deb_x: int = self.origin.x
-        deb_y: int = self.origin.y
-        # deb_x: int = math.ceil( self.origin.x / (gtx + lines_width) )
-        # deb_y: int = math.ceil( self.origin.y / (gty + lines_width) )
-        fin_x: int = self.origin.x + math.ceil( (self.w) / (gtx) ) + 1
-        fin_y: int = self.origin.y + math.ceil( (self.h) / (gty) ) + 1
+        tcx: int = gtx + lines_width
+        tcy: int = gty + lines_width
+        #
+        # deb_x: int = self.origin.x
+        # deb_y: int = self.origin.y
+        # fin_x: int = self.origin.x + math.ceil( (self.w) / (gtx) ) + 1
+        # fin_y: int = self.origin.y + math.ceil( (self.h) / (gty) ) + 1
+        #
+        deb_x: int = math.ceil( self.origin.x / tcx )
+        deb_y: int = math.ceil( self.origin.y / tcy )
+        fin_x: int = math.ceil( (self.origin.x + self.w) / tcx ) + 6
+        fin_y: int = math.ceil( (self.origin.y + self.h) / tcy ) + 3
 
         #
-        print(f"DEBUG | deb_x = {deb_x} | deb_y = {deb_y}")
-        print(f"DEBUG | fin_x = {fin_x} | deb_y = {fin_x}")
+        print(f"DEBUG | deb_x = {deb_x} | fin_x = {fin_x} | deb_y = {deb_y} | fin_y = {fin_y}")
+
+        #
+        shift_x: int = self.origin.x - deb_x * (gtx + lines_width)
+        shift_y: int = self.origin.y - deb_y * (gty + lines_width)
 
         # Dessin des lignes
         cx: int
@@ -99,7 +108,7 @@ class ND_Elt_CameraGrid(ND_Elt):
         dcy: int
         for cx in range(deb_x, fin_x + 1):
             #
-            dcx = self.x + int((cx-deb_x) * gtx)
+            dcx = self.x + int((cx-deb_x) * gtx) + shift_x
 
             # Dessin ligne
             self.window.draw_thick_line(
@@ -111,7 +120,7 @@ class ND_Elt_CameraGrid(ND_Elt):
         #
         for cy in range(deb_y, fin_y + 1):
             #
-            dcy = self.y + int((cy-deb_y) * gty)
+            dcy = self.y + int((cy-deb_y) * gty) + shift_y
 
             # Dessin Ligne
             self.window.draw_thick_line(
@@ -127,11 +136,11 @@ class ND_Elt_CameraGrid(ND_Elt):
             # Dessin des éléments
             for cx in range(deb_x, fin_x + 1):
                 #
-                dcx = self.x + int((cx-deb_x) * gtx)
+                dcx = self.x + int((cx-deb_x) * gtx) + shift_x
                 #
                 for cy in range(deb_y, fin_y + 1):
                     #
-                    dcy = self.y + int((cy-deb_y) * gty)
+                    dcy = self.y + int((cy-deb_y) * gty) + shift_y
                     #
                     elt: Optional[ND_Elt] = grid_to_render.get_element_at_grid_case(ND_Point(cx, cy))
                     #
