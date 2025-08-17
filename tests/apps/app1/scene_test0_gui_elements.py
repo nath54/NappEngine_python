@@ -175,7 +175,7 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     row_cols: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="row_cols",
-        position=nd.ND_Position_Container(w="100%", h=250, container=body, position_margins=margin_center),
+        position=nd.ND_Position_Container(w="50%", h=250, container=body, position_margins=margin_center),
         element_alignment="row"
     )
     #
@@ -185,20 +185,43 @@ def create_test0_scene(win: nd.ND_Window) -> None:
     col1: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="col1",
-        position=nd.ND_Position_Container(w=100, h=250, container=body),
+        position=nd.ND_Position_Container(w=100, h=250, container=row_cols, position_margins=margin_center),
         element_alignment="col"
     )
     #
     row_cols.add_element(col1)
 
+    #
     col2: nd.ND_Elt_Container = nd.ND_Elt_Container(
         window=win,
         elt_id="col2",
-        position=nd.ND_Position_Container(w=250, h=250, container=body),
+        position=nd.ND_Position_Container(w=250, h=250, container=row_cols, position_margins=margin_center),
         element_alignment="col"
     )
     #
     row_cols.add_element(col2)
+
+    #
+    txt_scr1: nd.ND_Elt_Text = nd.ND_Elt_Text(
+        window=win,
+        elt_id="txt_scr1",
+        position=nd.ND_Position_Container(w=150, h=50, container=col2, position_margins=margin_center),
+        text="Scrollbar value = 1 / 500",
+        styles_override={
+            "font_color": nd.ND_Color(255, 255, 255)
+        }
+    )
+
+    #
+    txt_scr2: nd.ND_Elt_Text = nd.ND_Elt_Text(
+        window=win,
+        elt_id="txt_scr2",
+        position=nd.ND_Position_Container(w=150, h=50, container=col2, position_margins=margin_center),
+        text="Scrollbar value = 1 / 500",
+        styles_override={
+            "font_color": nd.ND_Color(255, 255, 255)
+        }
+    )
 
     #
     v_scroll_to_test: nd.ND_Elt_V_ScrollBar = nd.ND_Elt_V_ScrollBar(
@@ -206,7 +229,8 @@ def create_test0_scene(win: nd.ND_Window) -> None:
         elt_id="v_scrollbar_to_test",
         position=nd.ND_Position_Container(w=30, h=200, container=col1),
         content_height=500,
-        scroll_position=1
+        scroll_position=1,
+        on_value_changed=lambda elt, nv: setattr(txt_scr1, "text", f"Scrollbar value = {nv} / 500")
     )
     #
     col1.add_element(v_scroll_to_test)
@@ -217,10 +241,15 @@ def create_test0_scene(win: nd.ND_Window) -> None:
         elt_id="h_scrollbar_to_test",
         position=nd.ND_Position_Container(w=200, h=30, container=col2),
         content_width=500,
-        scroll_position=1
+        scroll_position=1,
+        on_value_changed=lambda elt, nv: setattr(txt_scr2, "text", f"Scrollbar value = {nv} / 500")
     )
     #
     col2.add_element(h_scroll_to_test)
+    #
+    col2.add_element(txt_scr1)
+    #
+    col2.add_element(txt_scr2)
 
     #
     win.add_scene( tests_scene )
