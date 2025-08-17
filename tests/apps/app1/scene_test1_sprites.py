@@ -90,7 +90,43 @@ def create_test1_scene(win: nd.ND_Window) -> None:
     test_container.add_element(body)
 
     #
+    tiles_atlas: nd.ND_AtlasTexture = nd.ND_AtlasTexture(
+        window=win,
+        texture_atlas_path="res/basictiles_2.png",
+        tiles_size=nd.ND_Point(x=16, y=16)
+    )
 
+    #
+    multilayer: nd.ND_Elt_MultiLayer = nd.ND_Elt_MultiLayer(
+        window=win,
+        elt_id="layers",
+        position=nd.ND_Position_Container(w="100%", h="100%", container=body)
+    )
+    #
+    body.add_element(multilayer)
+
+    #
+    grid: nd.ND_Elt_RectGrid = nd.ND_Elt_RectGrid(
+        window=win,
+        elt_id="grid",
+        position=nd.ND_Position_MultiLayer(w="100%", h="100%", multilayer=multilayer),
+        grid_tx=16,
+        grid_ty=16,
+        grid_lines_width=1,
+        grid_lines_color=nd.ND_Color(50, 50, 50)
+    )
+    #
+    multilayer.add_element(layer_id=1, elt=grid)
+
+    #
+    grid_camera: nd.ND_Elt_CameraGrid = nd.ND_Elt_CameraGrid(
+        window=win,
+        elt_id="grid_camera",
+        position=nd.ND_Position_MultiLayer(w="100%", h="100%", multilayer=multilayer),
+        grids_to_render=[grid]
+    )
+    #
+    multilayer.add_element(layer_id=0, elt=grid_camera)
 
     #
     win.add_scene( tests_scene )
