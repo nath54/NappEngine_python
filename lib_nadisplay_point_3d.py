@@ -15,17 +15,20 @@ from typing import Optional, Union, Any
 from math import sqrt
 import numpy as np
 
+
 #
 ### Define a small epsilon for floating point comparisons to handle precision issues. ###
 ### Adjust based on expected scale of coordinates if needed. ###
 #
 EPSILON: float = 1e-6
 
+
 #
 ### --- Helper Collision Class --- ###
 ### This class will contain static methods for various geometric intersection tests. ###
 #
 class Collision:
+
     """
     A helper class containing static methods for performing intersection tests
     between different 3D geometric primitives.
@@ -207,8 +210,9 @@ class Collision:
         #
         return (u >= 0.0 - EPSILON) and (v >= 0.0 - EPSILON) and (u + v <= 1.0 + EPSILON)
 
-
-    # --- Rect Intersections ---
+    #
+    ### --- Rect Intersections --- ###
+    #
     @staticmethod
     def rect_rect(r1: 'ND_Rect_3D', r2: 'ND_Rect_3D') -> bool:
 
@@ -247,8 +251,9 @@ class Collision:
         #
         return dist_sq <= s.radius**2 + EPSILON
 
-
-    # --- Sphere Intersections ---
+    #
+    ### --- Sphere Intersections --- ###
+    #
     @staticmethod
     def sphere_sphere(s1: 'ND_Sphere_3D', s2: 'ND_Sphere_3D') -> bool:
 
@@ -324,15 +329,12 @@ class Collision:
         #
         return dist_to_segment_sq <= s.radius**2 + EPSILON
 
-
     #
     ### --- Segment Intersections --- ###
     ### Segment-Segment intersection in 3D is complex (parallel, skew, intersecting) ###
     ### Implementing a robust version is non-trivial. ###
     ### Let's implement a basic check for intersection points assuming non-parallel/non-collinear lines ###
     ### and then check if the point is on both segments. ###
-    #
-
     #
     @staticmethod
     def segment_segment(seg1: 'ND_Line_3D', seg2: 'ND_Line_3D') -> tuple[bool, Optional[Union['ND_Point_3D', tuple['ND_Point_3D', 'ND_Point_3D']]]]:
@@ -484,6 +486,7 @@ class Collision:
 ### --- ND_Point_3D (Updated with to_numpy) --- ###
 #
 class ND_Point_3D:
+
     """
     Represents a point in 3D space.
     """
@@ -685,6 +688,7 @@ class ND_Point_3D:
             #
             return False
 
+
 #
 ### --- ND_Rect_3D (Updated with intersects_with and using Collision helper) --- ###
 #
@@ -844,7 +848,6 @@ class ND_Rect_3D:
             ND_Point_3D(intersect_min_x, intersect_min_y, intersect_min_z),
             ND_Point_3D(intersect_max_x, intersect_max_y, intersect_max_z)
         )
-
 
     #
     def union(self, other: "ND_Rect_3D") -> "ND_Rect_3D":
@@ -1420,7 +1423,6 @@ class ND_Triangle_3D:
         other_vertices = {other.p1.to_tuple(), other.p2.to_tuple(), other.p3.to_tuple()}
         #
         return self_vertices == other_vertices
-
 
     #
     ### --- Intersection Methods for Triangle --- ###
