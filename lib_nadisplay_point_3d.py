@@ -8,204 +8,320 @@ _summary_
 """
 
 #
+### Import Modules. ###
+#
 from typing import Optional, Union, Any
 #
 from math import sqrt
 import numpy as np
 
-# Define a small epsilon for floating point comparisons to handle precision issues
-# Adjust based on expected scale of coordinates if needed
+#
+### Define a small epsilon for floating point comparisons to handle precision issues. ###
+### Adjust based on expected scale of coordinates if needed. ###
+#
 EPSILON: float = 1e-6
 
-
-# --- Helper Collision Class ---
-# This class will contain static methods for various geometric intersection tests
+#
+### --- Helper Collision Class --- ###
+### This class will contain static methods for various geometric intersection tests. ###
+#
 class Collision:
     """
     A helper class containing static methods for performing intersection tests
     between different 3D geometric primitives.
     """
 
+    #
     @staticmethod
     def point_point(p1: 'ND_Point_3D', p2: 'ND_Point_3D') -> bool:
+
         """Checks if two points are approximately equal."""
-        # Uses the __eq__ method which likely already handles float comparison
+
+        #
+        ### Uses the __eq__ method which already handles float comparison. ###
+        #
         return p1 == p2
 
+    #
     @staticmethod
     def point_rect(p: 'ND_Point_3D', r: 'ND_Rect_3D') -> bool:
+
         """Checks if a point is inside a rectangle (cuboid)."""
-        # Delegate to the method implemented in ND_Point_3D
+
+
+        #
+        ### Delegate to the method implemented in ND_Point_3D. ###
+        #
         return p.in_rect_3D(r)
 
+    #
     @staticmethod
     def point_sphere(p: 'ND_Point_3D', s: 'ND_Sphere_3D') -> bool:
-        """Checks if a point is inside a sphere."""
-        # A point is inside a sphere if its distance to the center <= radius
-        return p.distance_to(s.center) <= s.radius + EPSILON # Add epsilon for boundary inclusion
 
+        """Checks if a point is inside a sphere."""
+
+        #
+        ### A point is inside a sphere if its distance to the center <= radius. ###
+        ### # Add epsilon for boundary inclusion. ###
+        #
+        return p.distance_to(s.center) <= s.radius + EPSILON
+
+    #
     @staticmethod
     def point_segment(p: 'ND_Point_3D', segment: 'ND_Line_3D') -> bool:
+
         """Checks if a point lies on a line segment in 3D."""
-        # Convert to numpy for vector math
+
+        #
+        ### Convert to numpy for vector math. ###
+        #
         p_np = p.to_numpy()
         a_np = segment.p1.to_numpy()
         b_np = segment.p2.to_numpy()
 
-        # Vector representing the segment
+        #
+        ### Vector representing the segment. ###
+        #
         segment_vec = b_np - a_np
-        # Vector from segment start to point
+
+        #
+        ### Vector from segment start to point. ###
+        #
         point_vec = p_np - a_np
 
-        # Check if the point is collinear with the segment endpoints
-        # The cross product of two collinear vectors is the zero vector
+        #
+        ### Check if the point is collinear with the segment endpoints. ###
+        ### The cross product of two collinear vectors is the zero vector. ###
+        #
         cross_product = np.cross(segment_vec, point_vec)
+        #
         if np.linalg.norm(cross_product) > EPSILON:
-            return False # Not collinear
 
-        # Check if the point lies within the segment bounds using the dot product
-        # The dot product of point_vec and segment_vec divided by segment_vec magnitude squared
-        # gives the projection of point_vec onto segment_vec, scaled by segment length.
-        # This value (t) should be between 0 and 1 for the point to be on the segment.
+            #
+            ### Not collinear. ###
+            #
+            return False
+
+        #
+        ### Check if the point lies within the segment bounds using the dot product. ###
+        ### The dot product of point_vec and segment_vec divided by segment_vec magnitude squared ###
+        ### gives the projection of point_vec onto segment_vec, scaled by segment length. ###
+        ### This value (t) should be between 0 and 1 for the point to be on the segment. ###
+        #
         segment_length_sq = np.dot(segment_vec, segment_vec)
 
-        # Handle the case of a zero-length segment (p1 == p2)
+        #
+        ### Handle the case of a zero-length segment (p1 == p2). ###
+        #
         if segment_length_sq < EPSILON:
-            return Collision.point_point(p, segment.p1) # Check if point is the same as the endpoint
+            #
+            ### Check if point is the same as the endpoint. ###
+            #
+            return Collision.point_point(p, segment.p1)
 
+        #
         t = np.dot(point_vec, segment_vec) / segment_length_sq
 
-        # Check if the projected point is within the segment (0 <= t <= 1)
-        # Use epsilon for robust boundary check
+        #
+        ### Check if the projected point is within the segment (0 <= t <= 1). ###
+        ### Use epsilon for robust boundary check. ###
+        #
         return 0.0 - EPSILON <= t <= 1.0 + EPSILON
 
+    #
     @staticmethod
     def point_triangle(p: 'ND_Point_3D', t: 'ND_Triangle_3D') -> bool:
+
         """
         Checks if a point lies inside a triangle in 3D.
         Assumes the point is coplanar with the triangle.
         Uses barycentric coordinates.
         """
+
+        #
         p_np = p.to_numpy()
         a_np = t.p1.to_numpy()
         b_np = t.p2.to_numpy()
         c_np = t.p3.to_numpy()
 
-        # Check if the point is coplanar with the triangle first (optional but good practice)
-        # This can be done by checking if the vector from one vertex to P
-        # is orthogonal to the triangle's normal vector.
-        # Or by checking if the scalar triple product of (B-A), (C-A), (P-A) is close to zero.
+        #
+        ### Check if the point is coplanar with the triangle first (optional but good practice) ###
+        ### This can be done by checking if the vector from one vertex to P ###
+        ### is orthogonal to the triangle's normal vector. ###
+        ### Or by checking if the scalar triple product of (B-A), (C-A), (P-A) is close to zero. ###
+        #
         v0 = b_np - a_np
         v1 = c_np - a_np
         v2 = p_np - a_np
 
-        # Calculate area of the main triangle and subtriangles using cross product magnitude
-        # or dot product and Cramer's rule for barycentric coords.
-        # A more robust 3D method checks the point's side relative to each edge plane.
-        # Project points to a 2D plane where triangle area is maximized to simplify the check.
-        # However, a common method is based on barycentric coordinates directly in 3D using vectors.
+        #
+        ### Calculate area of the main triangle and subtriangles using cross product magnitude ###
+        ### or dot product and Cramer's rule for barycentric coords. ###
+        ### A more robust 3D method checks the point's side relative to each edge plane. ###
+        ### Project points to a 2D plane where triangle area is maximized to simplify the check. ###
+        ### However, a common method is based on barycentric coordinates directly in 3D using vectors. ###
+        #
 
-        # Calculate dot products for barycentric coordinates
+        #
+        ### Calculate dot products for barycentric coordinates. ###
+        #
         dot00 = np.dot(v0, v0)
         dot01 = np.dot(v0, v1)
         dot11 = np.dot(v1, v1)
         dot20 = np.dot(v2, v0)
         dot21 = np.dot(v2, v1)
 
-        # Compute denominator
+        #
+        ### Compute denominator. ###
+        #
         inv_denom = (dot00 * dot11 - dot01 * dot01)
+        #
         if abs(inv_denom) < EPSILON:
-            # Degenerate triangle or point very close to edge. Handle cases.
-            # If inv_denom is 0, the vectors v0 and v1 are linearly dependent, meaning
-            # the triangle is degenerate (a line segment or a point).
-            # In a robust implementation, you'd check if the point is on this line segment.
-            # For simplicity here, we return False for degenerate triangles unless point is a vertex.
-             if Collision.point_point(p, t.p1) or Collision.point_point(p, t.p2) or Collision.point_point(p, t.p3):
-                 return True
-             return False
 
+            #
+            ### Degenerate triangle or point very close to edge. Handle cases. ###
+            ### If inv_denom is 0, the vectors v0 and v1 are linearly dependent, meaning ###
+            ### the triangle is degenerate (a line segment or a point). ###
+            ### In a robust implementation, you'd check if the point is on this line segment. ###
+            ### For simplicity here, we return False for degenerate triangles unless point is a vertex. ###
+            #
+            if Collision.point_point(p, t.p1) or Collision.point_point(p, t.p2) or Collision.point_point(p, t.p3):
+                #
+                return True
 
+            #
+            return False
+
+        #
         inv_denom = 1 / inv_denom
 
-        # Compute barycentric coordinates
+        #
+        ### Compute barycentric coordinates. ###
+        #
         u = (dot11 * dot20 - dot01 * dot21) * inv_denom
         v = (dot00 * dot21 - dot01 * dot20) * inv_denom
 
-        # Check if point is inside triangle (u >= 0, v >= 0, u + v <= 1)
-        # Use epsilon for robust boundary checks
+        #
+        ### Check if point is inside triangle (u >= 0, v >= 0, u + v <= 1). ###
+        ### Use epsilon for robust boundary checks. ###
+        #
         return (u >= 0.0 - EPSILON) and (v >= 0.0 - EPSILON) and (u + v <= 1.0 + EPSILON)
 
 
     # --- Rect Intersections ---
     @staticmethod
     def rect_rect(r1: 'ND_Rect_3D', r2: 'ND_Rect_3D') -> bool:
+
         """Checks if two rectangles (cuboids) intersect."""
-        # Delegate to the method implemented in ND_Rect_3D
+
+        #
+        ### Delegate to the method implemented in ND_Rect_3D. ###
+        #
         return r1.intersects_with_other_rect_3D(r2)
 
+    #
     @staticmethod
     def rect_sphere(r: 'ND_Rect_3D', s: 'ND_Sphere_3D') -> bool:
+
         """Checks if a rectangle (cuboid) intersects with a sphere."""
-        # Find the closest point on the rectangle to the sphere's center
+
+        #
+        ### Find the closest point on the rectangle to the sphere's center. ###
+        #
         center_np = s.center.to_numpy()
 
+        #
         closest_np = np.copy(center_np)
+        #
         closest_np[0] = max(r.min_x, min(center_np[0], r.max_x))
         closest_np[1] = max(r.min_y, min(center_np[1], r.max_y))
         closest_np[2] = max(r.min_z, min(center_np[2], r.max_z))
 
-        # Calculate the distance squared from the sphere center to this closest point
+        #
+        ### Calculate the distance squared from the sphere center to this closest point. ###
+        #
         dist_sq = np.sum((center_np - closest_np)**2)
 
-        # Intersection occurs if the distance squared is less than or equal to the radius squared
+        #
+        ### Intersection occurs if the distance squared is less than or equal to the radius squared. ###
+        #
         return dist_sq <= s.radius**2 + EPSILON
 
 
     # --- Sphere Intersections ---
     @staticmethod
     def sphere_sphere(s1: 'ND_Sphere_3D', s2: 'ND_Sphere_3D') -> bool:
+
         """Checks if two spheres intersect."""
-        # Distance between centers
+
+        #
+        ### Distance between centers. ###
+        #
         dist = s1.center.distance_to(s2.center)
-        # Sum of radii
+
+        #
+        ### Sum of radii. ###
+        #
         radii_sum = s1.radius + s2.radius
-        # Intersection occurs if distance <= sum of radii
+
+        #
+        ### Intersection occurs if distance <= sum of radii. ###
+        #
         return dist <= radii_sum + EPSILON
 
-
+    #
     @staticmethod
     def sphere_segment(s: 'ND_Sphere_3D', segment: 'ND_Line_3D') -> bool:
-        """Checks if a sphere intersects with a line segment."""
-        # Based on algorithm to find closest point on line to point, and check if it's on segment
-        # Then check distance. If closest point not on segment, check segment endpoints.
 
+        """Checks if a sphere intersects with a line segment."""
+
+        #
+        ### Based on algorithm to find closest point on line to point, and check if it's on segment ###
+        ### Then check distance. If closest point not on segment, check segment endpoints. ###
+        #
         center_np = s.center.to_numpy()
         a_np = segment.p1.to_numpy()
         b_np = segment.p2.to_numpy()
 
-        # Vector representing the segment
+        #
+        ### Vector representing the segment. ###
+        #
         segment_vec = b_np - a_np
 
-        # If segment is a point
+        #
+        ### If segment is a point. ###
+        #
         segment_length_sq = np.dot(segment_vec, segment_vec)
+        #
         if segment_length_sq < EPSILON:
+            #
             return Collision.point_sphere(segment.p1, s) # Check if the single point intersects the sphere
 
-        # Project sphere center onto the line containing the segment
-        # t = dot(Center - A, B - A) / |B - A|^2
+        #
+        ### Project sphere center onto the line containing the segment. ##
+        ### t = dot(Center - A, B - A) / |B - A|^2 ##
+        #
         t = np.dot(center_np - a_np, segment_vec) / segment_length_sq
 
-        # Clamp t to the [0, 1] range to find the closest point *on the segment*
+        #
+        ### Clamp t to the [0, 1] range to find the closest point *on the segment* ###
+        #
         t_clamped = max(0.0, min(1.0, t))
 
-        # Closest point on the segment to the sphere center
+        #
+        ### Closest point on the segment to the sphere center. ###
+        #
         closest_on_segment_np = a_np + t_clamped * segment_vec
         closest_point = ND_Point_3D(*closest_on_segment_np)
 
-        # Distance from sphere center to the closest point on the segment
+        #
+        ### Distance from sphere center to the closest point on the segment. ###
+        #
         dist_to_segment_sq = s.center.distance_to(closest_point)**2
 
-        # Intersection occurs if this distance is <= radius squared
+        #
+        ### Intersection occurs if this distance is <= radius squared. ###
+        #
         return dist_to_segment_sq <= s.radius**2 + EPSILON
 
 
@@ -217,6 +333,7 @@ class Collision:
 
     @staticmethod
     def segment_segment(seg1: 'ND_Line_3D', seg2: 'ND_Line_3D') -> tuple[bool, Optional[Union['ND_Point_3D', tuple['ND_Point_3D', 'ND_Point_3D']]]]:
+
         """
         Checks for intersection between two line segments in 3D.
         Returns a tuple: (intersects: bool, intersection_point(s): Optional['ND_Point_3D' | tuple['ND_Point_3D', 'ND_Point_3D']]
@@ -265,15 +382,15 @@ class Collision:
             # Let's just return False for non-collinear parallel and handle collinear cases later if needed.
             # A rough check for collinearity: cross product of v1 and v2 is zero, AND w0 is collinear with v1 (or v2).
             if np.linalg.norm(np.cross(v1, v2)) < EPSILON and np.linalg.norm(np.cross(w0, v1)) < EPSILON:
-                 # Assume collinear for now. Need to check for segment overlap.
-                 # Project all points onto the line. Check if the 1D intervals overlap.
-                 # This requires careful handling of the projection basis.
-                 # Leaving this as a TODO for a full implementation.
-                 # For this simplified version, we just return False for overlap on collinear lines.
+                # Assume collinear for now. Need to check for segment overlap.
+                # Project all points onto the line. Check if the 1D intervals overlap.
+                # This requires careful handling of the projection basis.
+                # Leaving this as a TODO for a full implementation.
+                # For this simplified version, we just return False for overlap on collinear lines.
                 return False, None # Collinear overlap check is complex TODO
             else:
-                 # Parallel but not collinear, no intersection
-                 return False, None
+                # Parallel but not collinear, no intersection
+                return False, None
 
         # Calculate parameters s and t for the intersection point on the infinite lines
         s_inf = (dot_w0_v2 * dot_v1_v2 - dot_w0_v1 * dot_v2_v2) / denominator
@@ -299,24 +416,34 @@ class ND_Point_3D:
     Represents a point in 3D space.
     """
     def __init__(self, x: float = 0, y: float = 0, z: float = 0) -> None:
+        #
         self.x: float = float(x)
         self.y: float = float(y)
         self.z: float = float(z)
 
+    #
     def __hash__(self) -> int:
+        #
         return hash(f"{self.x}_{self.y}_{self.z}")
 
+    #
     def __repr__(self) -> str:
+        #
         return f"ND_Point_3D(x={self.x}, y={self.y}, z={self.z})"
 
+    #
     def __eq__(self, other: object) -> bool:
+        #
         if not isinstance(other, ND_Point_3D):
+            #
             return NotImplemented
+
         # Using epsilon for robust floating point comparison
         return (abs(self.x - other.x) < EPSILON and
                 abs(self.y - other.y) < EPSILON and
                 abs(self.z - other.z) < EPSILON)
 
+    #
     def __add__(self, other: 'ND_Point_3D') -> 'ND_Point_3D':
         return ND_Point_3D(self.x + other.x, self.y + other.y, self.z + other.z)
 
@@ -327,6 +454,7 @@ class ND_Point_3D:
         return ND_Point_3D(-self.x, -self.y, -self.z)
 
     def distance_to(self, other: 'ND_Point_3D') -> float:
+
         """
         Calculates the Euclidean distance between this point and another point.
         """
@@ -336,12 +464,14 @@ class ND_Point_3D:
         return sqrt(dx**2 + dy**2 + dz**2)
 
     def in_rect_3D(self, rect: 'ND_Rect_3D') -> bool:
+
         """
         Checks if the point is inside a 3D rectangle (inclusive of boundaries).
         """
         return Collision.point_rect(self, rect) # Delegate to Collision helper
 
     def np_normalize(self) -> np.ndarray[Any, Any]:
+
         """
         Normalizes the 3D point vector to a unit vector using NumPy.
         Returns a NumPy array representing the normalized vector.
@@ -356,6 +486,7 @@ class ND_Point_3D:
 
     @staticmethod
     def from_tuple(t: tuple[float, float, float]) -> 'ND_Point_3D':
+
         """
         Creates a ND_Point_3D instance from a 3-element tuple.
         """
@@ -364,12 +495,14 @@ class ND_Point_3D:
         return ND_Point_3D(t[0], t[1], t[2])
 
     def to_tuple(self) -> tuple[float, float, float]:
+
         """
         Converts the ND_Point_3D instance to a 3-element tuple.
         """
         return (self.x, self.y, self.z)
 
     def to_numpy(self) -> np.ndarray[Any, Any]:
+
         """
         Converts the ND_Point_3D instance to a NumPy array.
         """
@@ -377,6 +510,7 @@ class ND_Point_3D:
 
     # --- Intersection Methods for Point ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         if isinstance(other, ND_Point_3D):
             return Collision.point_point(self, other)
@@ -385,19 +519,19 @@ class ND_Point_3D:
         elif isinstance(other, ND_Sphere_3D):
             return Collision.point_sphere(self, other)
         elif isinstance(other, ND_Line_3D):
-             # Point-Line (Segment) intersection
-             return Collision.point_segment(self, other)
+            # Point-Line (Segment) intersection
+            return Collision.point_segment(self, other)
         elif isinstance(other, ND_Circle_3D):
-             # Point-Circle intersection (complex, needs plane check) - TODO
-             print("Warning: Point-Circle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Point-Circle intersection (complex, needs plane check) - TODO
+            print("Warning: Point-Circle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Triangle_3D):
-             # Point-Triangle intersection
-             return Collision.point_triangle(self, other)
+            # Point-Triangle intersection
+            return Collision.point_triangle(self, other)
         elif isinstance(other, ND_Polygon_3D):
-             # Point-Polygon intersection (complex, needs plane check and point-in-polygon) - TODO
-             print("Warning: Point-Polygon intersection check is not fully implemented.")
-             return False # Not implemented
+            # Point-Polygon intersection (complex, needs plane check and point-in-polygon) - TODO
+            print("Warning: Point-Polygon intersection check is not fully implemented.")
+            return False # Not implemented
         else:
             # Add checks for other types as they are implemented
             print(f"Warning: Intersection check between Point_3D and {type(other).__name__} is not implemented.")
@@ -464,15 +598,16 @@ class ND_Rect_3D:
 
 
     def intersects_with_other_rect_3D(self, other: "ND_Rect_3D") -> bool:
-         """
-         Checks if this rectangle intersects with another 3D rectangle.
-         Returns True if they intersect, False otherwise.
-         """
-         # Delegate to Collision helper
-         return Collision.rect_rect(self, other)
+        """
+        Checks if this rectangle intersects with another 3D rectangle.
+        Returns True if they intersect, False otherwise.
+        """
+        # Delegate to Collision helper
+        return Collision.rect_rect(self, other)
 
 
     def get_intersection_area_with_other_rect(self, other: "ND_Rect_3D") -> Optional["ND_Rect_3D"]:
+
         """
         Returns a new ND_Rect_3D representing the intersection of this rectangle
         with another rectangle. Returns None if they do not intersect.
@@ -495,10 +630,10 @@ class ND_Rect_3D:
         # Due to intersects_with_other_rect_3D, this should hold if the intersection exists,
         # but numerical precision might require epsilon checks here too if needed.
         if intersect_min_x > intersect_max_x + EPSILON or \
-           intersect_min_y > intersect_max_y + EPSILON or \
-           intersect_min_z > intersect_max_z + EPSILON:
-             # Should not happen if intersects_with_other_rect_3D is true and logic is correct
-             return None # No valid intersection rectangle
+            intersect_min_y > intersect_max_y + EPSILON or \
+            intersect_min_z > intersect_max_z + EPSILON:
+                # Should not happen if intersects_with_other_rect_3D is true and logic is correct
+                return None # No valid intersection rectangle
 
         return ND_Rect_3D(
             ND_Point_3D(intersect_min_x, intersect_min_y, intersect_min_z),
@@ -507,6 +642,7 @@ class ND_Rect_3D:
 
 
     def union(self, other: "ND_Rect_3D") -> "ND_Rect_3D":
+
         """
         Returns a new ND_Rect_3D representing the smallest rectangle that
         encloses both this rectangle and another rectangle.
@@ -527,6 +663,7 @@ class ND_Rect_3D:
 
     @staticmethod
     def enclose_points(points: list[ND_Point_3D]) -> Optional["ND_Rect_3D"]:
+
         """
         Creates the smallest possible 3D rectangle that encloses all given points.
         Returns None if the list of points is empty.
@@ -555,6 +692,7 @@ class ND_Rect_3D:
         )
 
     def contains_point(self, point: ND_Point_3D) -> bool:
+
         """
         Checks if a given point is contained within this rectangle.
         This method delegates the check to the Collision helper.
@@ -563,30 +701,31 @@ class ND_Rect_3D:
 
     # --- Intersection Methods for Rect ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         if isinstance(other, ND_Point_3D):
-             # Rect-Point is the same as Point-Rect
-             return Collision.point_rect(other, self)
+            # Rect-Point is the same as Point-Rect
+            return Collision.point_rect(other, self)
         elif isinstance(other, ND_Rect_3D):
-             return Collision.rect_rect(self, other)
+            return Collision.rect_rect(self, other)
         elif isinstance(other, ND_Sphere_3D):
-             return Collision.rect_sphere(self, other)
+            return Collision.rect_sphere(self, other)
         elif isinstance(other, ND_Line_3D):
-             # Rect-Line (Segment) intersection (complex) - TODO
-             print("Warning: Rect-Line (Segment) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Rect-Line (Segment) intersection (complex) - TODO
+            print("Warning: Rect-Line (Segment) intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Circle_3D):
-             # Rect-Circle intersection (very complex) - TODO
-             print("Warning: Rect-Circle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Rect-Circle intersection (very complex) - TODO
+            print("Warning: Rect-Circle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Triangle_3D):
-             # Rect-Triangle intersection (very complex) - TODO
-             print("Warning: Rect-Triangle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Rect-Triangle intersection (very complex) - TODO
+            print("Warning: Rect-Triangle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Polygon_3D):
-             # Rect-Polygon intersection (very complex) - TODO
-             print("Warning: Rect-Polygon intersection check is not fully implemented.")
-             return False # Not implemented
+            # Rect-Polygon intersection (very complex) - TODO
+            print("Warning: Rect-Polygon intersection check is not fully implemented.")
+            return False # Not implemented
         else:
             print(f"Warning: Intersection check between Rect_3D and {type(other).__name__} is not implemented.")
             return False
@@ -617,6 +756,7 @@ class ND_Sphere_3D:
 
     # --- Intersection Methods for Sphere ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         if isinstance(other, ND_Point_3D):
             # Sphere-Point is the same as Point-Sphere
@@ -627,20 +767,20 @@ class ND_Sphere_3D:
         elif isinstance(other, ND_Sphere_3D):
             return Collision.sphere_sphere(self, other)
         elif isinstance(other, ND_Line_3D):
-             # Sphere-Line (Segment) intersection
-             return Collision.sphere_segment(self, other)
+            # Sphere-Line (Segment) intersection
+            return Collision.sphere_segment(self, other)
         elif isinstance(other, ND_Circle_3D):
-             # Sphere-Circle intersection (complex) - TODO
-             print("Warning: Sphere-Circle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Sphere-Circle intersection (complex) - TODO
+            print("Warning: Sphere-Circle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Triangle_3D):
-             # Sphere-Triangle intersection (complex) - TODO
-             print("Warning: Sphere-Triangle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Sphere-Triangle intersection (complex) - TODO
+            print("Warning: Sphere-Triangle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Polygon_3D):
-             # Sphere-Polygon intersection (very complex) - TODO
-             print("Warning: Sphere-Polygon intersection check is not fully implemented.")
-             return False # Not implemented
+            # Sphere-Polygon intersection (very complex) - TODO
+            print("Warning: Sphere-Polygon intersection check is not fully implemented.")
+            return False # Not implemented
         else:
             print(f"Warning: Intersection check between Sphere_3D and {type(other).__name__} is not implemented.")
             return False
@@ -656,9 +796,9 @@ class ND_Line_3D:
         self.p2: ND_Point_3D = p2
 
     def __hash__(self) -> int:
-         # Hash based on sorted points to handle (A, B) vs (B, A) segments
-         # Using tuples of coordinates for hashing points consistently
-         return hash(tuple(sorted((self.p1.to_tuple(), self.p2.to_tuple()))))
+        # Hash based on sorted points to handle (A, B) vs (B, A) segments
+        # Using tuples of coordinates for hashing points consistently
+        return hash(tuple(sorted((self.p1.to_tuple(), self.p2.to_tuple()))))
 
     def __repr__(self) -> str:
         return f"ND_Line_3D(p1={self.p1}, p2={self.p2})"
@@ -667,38 +807,39 @@ class ND_Line_3D:
         if not isinstance(other, ND_Line_3D):
             return NotImplemented
         # Segments are equal if their endpoints are the same, regardless of order
-        return (self.p1 == other.p1 and self.p2 == other.p2) or \
-               (self.p1 == other.p2 and self.p2 == other.p1)
+        return  (self.p1 == other.p1 and self.p2 == other.p2) or \
+                (self.p1 == other.p2 and self.p2 == other.p1)
 
     # --- Intersection Methods for Line (Segment) ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         if isinstance(other, ND_Point_3D):
-             # Line-Point (Segment-Point) is the same as Point-Segment
-             return Collision.point_segment(other, self)
+            # Line-Point (Segment-Point) is the same as Point-Segment
+            return Collision.point_segment(other, self)
         elif isinstance(other, ND_Rect_3D):
-             # Line-Rect (Segment-Rect) is the same as Rect-Line - TODO
-             print("Warning: Line-Rect (Segment-Rect) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Line-Rect (Segment-Rect) is the same as Rect-Line - TODO
+            print("Warning: Line-Rect (Segment-Rect) intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Sphere_3D):
-             # Line-Sphere (Segment-Sphere) is the same as Sphere-Segment
-             return Collision.sphere_segment(other, self)
+            # Line-Sphere (Segment-Sphere) is the same as Sphere-Segment
+            return Collision.sphere_segment(other, self)
         elif isinstance(other, ND_Line_3D):
-             # Line-Line (Segment-Segment) intersection (returns bool, doesn't get point)
-             intersects, _ = Collision.segment_segment(self, other)
-             return intersects
+            # Line-Line (Segment-Segment) intersection (returns bool, doesn't get point)
+            intersects, _ = Collision.segment_segment(self, other)
+            return intersects
         elif isinstance(other, ND_Circle_3D):
-             # Line-Circle (Segment-Circle) intersection (complex) - TODO
-             print("Warning: Line-Circle (Segment-Circle) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Line-Circle (Segment-Circle) intersection (complex) - TODO
+            print("Warning: Line-Circle (Segment-Circle) intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Triangle_3D):
-             # Line-Triangle (Segment-Triangle) intersection (complex) - TODO
-             print("Warning: Line-Triangle (Segment-Triangle) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Line-Triangle (Segment-Triangle) intersection (complex) - TODO
+            print("Warning: Line-Triangle (Segment-Triangle) intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Polygon_3D):
-             # Line-Polygon (Segment-Polygon) intersection (very complex) - TODO
-             print("Warning: Line-Polygon (Segment-Polygon) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Line-Polygon (Segment-Polygon) intersection (very complex) - TODO
+            print("Warning: Line-Polygon (Segment-Polygon) intersection check is not fully implemented.")
+            return False # Not implemented
         else:
             print(f"Warning: Intersection check between Line_3D and {type(other).__name__} is not implemented.")
             return False
@@ -744,35 +885,36 @@ class ND_Circle_3D:
 
     # --- Intersection Methods for Circle ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         if isinstance(other, ND_Point_3D):
-             # Circle-Point intersection (complex, needs plane check) - TODO
-             print("Warning: Circle-Point intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Point intersection (complex, needs plane check) - TODO
+            print("Warning: Circle-Point intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Rect_3D):
-             # Circle-Rect intersection (very complex) - TODO
-             print("Warning: Circle-Rect intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Rect intersection (very complex) - TODO
+            print("Warning: Circle-Rect intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Sphere_3D):
-             # Circle-Sphere intersection (complex) - TODO
-             print("Warning: Circle-Sphere intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Sphere intersection (complex) - TODO
+            print("Warning: Circle-Sphere intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Line_3D):
-             # Circle-Line (Segment) intersection (complex) - TODO
-             print("Warning: Circle-Line (Segment) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Line (Segment) intersection (complex) - TODO
+            print("Warning: Circle-Line (Segment) intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Circle_3D):
-             # Circle-Circle intersection (very complex) - TODO
-             print("Warning: Circle-Circle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Circle intersection (very complex) - TODO
+            print("Warning: Circle-Circle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Triangle_3D):
-             # Circle-Triangle intersection (very complex) - TODO
-             print("Warning: Circle-Triangle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Triangle intersection (very complex) - TODO
+            print("Warning: Circle-Triangle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Polygon_3D):
-             # Circle-Polygon intersection (extremely complex) - TODO
-             print("Warning: Circle-Polygon intersection check is not fully implemented.")
-             return False # Not implemented
+            # Circle-Polygon intersection (extremely complex) - TODO
+            print("Warning: Circle-Polygon intersection check is not fully implemented.")
+            return False # Not implemented
         else:
             print(f"Warning: Intersection check between Circle_3D and {type(other).__name__} is not implemented.")
             return False
@@ -789,7 +931,7 @@ class ND_Triangle_3D:
         v1 = (p2 - p1).to_numpy()
         v2 = (p3 - p1).to_numpy()
         if np.linalg.norm(np.cross(v1, v2)) < EPSILON:
-             print("Warning: Degenerate triangle (collinear vertices). Intersection tests may be unreliable.")
+            print("Warning: Degenerate triangle (collinear vertices). Intersection tests may be unreliable.")
         self.p1: ND_Point_3D = p1
         self.p2: ND_Point_3D = p2
         self.p3: ND_Point_3D = p3
@@ -813,34 +955,35 @@ class ND_Triangle_3D:
 
     # --- Intersection Methods for Triangle ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         if isinstance(other, ND_Point_3D):
-             # Triangle-Point is the same as Point-Triangle
-             return Collision.point_triangle(other, self)
+            # Triangle-Point is the same as Point-Triangle
+            return Collision.point_triangle(other, self)
         elif isinstance(other, ND_Rect_3D):
-             # Triangle-Rect intersection (very complex) - TODO
-             print("Warning: Triangle-Rect intersection check is not fully implemented.")
-             return False # Not implemented
+            # Triangle-Rect intersection (very complex) - TODO
+            print("Warning: Triangle-Rect intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Sphere_3D):
-             # Triangle-Sphere intersection (complex) - TODO
-             print("Warning: Triangle-Sphere intersection check is not fully implemented.")
-             return False # Not implemented
+            # Triangle-Sphere intersection (complex) - TODO
+            print("Warning: Triangle-Sphere intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Line_3D):
-             # Triangle-Line (Segment) intersection (complex) - TODO
-             print("Warning: Triangle-Line (Segment) intersection check is not fully implemented.")
-             return False # Not implemented
+            # Triangle-Line (Segment) intersection (complex) - TODO
+            print("Warning: Triangle-Line (Segment) intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Circle_3D):
-             # Triangle-Circle intersection (very complex) - TODO
-             print("Warning: Triangle-Circle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Triangle-Circle intersection (very complex) - TODO
+            print("Warning: Triangle-Circle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Triangle_3D):
-             # Triangle-Triangle intersection (very complex) - TODO
-             print("Warning: Triangle-Triangle intersection check is not fully implemented.")
-             return False # Not implemented
+            # Triangle-Triangle intersection (very complex) - TODO
+            print("Warning: Triangle-Triangle intersection check is not fully implemented.")
+            return False # Not implemented
         elif isinstance(other, ND_Polygon_3D):
-             # Triangle-Polygon intersection (extremely complex) - TODO
-             print("Warning: Triangle-Polygon intersection check is not fully implemented.")
-             return False # Not implemented
+            # Triangle-Polygon intersection (extremely complex) - TODO
+            print("Warning: Triangle-Polygon intersection check is not fully implemented.")
+            return False # Not implemented
         else:
             print(f"Warning: Intersection check between Triangle_3D and {type(other).__name__} is not implemented.")
             return False
@@ -862,23 +1005,23 @@ class ND_Polygon_3D:
         self.normal: Optional[np.ndarray[Any, Any]] = None # Store calculated normal (TODO)
         # Calculate normal if possible (requires coplanarity check)
         if len(vertices) >= 3:
-             try:
-                 # Get two vectors along edges from the first vertex
-                 v1 = (vertices[1] - vertices[0]).to_numpy()
-                 v2 = (vertices[2] - vertices[0]).to_numpy()
-                 cross_prod = np.cross(v1, v2)
-                 magnitude = np.linalg.norm(cross_prod)
-                 if magnitude > EPSILON:
-                     self.normal = cross_prod / magnitude
-                 else:
-                     # Degenerate polygon (vertices collinear)
-                     self.normal = None
-                     print("Warning: Polygon vertices are collinear or degenerate.")
-                 # TODO: For non-convex polygons, the normal calculation is more complex.
-                 # This simple method assumes the first three vertices define the plane.
-             except Exception as e:
-                 print(f"Warning: Could not calculate polygon normal: {e}")
-                 self.normal = None
+            try:
+                # Get two vectors along edges from the first vertex
+                v1 = (vertices[1] - vertices[0]).to_numpy()
+                v2 = (vertices[2] - vertices[0]).to_numpy()
+                cross_prod = np.cross(v1, v2)
+                magnitude = np.linalg.norm(cross_prod)
+                if magnitude > EPSILON:
+                    self.normal = cross_prod / magnitude
+                else:
+                    # Degenerate polygon (vertices collinear)
+                    self.normal = None
+                    print("Warning: Polygon vertices are collinear or degenerate.")
+                # TODO: For non-convex polygons, the normal calculation is more complex.
+                # This simple method assumes the first three vertices define the plane.
+            except Exception as e:
+                print(f"Warning: Could not calculate polygon normal: {e}")
+                self.normal = None
 
 
     def __hash__(self) -> int:
@@ -901,7 +1044,7 @@ class ND_Polygon_3D:
         # A simple check here is just if the vertex lists are identical (order matters).
         # A more robust check would compare sets of vertices and check coplanarity/ordering.
         if len(self.vertices) != len(other.vertices):
-             return False
+            return False
 
         # Check if the lists of vertices are the same (order matters)
         # For geometric equality, one would need to check for cyclic permutations
@@ -911,6 +1054,7 @@ class ND_Polygon_3D:
 
     # --- Intersection Methods for Polygon ---
     def intersects_with(self, other: object) -> bool:
+
         """Checks for intersection with another 3D geometric object."""
         # Intersection tests for general polygons are highly complex.
         # Often involves clipping algorithms (e.g., Sutherland-Hodgman in 3D),
@@ -919,8 +1063,8 @@ class ND_Polygon_3D:
 
         # Add checks for implemented intersections if any (e.g., Point-Polygon requires plane check)
         if isinstance(other, ND_Point_3D):
-             # Point-Polygon intersection (needs coplanarity and 2D point-in-polygon) - TODO
-             return False # Not implemented
+            # Point-Polygon intersection (needs coplanarity and 2D point-in-polygon) - TODO
+            return False # Not implemented
         # Add other types as implemented
 
         return False # Not implemented
