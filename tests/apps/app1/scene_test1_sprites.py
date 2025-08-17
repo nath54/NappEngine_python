@@ -4,9 +4,17 @@ from lib_nadisplay_core import ND_EventsHandler_Elts
 
 import lib_nadisplay as nd
 
+#
+grid_camera: nd.ND_Elt_CameraGrid
+window: nd.ND_Window
+
 
 #
 def create_test1_scene(win: nd.ND_Window) -> None:
+    global grid_camera, window
+
+    #
+    window = win
 
     #
     ###
@@ -119,14 +127,78 @@ def create_test1_scene(win: nd.ND_Window) -> None:
     multilayer.add_element(layer_id=1, elt=grid)
 
     #
-    grid_camera: nd.ND_Elt_CameraGrid = nd.ND_Elt_CameraGrid(
+    # grid_camera: nd.ND_Elt_CameraGrid = nd.ND_Elt_CameraGrid(
+    grid_camera = nd.ND_Elt_CameraGrid(
         window=win,
         elt_id="grid_camera",
         position=nd.ND_Position_MultiLayer(w="100%", h="100%", multilayer=multilayer),
-        grids_to_render=[grid]
+        grids_to_render=[grid],
     )
     #
     multilayer.add_element(layer_id=0, elt=grid_camera)
 
     #
+    win.main_app.add_function_to_mainloop_fns_queue(mainloop_name="scene_test1", function=mainloop_scene_test1)
+
+    #
     win.add_scene( tests_scene )
+
+
+#
+def mainloop_scene_test1(main_app: nd.ND_MainApp, delta_time: float):
+    global grid_camera, window
+
+    #
+    if window.state != "test1_sprites":
+        #
+        return
+
+    #
+    speed: float = 0.001 * delta_time
+
+    #
+    print(f"DEBUG | origin : {grid_camera.origin} | zoom = {grid_camera.zoom_x}")
+
+    #
+    if main_app.events_manager.is_key_pressed("up arrow"):
+        #
+        grid_camera.origin.y -= int(speed)
+    #
+    if main_app.events_manager.is_key_pressed("down arrow"):
+        #
+        grid_camera.origin.y += int(speed)
+    #
+    if main_app.events_manager.is_key_pressed("left arrow"):
+        #
+        grid_camera.origin.x -= int(speed)
+    #
+    if main_app.events_manager.is_key_pressed("right arrow"):
+        #
+        grid_camera.origin.x += int(speed)
+    #
+    if main_app.events_manager.is_key_pressed("a"):
+        #
+        grid_camera.zoom_x *= 0.99
+        grid_camera.zoom_y *= 0.99
+        #
+        if grid_camera.zoom_y < grid_camera.min_zoom:
+            #
+            grid_camera.zoom_y = grid_camera.min_zoom
+        #
+        if grid_camera.zoom_x < grid_camera.min_zoom:
+            #
+            grid_camera.zoom_x = grid_camera.min_zoom
+    #
+    if main_app.events_manager.is_key_pressed("e"):
+        #
+        grid_camera.zoom_x *= 1.01
+        grid_camera.zoom_y *= 1.01
+        #
+        if grid_camera.zoom_y > grid_camera.max_zoom:
+            #
+            grid_camera.zoom_y = grid_camera.max_zoom
+        #
+        if grid_camera.zoom_x > grid_camera.max_zoom:
+            #
+            grid_camera.zoom_x = grid_camera.max_zoom
+

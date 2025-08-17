@@ -35,6 +35,7 @@ class ND_Elt_CameraGrid(ND_Elt):
             elt_id: str,
             position: ND_Position,
             grids_to_render: list["ND_Elt_RectGrid"],
+            camera_origin: ND_Point = ND_Point(0, 0),
             zoom_x: float = 1.0,
             zoom_y: float = 1.0,
             style_name: str ="default",
@@ -47,7 +48,7 @@ class ND_Elt_CameraGrid(ND_Elt):
         #
         self.grids_to_render: list[ND_Elt_RectGrid] = grids_to_render
         #
-        self.origin: ND_Point = ND_Point(0, 0)
+        self.origin: ND_Point = camera_origin
         self.zoom_x: float = zoom_x
         self.zoom_y: float = zoom_y
         #
@@ -80,10 +81,16 @@ class ND_Elt_CameraGrid(ND_Elt):
         if self.grid_lines_width > 0:
             lines_width = max( 1, round( max(zx, zy) * self.grid_lines_width ) )
         #
-        deb_x: int = self.origin.x # math.ceil( self.origin.x / (gtx + lines_width) )
-        deb_y: int = self.origin.y # math.ceil( self.origin.y / (gty + lines_width) )
+        deb_x: int = self.origin.x
+        deb_y: int = self.origin.y
+        # deb_x: int = math.ceil( self.origin.x / (gtx + lines_width) )
+        # deb_y: int = math.ceil( self.origin.y / (gty + lines_width) )
         fin_x: int = self.origin.x + math.ceil( (self.w) / (gtx) ) + 1
         fin_y: int = self.origin.y + math.ceil( (self.h) / (gty) ) + 1
+
+        #
+        print(f"DEBUG | deb_x = {deb_x} | deb_y = {deb_y}")
+        print(f"DEBUG | fin_x = {fin_x} | deb_y = {fin_x}")
 
         # Dessin des lignes
         cx: int
