@@ -10,11 +10,9 @@ test_scenes: dict[str, str] = {
 
     "Test 0 - GUI Elements": "test0_gui_elements",
 
-    "Test 1 - Sprites": "test1_sprites",
+    "Test 1 - Sprites and grid": "test1_sprites_and_grid",
 
-    "Test 2 - Rect Grid": "test2_rect_grid",
-
-    "Test 3 - 3d shapes": "test3_3d_shapes"
+    "Test 2 - 3d shapes": "test2_3d_shapes"
 
 }
 

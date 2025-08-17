@@ -6,12 +6,12 @@ import lib_nadisplay as nd
 
 
 #
-def create_test3_scene(win: nd.ND_Window) -> None:
+def create_test2_scene(win: nd.ND_Window) -> None:
 
     #
     ###
     #
-    test_scene_id: str = "test3_3d_shapes"
+    test_scene_id: str = "test2_3d_shapes"
 
     #
     ### Useful margin center item ! ###

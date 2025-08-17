@@ -19,7 +19,7 @@ def create_test1_scene(win: nd.ND_Window) -> None:
     #
     ###
     #
-    test_scene_id: str = "test1_sprites"
+    test_scene_id: str = "test1_sprites_and_grid"
 
     #
     ### Useful margin center item ! ###
@@ -152,15 +152,12 @@ def mainloop_scene_test1(main_app: nd.ND_MainApp, delta_time: float):
     global grid_camera, window
 
     #
-    if window.state != "test1_sprites":
+    if window.state != "test1_sprites_and_grid":
         #
         return
 
     #
     speed: float = 0.0005 * delta_time
-
-    #
-    print(f"DEBUG | origin : {grid_camera.origin} | zoom = {grid_camera.zoom_x}")
 
     #
     if main_app.events_manager.is_key_pressed("up arrow"):
