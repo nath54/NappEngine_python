@@ -275,6 +275,7 @@ class ND_Display_GLFW_OPENGL(ND_Display):
 
 #
 class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
+
     #
     def __init__(
             self,
@@ -365,10 +366,12 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         gl.glUseProgram(self.shader_program)
 
+
     #
     def _ensure_shaderProgram_textures(self) -> None:
         #
         gl.glUseProgram(self.shader_program_textures)
+
 
     #
     def _ensure_context(self) -> None:
@@ -390,6 +393,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         # log_opengl_context_info()
         # log_opengl_context_attributes()
 
+
     #
     def destroy_window(self) -> None:
         #
@@ -401,17 +405,20 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         glfw.destroy_window(self.glw_window)
         #
 
+
     #
     def add_display_state(self, state: str, state_display_function: Callable, erase_if_state_already_exists: bool = False) -> None:
         #
         if (state not in self.display_states) or (state in self.display_states and erase_if_state_already_exists):
             self.display_states[state] = state_display_function
 
+
     #
     def remove_display_state(self, state: str) -> None:
         #
         if state in self.display_states:
             del self.display_states[state]
+
 
     #
     def set_title(self, new_title: str) -> None:
@@ -421,6 +428,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         glfw.set_window_title(self.glw_window, new_title)
 
+
     #
     def set_position(self, new_x: int, new_y: int) -> None:
         #
@@ -429,6 +437,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         glfw.set_window_pos(self.glw_window, new_x, new_y)
 
+
     #
     def set_size(self, new_width: int, new_height: int) -> None:
         #
@@ -436,6 +445,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             return
         #
         glfw.set_window_size(self.glw_window, new_width, new_height)
+
 
     #
     def update_size(self, new_w: int, new_h: int) -> None:
@@ -450,6 +460,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
                 continue
             #
             font_renderer.handle_resize(new_w, new_h)
+
 
     #
     def set_fullscreen(self, mode: int) -> None:
@@ -494,6 +505,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             mode_ = glfw.get_video_mode(monitor_)
             glfw.set_window_monitor(self.glw_window, monitor_, 0, 0, mode_.size.width, mode_.size.height, mode_.refresh_rate)
 
+
     #
     def screen_to_ndc(self, x_screen: int, y_screen: int, viewport_origin: tuple[int, int]=(0, 0), invert_y: bool=True) -> tuple[float, float]:
         """
@@ -528,6 +540,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         return x_ndc, y_ndc
 
+
     #
     def ndc_to_screen(self, x_ndc: float, y_ndc: float, viewport_origin: tuple[int, int]=(0, 0), invert_y: bool=True) -> tuple[int, int]:
         """
@@ -558,6 +571,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         #
         return x_screen, y_screen
+
 
     #
     def blit_texture(self, texture_id: int, dst_rect: ND_Rect) -> None:
@@ -607,6 +621,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
+
     #
     def prepare_text_to_render(self, text: str, color: ND_Color, font_size: int, font_name: Optional[str] = None) -> int:
 
@@ -626,6 +641,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         return -1
 
+
     #
     def prepare_image_to_render(self, img_path: str) -> int:
 
@@ -640,6 +656,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         #
         return -1
+
 
     #
     def render_prepared_texture(self, texture_id: int, x: int, y: int, width: int, height, transformations: ND_Transformation = ND_Transformation()) -> None:
@@ -658,6 +675,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         self.blit_texture(texture_id, ND_Rect(x, y, width, height))
 
+
     #
     def get_prepared_texture_size(self, texture_id: int) -> ND_Point:
         #
@@ -674,6 +692,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         return ND_Point(w,h)
 
+
     #
     def destroy_prepared_texture(self, texture_id: int) -> None:
         #
@@ -683,6 +702,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             if texture_id in self.gl_textures:
                 gl.glDeleteTextures(1, [self.gl_textures[texture_id]])
                 del self.gl_textures[texture_id]
+
 
     #
     def _render_lines(self, points: list[ ND_Point ], color: ND_Color) -> None:
@@ -725,6 +745,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glBindVertexArray(0)
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
+
 
     #
     def _render_uniform_colored_triangles(self, triangles: list[ tuple[ ND_Point, ND_Point, ND_Point ] ], color: ND_Color) -> None:
@@ -822,6 +843,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glDeleteBuffers(1, [vbo])
         gl.glDeleteVertexArrays(1, [vao])
 
+
     #
     def draw_text(self, txt: str, x: int, y: int, font_size: int, font_color: ND_Color, font_name: Optional[str] = None) -> None:
         #
@@ -849,6 +871,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         font_renderer.render_text(txt, x, y, font_size, font_color)
 
+
     #
     def draw_pixel(self, x: int, y: int, color: ND_Color) -> None:
         """
@@ -856,6 +879,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         """
         #
         self._render_point(point=ND_Point(x, y), color=color)
+
 
     #
     def draw_hline(self, x1: int, x2: int, y: int, color: ND_Color) -> None:
@@ -865,6 +889,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         self._render_lines(points=[ND_Point(x1, y), ND_Point(x2, y)], color=color)
 
+
     #
     def draw_vline(self, x: int, y1: int, y2: int, color: ND_Color) -> None:
         """
@@ -873,6 +898,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         self._render_lines(points=[ND_Point(x, y1), ND_Point(x, y2)], color=color)
 
+
     #
     def draw_line(self, x1: int, x2: int, y1: int, y2: int, color: ND_Color) -> None:
         """
@@ -880,6 +906,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         """
         #
         self._render_lines(points=[ND_Point(x1, y1), ND_Point(x2, y2)], color=color)
+
 
     #
     def draw_thick_line(self, x1: int, x2: int, y1: int, y2: int, line_thickness: float, color: ND_Color) -> None:
@@ -919,6 +946,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             color=color
         )
 
+
     #
     def draw_rounded_rect(self, x: int, y: int, width: int, height: int, radius: int, fill_color: ND_Color, border_color: ND_Color, border_size: int = 1, corner_nb_points: int = 6) -> None:
         #
@@ -941,6 +969,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         self.draw_arc(x=x + width - radius, y=y + height - radius, radius=radius, angle_start=0, angle_end=90, color=border_color, arc_nb_points=corner_nb_points)
         self.draw_arc(x=x + radius, y=y + height - radius, radius=radius, angle_start=90, angle_end=180, color=border_color, arc_nb_points=corner_nb_points)
 
+
     #
     def draw_unfilled_rect(self, x: int, y: int, width: int, height: int, outline_color: ND_Color) -> None:
         #
@@ -955,6 +984,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             color=outline_color
         )
 
+
     #
     def draw_filled_rect(self, x: int, y: int, width: int, height: int, fill_color: ND_Color) -> None:
         #
@@ -964,6 +994,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             ],
             color=fill_color
         )
+
 
     #
     def draw_unfilled_circle(self, x: int, y: int, radius: int, outline_color: ND_Color, circle_nb_points: int = 36) -> None:
@@ -977,6 +1008,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             ],
             color=outline_color
         )
+
 
     #
     def draw_filled_circle(self, x: int, y: int, radius: int, fill_color: ND_Color, circle_nb_points: int = 36) -> None:
@@ -998,6 +1030,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             color=fill_color
         )
 
+
     #
     def draw_unfilled_ellipse(self, x: int, y: int, rx: int, ry: int, outline_color: ND_Color, ellipse_nb_points: int = 72) -> None:
         """
@@ -1009,6 +1042,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             for i in range(ellipse_nb_points + 1)
         ]
         self._render_lines(points=points, color=outline_color)
+
 
     #
     def draw_filled_ellipse(self, x: int, y: int, rx: int, ry: int, fill_color: ND_Color, ellipse_nb_points: int = 72) -> None:
@@ -1027,6 +1061,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         ]
         self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
+
     #
     def draw_arc(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, color: ND_Color, arc_nb_points: int = 36) -> None:
         #
@@ -1041,6 +1076,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         ]
         #
         self._render_lines(points=points, color=color)
+
 
     #
     def draw_unfilled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, outline_color: ND_Color, pie_nb_points: int = 36) -> None:
@@ -1058,6 +1094,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         ] + [center]
         #
         self._render_lines(points=points, color=outline_color)
+
 
     #
     def draw_filled_pie(self, x: int, y: int, radius: float, angle_start: float, angle_end: float, fill_color: ND_Color, pie_nb_points: int = 36) -> None:
@@ -1081,6 +1118,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         #
         self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
+
     #
     def draw_unfilled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, outline_color: ND_Color) -> None:
         #
@@ -1093,6 +1131,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             color=outline_color
         )
 
+
     #
     def draw_filled_triangle(self, x1: int, y1: int, x2: int, y2: int, x3: int, y3: int, filled_color: ND_Color) -> None:
         #
@@ -1100,6 +1139,30 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             triangles=[( ND_Point(x1, y1), ND_Point(x2, y2), ND_Point(x3, y3) )],
             color=filled_color
         )
+
+
+    #
+    def draw_textured_triangle(
+        self,
+        x_triangle_coords: tuple[int, int, int],
+        y_triangle_coords: tuple[int, int, int],
+        texture_id: int,
+        x_texture_wrap_coords: tuple[int, int, int],
+        y_texture_wrap_coords: tuple[int, int, int],
+    ) -> None:
+
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        if texture_id not in self.gl_textures:
+            return
+
+        #
+        ### TODO: draw textured triangle. ###
+        #
+
 
     #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
@@ -1116,6 +1179,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
             color=outline_color
         )
 
+
     #
     def draw_filled_polygon(self, x_coords: list[int], y_coords: list[int], fill_color: ND_Color) -> None:
         #
@@ -1127,15 +1191,18 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         triangles = earcut_triangulate_polygon(points)
         self._render_uniform_colored_triangles(triangles=triangles, color=fill_color)
 
+
     #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
         #
         pass
 
+
     #
     def draw_bezier_curve(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color, nb_interpolations: int = 3) -> None:
         #
         pass
+
 
     #
     def apply_area_drawing_constraint(self, x: int, y: int, w: int, h: int) -> None:
@@ -1152,6 +1219,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         gl.glEnable(gl.GL_SCISSOR_TEST)
         gl.glScissor(x, self.height - (y + h), w, h)
 
+
     #
     def reset_area_drawing_constraint(self) -> None:
         """
@@ -1165,6 +1233,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
 
         gl.glDisable(gl.GL_SCISSOR_TEST)
 
+
     #
     def enable_area_drawing_constraints(self, x: int, y: int, width: int, height: int) -> None:
         """
@@ -1172,6 +1241,7 @@ class ND_Window_GLFW_OPENGL(ND_Window_GLFW):
         """
         self.push_to_clip_rect_stack(x, y, width, height)
         self.apply_area_drawing_constraint(x, y, width, height)
+
 
     #
     def disable_area_drawing_constraints(self) -> None:

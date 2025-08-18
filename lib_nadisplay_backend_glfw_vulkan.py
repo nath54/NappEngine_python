@@ -645,6 +645,29 @@ class ND_Window_GLFW_VULKAN(ND_Window_GLFW):
 
 
     #
+    def draw_textured_triangle(
+        self,
+        x_triangle_coords: tuple[int, int, int],
+        y_triangle_coords: tuple[int, int, int],
+        texture_id: int,
+        x_texture_wrap_coords: tuple[int, int, int],
+        y_texture_wrap_coords: tuple[int, int, int],
+    ) -> None:
+
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        if texture_id not in self.sdl_textures:
+            return
+
+        #
+        ### TODO: draw textured triangle. ###
+        #
+
+
+    #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
 
         #

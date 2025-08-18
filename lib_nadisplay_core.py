@@ -1302,6 +1302,18 @@ class ND_Window:
         return
 
     #
+    def draw_textured_triangle(
+        self,
+        x_triangle_coords: tuple[int, int, int],
+        y_triangle_coords: tuple[int, int, int],
+        texture_id: int,
+        x_texture_wrap_coords: tuple[int, int, int],
+        y_texture_wrap_coords: tuple[int, int, int],
+    ) -> None:
+        #
+        return
+
+    #
     def draw_textured_polygon(self, x_coords: list[int], y_coords: list[int], texture_id: int, texture_dx: int = 0, texture_dy: int = 0) -> None:
         #
         return

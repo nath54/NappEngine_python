@@ -682,6 +682,32 @@ class ND_Window_Pygame(ND_Window):
 
 
     #
+    def draw_textured_triangle(
+        self,
+        x_triangle_coords: tuple[int, int, int],
+        y_triangle_coords: tuple[int, int, int],
+        texture_id: int,
+        x_texture_wrap_coords: tuple[int, int, int],
+        y_texture_wrap_coords: tuple[int, int, int],
+    ) -> None:
+
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        if texture_id not in self.pygame_surfaces:
+            return
+
+        #
+        texture: pygame.Surface = self.pygame_surfaces[texture_id]
+
+        #
+        ### TODO: draw textured triangle. ###
+        #
+
+
+    #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color, border_thickness: int = 1) -> None:
 
         #
@@ -754,7 +780,6 @@ class ND_Window_Pygame(ND_Window):
         textured_surface.blit(texture_scaled, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
 
         self.blit_texture(textured_surface, ND_Rect(x_min, y_min, tx, ty))
-
 
 
     #

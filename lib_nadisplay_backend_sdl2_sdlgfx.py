@@ -9,8 +9,7 @@ SDL2 + SDLGFX backend for lib_nadisplay.
 
 """
 
-
-
+#
 from typing import Optional, Any, Callable, cast, Type
 from threading import Lock
 
@@ -32,14 +31,11 @@ from lib_nadisplay_core import ND_MainApp, ND_Display, ND_Window, ND_Scene
 from lib_nadisplay_backend_sdl2 import to_sdl_color, get_display_info
 
 
-
 #
 def to_sdlfgx_coords(xa: int, ya: int, xb: int, yb: int) -> tuple[int, int, int, int]:
 
     #
     return xb, ya, xa, yb
-
-
 
 
 #
@@ -894,6 +890,25 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
 
     #
+    def draw_textured_triangle(
+        self,
+        x_triangle_coords: tuple[int, int, int],
+        y_triangle_coords: tuple[int, int, int],
+        texture_id: int,
+        x_texture_wrap_coords: tuple[int, int, int],
+        y_texture_wrap_coords: tuple[int, int, int],
+    ) -> None:
+
+        #
+        if not self.display.initialized:
+            return
+
+        #
+        if texture_id not in self.sdl_textures:
+            return
+
+
+    #
     def draw_unfilled_polygon(self, x_coords: list[int], y_coords: list[int], outline_color: ND_Color) -> None:
         #
         if not self.display.initialized:
@@ -956,6 +971,9 @@ class ND_Window_SDL2_SDLGFX(ND_Window):
 
         #
         sdlgfx.texturedPolygon(self.renderer, vx, vy, n, self.sdl_textures[texture_id], texture_dx, texture_dy)
+
+        #
+        self.draw_textured_polygon(x_coords=list(x_triangle_coords), y_coords=list(y_triangle_coords), texture_id=texture_id)
 
 
     #
