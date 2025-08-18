@@ -12,8 +12,8 @@ _summary_
 #
 from typing import Optional, Union, Any
 #
-from math import sqrt
 import numpy as np
+from numpy.typing import NDArray
 
 
 #
@@ -78,9 +78,9 @@ class Collision:
         #
         ### Convert to numpy for vector math. ###
         #
-        p_np = p.to_numpy()
-        a_np = segment.p1.to_numpy()
-        b_np = segment.p2.to_numpy()
+        p_np = p.clone()
+        a_np = segment.p1.clone()
+        b_np = segment.p2.clone()
 
         #
         ### Vector representing the segment. ###
@@ -142,10 +142,10 @@ class Collision:
         """
 
         #
-        p_np = p.to_numpy()
-        a_np = t.p1.to_numpy()
-        b_np = t.p2.to_numpy()
-        c_np = t.p3.to_numpy()
+        p_np = p.clone()
+        a_np = t.p1.clone()
+        b_np = t.p2.clone()
+        c_np = t.p3.clone()
 
         #
         ### Check if the point is coplanar with the triangle first (optional but good practice) ###
@@ -232,7 +232,7 @@ class Collision:
         #
         ### Find the closest point on the rectangle to the sphere's center. ###
         #
-        center_np = s.center.to_numpy()
+        center_np = s.center.clone()
 
         #
         closest_np = np.copy(center_np)
@@ -284,9 +284,9 @@ class Collision:
         ### Based on algorithm to find closest point on line to point, and check if it's on segment ###
         ### Then check distance. If closest point not on segment, check segment endpoints. ###
         #
-        center_np = s.center.to_numpy()
-        a_np = segment.p1.to_numpy()
-        b_np = segment.p2.to_numpy()
+        center_np = s.center.clone()
+        a_np = segment.p1.clone()
+        b_np = segment.p2.clone()
 
         #
         ### Vector representing the segment. ###
@@ -348,10 +348,10 @@ class Collision:
         """
 
         #
-        p1 = seg1.p1.to_numpy()
-        q1 = seg1.p2.to_numpy()
-        p2 = seg2.p1.to_numpy()
-        q2 = seg2.p2.to_numpy()
+        p1 = seg1.p1.clone()
+        q1 = seg1.p2.clone()
+        p2 = seg2.p1.clone()
+        q2 = seg2.p2.clone()
 
         #
         ### Direction vector for seg1. ###
@@ -492,11 +492,54 @@ class ND_Point_3D:
     """
 
     #
-    def __init__(self, x: float = 0, y: float = 0, z: float = 0) -> None:
+    def __init__(self, x: float = 0, y: float = 0, z: float = 0, from_data: Optional[NDArray[np.float32]] = None) -> None:
+
         #
-        self.x: float = float(x)
-        self.y: float = float(y)
-        self.z: float = float(z)
+        self.data: NDArray[np.float32]
+        #
+        if from_data:
+            #
+            self.data = from_data
+        #
+        else:
+            #
+            self.data = np.array( [x, y, z] )
+
+    #
+    @property
+    def x(self) -> float:
+        #
+        return self.data[0]
+
+    #
+    @x.setter
+    def x(self, new_value: float) -> None:
+        #
+        self.data[0] = new_value
+
+    #
+    @property
+    def y(self) -> float:
+        #
+        return self.data[1]
+
+    #
+    @y.setter
+    def y(self, new_value: float) -> None:
+        #
+        self.data[1] = new_value
+
+    #
+    @property
+    def z(self) -> float:
+        #
+        return self.data[2]
+
+    #
+    @z.setter
+    def z(self, new_value: float) -> None:
+        #
+        self.data[2] = new_value
 
     #
     def __hash__(self) -> int:
@@ -526,17 +569,17 @@ class ND_Point_3D:
     #
     def __add__(self, other: 'ND_Point_3D') -> 'ND_Point_3D':
         #
-        return ND_Point_3D(self.x + other.x, self.y + other.y, self.z + other.z)
+        return ND_Point_3D(from_data=self.data + other.data)
 
     #
     def __sub__(self, other: 'ND_Point_3D') -> 'ND_Point_3D':
         #
-        return ND_Point_3D(self.x - other.x, self.y - other.y, self.z - other.z)
+        return ND_Point_3D(from_data=self.data - other.data)
 
     #
     def __neg__(self) -> 'ND_Point_3D':
         #
-        return ND_Point_3D(-self.x, -self.y, -self.z)
+        return ND_Point_3D(from_data=-self.data)
 
     #
     def distance_to(self, other: 'ND_Point_3D') -> float:
@@ -546,11 +589,7 @@ class ND_Point_3D:
         """
 
         #
-        dx = self.x - other.x
-        dy = self.y - other.y
-        dz = self.z - other.z
-        #
-        return sqrt(dx**2 + dy**2 + dz**2)
+        return float( np.linalg.norm(self.data - other.data, ord=2) )
 
     #
     def in_rect_3D(self, rect: 'ND_Rect_3D') -> bool:
@@ -615,14 +654,14 @@ class ND_Point_3D:
         return (self.x, self.y, self.z)
 
     #
-    def to_numpy(self) -> np.ndarray[Any, Any]:
+    def clone(self) -> np.ndarray[Any, Any]:
 
         """
         Converts the ND_Point_3D instance to a NumPy array.
         """
 
         #
-        return np.array([self.x, self.y, self.z])
+        return np.copy( self.data )
 
     #
     ### --- Intersection Methods for Point --- ###
@@ -1242,7 +1281,7 @@ class ND_Circle_3D:
         #
         ### Ensure normal is non-zero and normalized. ###
         #
-        normal_np = normal.to_numpy()
+        normal_np = normal.clone()
         normal_magnitude = np.linalg.norm(normal_np)
         #
         if normal_magnitude < EPSILON:
@@ -1384,8 +1423,8 @@ class ND_Triangle_3D:
         #
         ### Basic check for degeneracy (collinearity) - cross product of two edges should be non-zero. ###
         #
-        v1 = (p2 - p1).to_numpy()
-        v2 = (p3 - p1).to_numpy()
+        v1 = (p2 - p1).clone()
+        v2 = (p3 - p1).clone()
         #
         if np.linalg.norm(np.cross(v1, v2)) < EPSILON:
             #
@@ -1543,8 +1582,8 @@ class ND_Polygon_3D:
                 #
                 ### Get two vectors along edges from the first vertex. ###
                 #
-                v1 = (vertices[1] - vertices[0]).to_numpy()
-                v2 = (vertices[2] - vertices[0]).to_numpy()
+                v1 = (vertices[1] - vertices[0]).clone()
+                v2 = (vertices[2] - vertices[0]).clone()
                 #
                 cross_prod = np.cross(v1, v2)
                 magnitude = np.linalg.norm(cross_prod)

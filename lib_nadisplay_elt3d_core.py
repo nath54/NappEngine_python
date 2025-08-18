@@ -35,17 +35,33 @@ def generate_elt_id() -> str:
 
 
 #
+### Abstract class for 3d elements that will be rendered. ###
+#
 class ND_Elt_3D:
 
     #
-    def __init__(self, elt_id: str = generate_elt_id(), origin: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0)) -> None:
+    def __init__(
+        self,
+        elt_id: str = generate_elt_id(),
+        origin: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0),
+        rotation: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0),
+        scale: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0)
+    ) -> None:
+
         #
         self.elt_id: str = elt_id
         #
+        self.visible: bool = True
+        #
         self.origin: ND_Point_3D = origin
+        #
+        self.rotation: ND_Point_3D = rotation
+        #
+        self.scale: ND_Point_3D = scale
 
     #
-    def render(self) -> None:
+    def render(self, cam_origin: ND_Point_3D, cam_direction: ND_Point_3D, cam_fov: float) -> None:
+
         #
         pass
 
@@ -331,6 +347,11 @@ class ND_Elt_Camera_3D(ND_Elt):
         self.visible_objects_distances_to_origin: dict[str, float] = {}
 
         #
+        ### Elements that are close to the limit of the camera field of view. ###
+        #
+        self.edges_elements: set[str] = set()
+
+        #
         ### Z order cache ###
         ### List of the id of the elements to render in the correct order, from the farthest to the closest. ###
         #
@@ -393,14 +414,24 @@ class ND_Elt_Camera_3D(ND_Elt):
     def render(self) -> None:
 
         #
+        self.window.enable_area_drawing_constraints(
+            x=self.x, y=self.y, width=self.w, height=self.h
+        )
+
+        #
         elt_id: str
         #
         for elt_id in self.z_order_cache:
 
             #
-            ### TODO. ###
-            #
-            pass
+            self.space_3D.elts[elt_id].render(
+                cam_origin=self.origin,
+                cam_direction=self.direction,
+                cam_fov=self.fov
+            )
+
+        #
+        self.window.disable_area_drawing_constraints()
 
         #
         return
