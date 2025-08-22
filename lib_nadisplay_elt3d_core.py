@@ -35,6 +35,40 @@ def generate_elt_id() -> str:
 
 
 #
+def apply_point_transformation(
+    point_to_transform: ND_Point_3D,
+    elt3d_origin: ND_Point_3D,
+    elt3d_rotation: ND_Point_3D,
+    elt3d_scale: ND_Point_3D,
+) -> ND_Point_3D:
+
+    #
+    ### Apply rotation (in degrees) and scaling relative to the element origin. ###
+    #
+    # TODO
+
+    #
+    return ND_Point_3D()
+
+
+#
+def project_3d_point_global_space_to_camera_space_view(
+    point_in_global_coords: ND_Point_3D,
+    cam_origin: ND_Point_3D,
+    cam_direction: ND_Point_3D,
+    cam_fov: float
+) -> ND_Point_3D:
+
+    #
+    ### Project a point to the 2d camera space. Returns a 2d point in a 3d point container with z=0 ###
+    #
+    pass
+
+    #
+    return ND_Point_3D()
+
+
+#
 ### Abstract class for 3d elements that will be rendered. ###
 #
 class ND_Elt_3D:
@@ -42,12 +76,15 @@ class ND_Elt_3D:
     #
     def __init__(
         self,
+        win: ND_Window,
         elt_id: str = generate_elt_id(),
         origin: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0),
         rotation: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0),
-        scale: ND_Point_3D = ND_Point_3D(x=0, y=0, z=0)
+        scale: ND_Point_3D = ND_Point_3D(x=1, y=1, z=1)
     ) -> None:
 
+        #
+        self.win: ND_Window = win
         #
         self.elt_id: str = elt_id
         #

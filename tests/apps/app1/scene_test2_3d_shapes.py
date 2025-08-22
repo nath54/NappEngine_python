@@ -5,6 +5,16 @@ from lib_nadisplay_core import ND_EventsHandler_Elts
 import lib_nadisplay as nd
 
 
+
+#
+def create_3d_scene(win: nd.ND_Window, container: nd.ND_Elt_Container) -> None:
+
+    #
+    camera: nd.
+
+
+
+
 #
 def create_test2_scene(win: nd.ND_Window) -> None:
 
@@ -90,7 +100,7 @@ def create_test2_scene(win: nd.ND_Window) -> None:
     test_container.add_element(body)
 
     #
-
+    create_3d_scene(win=win, container=body)
 
     #
     win.add_scene( tests_scene )
