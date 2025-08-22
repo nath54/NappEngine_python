@@ -39,7 +39,7 @@ def generate_elt_id() -> str:
 
 #
 def apply_point_transformation(
-    point_to_transform: ND_Point_3D,
+    point_to_transform_in_element_space: ND_Point_3D,
     elt3d_origin: ND_Point_3D,
     elt3d_rotation: ND_Point_3D,
     elt3d_scale: ND_Point_3D,
@@ -48,7 +48,7 @@ def apply_point_transformation(
     #
     ### Apply rotation (in degrees) and scaling relative to the element origin. ###
     #
-    point = point_to_transform.clone() - elt3d_origin
+    point: ND_Point_3D = point_to_transform_in_element_space.clone()
 
     #
     # Apply scaling component-wise.
@@ -82,7 +82,6 @@ def apply_point_transformation(
         [np.sin(rz), np.cos(rz), 0],
         [0, 0, 1]
     ]
-
 
     #
     rot_x: NDArray[np.float32] = np.array(rot_x_lst)
@@ -195,6 +194,192 @@ def project_3d_point_global_space_to_camera_space_view(
 
 
 #
+def apply_points_transformation(
+    points_to_transform_in_element_space: list[ND_Point_3D],
+    elt3d_origin: ND_Point_3D,
+    elt3d_rotation: ND_Point_3D,
+    elt3d_scale: ND_Point_3D,
+) -> list[ND_Point_3D]:
+
+    #
+    n: int = len(points_to_transform_in_element_space)
+
+    #
+    points_data: NDArray[np.float32] = np.zeros( (n, 3), dtype=np.float32 )
+    #
+    for i, p in enumerate(points_to_transform_in_element_space):
+        #
+        points_data[i] = p.data
+
+    #
+    ### Apply scaling component-wise. ###
+    #
+    points_data *= elt3d_scale.data
+
+    #
+    ### Apply rotation using Euler angles in XYZ order. ###
+    #
+    rx: float = np.deg2rad(elt3d_rotation.x)
+    ry: float = np.deg2rad(elt3d_rotation.y)
+    rz: float = np.deg2rad(elt3d_rotation.z)
+
+    #
+    rot_x_lst: list[list[float]] = [
+        [1, 0, 0],
+        [0, np.cos(rx), -np.sin(rx)],
+        [0, np.sin(rx), np.cos(rx)]
+    ]
+
+    #
+    rot_y_lst: list[list[float]] = [
+        [np.cos(ry), 0, np.sin(ry)],
+        [0, 1, 0],
+        [-np.sin(ry), 0, np.cos(ry)]
+    ]
+
+    #
+    rot_z_lst: list[list[float]] = [
+        [np.cos(rz), -np.sin(rz), 0],
+        [np.sin(rz), np.cos(rz), 0],
+        [0, 0, 1]
+    ]
+
+    #
+    rot_x: NDArray[np.float32] = np.array(rot_x_lst)
+    rot_y: NDArray[np.float32] = np.array(rot_y_lst)
+    rot_z: NDArray[np.float32] = np.array(rot_z_lst)
+
+    #
+    R = rot_z @ rot_y @ rot_x
+    #
+    points_data = (R @ points_data.T).T.astype(dtype=np.float32)
+
+    #
+    ### Apply translation by origin. ###
+    #
+    points_data += elt3d_origin.data
+
+    #
+    ### Returns points ###
+    #
+    transformed_points: list[ND_Point_3D] = [
+        ND_Point_3D(from_data=points_data[i])
+        for i in range(n)
+    ]
+
+    #
+    return transformed_points
+
+
+#
+def project_3d_points_global_space_to_camera_space_view(
+    points_in_global_coords: list[ND_Point_3D],
+    cam_origin: ND_Point_3D,
+    cam_direction: ND_Point_3D,
+    cam_fov: float
+) -> list[ND_Point_3D]:
+
+    #
+    n: int = len(points_in_global_coords)
+    #
+    if n == 0:
+        #
+        return []
+
+    #
+    points_data: NDArray[np.float32] = np.zeros( (n, 3), dtype=np.float32 )
+    #
+    for i, p in enumerate(points_in_global_coords):
+        #
+        points_data[i] = p.data
+
+    #
+    world_up = np.array([0, 1, 0], dtype=np.float32)
+
+    #
+    ### Normalize camera direction to get forward vector. ###
+    #
+    forward_data: NDArray[np.float32] = cam_direction.data.copy()
+    #
+    norm: float = float( np.linalg.norm(forward_data) )
+    #
+    if norm > EPSILON:
+        #
+        forward_data /= norm
+    #
+    else:
+        #
+        ### Degenerate case: invalid direction, return list of origins. ###
+        #
+        return [ND_Point_3D() for _ in range(n)]
+
+    #
+    ### Compute right vector: cross(world_up, forward). ###
+    #
+    right_data: NDArray[np.float32] = np.cross(world_up, forward_data)
+    #
+    norm: float = float( np.linalg.norm(right_data) )
+    #
+    if norm > EPSILON:
+        #
+        right_data /= norm
+    #
+    else:
+        #
+        ### Gimbal lock or degenerate: fallback to arbitrary right. ###
+        #
+        right_data = np.array([1, 0, 0], dtype=np.float32)
+
+    #
+    ### Compute up vector: cross(forward, right). ###
+    #
+    up_data: NDArray[np.float32] = np.cross(forward_data, right_data)
+    norm: float = float( np.linalg.norm(up_data) )
+    #
+    if norm > EPSILON:
+        #
+        up_data /= norm
+
+    #
+    ### Build view rotation matrix (transpose of basis). ###
+    #
+    basis: NDArray[np.float32] = np.column_stack((right_data, up_data, forward_data))
+    R_view: NDArray[np.float32] = basis.T
+
+    #
+    ### Transform to camera space. ###
+    #
+    points_cam_data: NDArray[np.float32] = ( R_view @ (points_data - cam_origin.data).T ).T.astype(dtype=np.float32)
+
+    #
+    ### Perspective projection to normalized [-1, 1]. ###
+    #
+    rad_fov: float = np.deg2rad(cam_fov)
+    tan_half_fov: float = np.tan(rad_fov / 2)
+
+    #
+    z: NDArray[np.float32] = points_cam_data[:, 2]
+    #
+    mask: NDArray[np.bool_] = np.abs(z) >= EPSILON
+
+    #
+    x_proj: NDArray[np.float32] = np.zeros(n, dtype=np.float32)
+    y_proj: NDArray[np.float32] = np.zeros(n, dtype=np.float32)
+    #
+    x_proj[mask] = points_cam_data[mask, 0] / (z[mask] * tan_half_fov)
+    y_proj[mask] = points_cam_data[mask, 1] / (z[mask] * tan_half_fov)
+
+    #
+    proj_data: NDArray[np.float32] = np.zeros((n, 3), dtype=np.float32)
+    proj_data[:, 0] = x_proj
+    proj_data[:, 1] = y_proj
+    proj_data[:, 2] = 0
+
+    #
+    return [ND_Point_3D(from_data=proj_data[i]) for i in range(n)]
+
+
+#
 ### Abstract class for 3d elements that will be rendered. ###
 #
 class ND_Elt_3D:
@@ -222,9 +407,38 @@ class ND_Elt_3D:
         #
         self.scale: ND_Point_3D = scale
 
-    #
-    def render(self, cam_origin: ND_Point_3D, cam_direction: ND_Point_3D, cam_fov: float) -> None:
+        #
+        ### Caches to avoid calculating transformations and camera projections at each drawing frame if not needed. ###
+        ### Cache variables for transformation (rotation, scaling) starts with "transform_".  ###
+        ### Cache variables for camera projections starts with "cam_".  ###
+        #
+        self.caches: dict[str, Any] = {}
 
+    #
+    ### Called when this element moves, rotates or scales. ###
+    #
+    def clear_full_cache(self) -> None:
+
+        #
+        self.caches.clear()
+
+
+    #
+    def clear_camera_cache(self) -> None:
+
+        #
+        for k in list( self.caches.keys() ):
+            #
+            if k.startswith("cam_"):
+                #
+                del self.caches[k]
+
+
+    #
+    def render(self, cam_origin: ND_Point_3D, cam_direction: ND_Point_3D, cam_fov: float, cam_elt: 'ND_Elt_Camera_3D') -> None:
+
+        #
+        ### Abstract Function. ###
         #
         pass
 
@@ -486,6 +700,7 @@ class ND_Elt_Camera_3D(ND_Elt):
             fov: float,
             rendering_distance: float,
             space_3D: ND_Space_3D,
+            edges_margin: float = 20,
             style_name: str ="default",
             styles_override: Optional[dict[str, Any]] = None,
             events_handler: Optional[ND_EventsHandler_Elts] = None
@@ -512,6 +727,8 @@ class ND_Elt_Camera_3D(ND_Elt):
         #
         ### Elements that are close to the limit of the camera field of view. ###
         #
+        self.edges_margin: float = edges_margin
+        #
         self.edges_elements: set[str] = set()
 
         #
@@ -520,45 +737,189 @@ class ND_Elt_Camera_3D(ND_Elt):
         #
         self.z_order_cache: list[str] = []
 
+
+    #
+    ###
+    #
+    def elt_visible_check(self, elt: ND_Elt_3D) -> tuple[bool, bool, float]:
+
+        #
+        ### Compute camera-space position of the element's origin. ###
+        #
+        world_up = ND_Point_3D(x=0, y=1, z=0)
+        forward: ND_Point_3D = self.direction.clone()
+        #
+        norm: float = float(np.linalg.norm(forward.data))
+        #
+        if norm > EPSILON:
+            #
+            forward.data /= norm
+        #
+        else:
+            #
+            return (False, False, -1)  # Invalid camera direction
+
+        #
+        right_data: NDArray[np.float32] = np.cross(world_up.data, forward.data)
+        right: ND_Point_3D = ND_Point_3D(from_data=right_data)
+        #
+        norm = float(np.linalg.norm(right.data))
+        #
+        if norm > EPSILON:
+            #
+            right.data /= norm
+        #
+        else:
+            #
+            right = ND_Point_3D(x=1, y=0, z=0)
+
+        #
+        up_data: NDArray[np.float32] = np.cross(forward.data, right.data)
+        up: ND_Point_3D = ND_Point_3D(from_data=up_data)
+        #
+        norm = float(np.linalg.norm(up.data))
+        #
+        if norm > EPSILON:
+            #
+            up.data /= norm
+
+        #
+        basis: NDArray[np.float32] = np.column_stack((right.data, up.data, forward.data))
+        R_view: NDArray[np.float32] = basis.T
+
+        #
+        point_cam_data: NDArray[np.float32] = (R_view @ (elt.origin.data - self.origin.data)).astype(dtype=np.float32)
+        point_cam: ND_Point_3D = ND_Point_3D(from_data=point_cam_data)
+
+        #
+        ### Check if in front and within rendering distance. ###
+        #
+        if point_cam.z <= EPSILON or point_cam.z >= self.rendering_distance:
+            #
+            return (False, False, -1)
+
+        #
+        ### Project to normalized [-1, 1]. ###
+        #
+        rad_fov: float = np.deg2rad(self.fov)
+        tan_half_fov: float = np.tan(rad_fov / 2)
+        #
+        x_proj: float = point_cam.x / (point_cam.z * tan_half_fov)
+        y_proj: float = point_cam.y / (point_cam.z * tan_half_fov)
+
+        #
+        ### Check if within view frustum (ignoring aspect for simplicity). ###
+        #
+        is_visible: bool = abs(x_proj) <= 1 and abs(y_proj) <= 1
+
+        #
+        ### Compute edge: Use normalized margin based on screen size (assume square). ###
+        #
+        margin_norm: float = self.edges_margin / (self.w / 2.0)  # Approx, horizontal
+        #
+        is_in_edge: bool = (
+            is_visible and (
+                abs(x_proj) > 1 - margin_norm or
+                abs(y_proj) > 1 - margin_norm or
+                point_cam.z > self.rendering_distance - self.edges_margin or  # Distance margin (arbitrary units)
+                point_cam.z < self.edges_margin  # Near edge
+            )
+        )
+
+        #
+        distance_from_camera_origin_z_order: float = point_cam.z
+
+        #
+        return (is_visible, is_in_edge, distance_from_camera_origin_z_order)
+
+
     #
     ### Function to do a full check for all the visibles objects. (To do at initialisation after all objects added to the scene, or for abrupt camera movement) ###
     #
-    def full_check_for_visible_objects(self) -> None:
+    def full_check_for_visible_elts(self) -> None:
 
         #
-        ### TODO: for all the objects in the scene, check if they are visible. ###
+        self.visible_objects_distances_to_origin.clear()
+        self.edges_elements.clear()
+
         #
-        pass
+        elt_id: str
+        elt: ND_Elt_3D
+        #
+        for elt_id, elt in self.space_3D.elts.items():
+
+            #
+            is_visible, is_edge, distance_to_origin = self.elt_visible_check(elt=elt)
+            #
+            if is_visible:
+                #
+                self.visible_objects_distances_to_origin[elt_id] = distance_to_origin
+            #
+            if is_edge:
+                #
+                self.edges_elements.add( elt_id )
+
 
     #
     ### Function to do a check for visibles objects only with objects that are at the limit / edges of the camera. (for soft camera movements) ###
     #
-    def soft_check_for_visible_objects(self) -> None:
+    def soft_check_for_visible_elts(self) -> None:
 
         #
-        ### TODO. ###
-        #
-        pass
+        for elt_id in list( self.edges_elements ):
+
+            #
+            is_visible, is_edge, distance_to_origin = self.elt_visible_check(elt=self.space_3D.elts[elt_id])
+
+            #
+            if not is_visible:
+                #
+                del self.visible_objects_distances_to_origin[elt_id]
+                self.edges_elements.remove(elt_id)
+            #
+            else:
+                #
+                self.visible_objects_distances_to_origin[elt_id] = distance_to_origin
+
+                #
+                if not is_edge:
+                    #
+                    self.edges_elements.remove( elt_id )
+
 
     #
-    ### Function to update the visibility of an unique elements. (For elements movements) ###
+    ### Update visible elements distance to origin. ###
     #
-    def update_visibility_of_elt(self, elt_id: Optional[str] = None, elt: Optional[ND_Elt_3D] = None):
+    def update_visible_elts_distance_to_origin(self) -> None:
 
         #
-        if elt_id:
+        for elt_id in list( self.visible_objects_distances_to_origin.keys() ):
+
             #
-            elt = self.space_3D.elts[elt_id]
+            is_visible, is_edge, distance_to_origin = self.elt_visible_check(elt=self.space_3D.elts[elt_id])
 
-        #
-        if not elt:
             #
-            return
+            if not is_visible:
+                #
+                del self.visible_objects_distances_to_origin[elt_id]
+                #
+                if elt_id in self.edges_elements:
+                    #
+                    self.edges_elements.remove(elt_id)
+            #
+            else:
+                #
+                self.visible_objects_distances_to_origin[elt_id] = distance_to_origin
 
-        #
-        ### TODO. ###
-        #
-        pass
+                #
+                if elt_id not in self.edges_elements and is_edge:
+                    #
+                    self.edges_elements.add( elt_id )
+                #
+                elif elt_id in self.edges_elements and not is_edge:
+                    #
+                    self.edges_elements.remove( elt_id )
+
 
     #
     ### Function to update the z order cache. (for each camera movements / large elements movements) ###
@@ -570,6 +931,7 @@ class ND_Elt_Camera_3D(ND_Elt):
 
         #
         self.z_order_cache.sort( key=lambda elt_id: self.visible_objects_distances_to_origin[elt_id], reverse=True )
+
 
     #
     ### Function to render the 3D scene. ###
@@ -590,7 +952,8 @@ class ND_Elt_Camera_3D(ND_Elt):
             self.space_3D.elts[elt_id].render(
                 cam_origin=self.origin,
                 cam_direction=self.direction,
-                cam_fov=self.fov
+                cam_fov=self.fov,
+                cam_elt=self
             )
 
         #

@@ -10,7 +10,7 @@ import lib_nadisplay as nd
 def create_3d_scene(win: nd.ND_Window, container: nd.ND_Elt_Container) -> None:
 
     #
-    camera: nd.
+    pass
 
 
 

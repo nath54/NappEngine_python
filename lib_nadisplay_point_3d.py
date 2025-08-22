@@ -80,9 +80,9 @@ class Collision:
         #
         ### Convert to numpy for vector math. ###
         #
-        p_np = p.clone()
-        a_np = segment.p1.clone()
-        b_np = segment.p2.clone()
+        p_np: NDArray[np.float32] = p.data
+        a_np: NDArray[np.float32] = segment.p1.data
+        b_np: NDArray[np.float32] = segment.p2.data
 
         #
         ### Vector representing the segment. ###
@@ -144,10 +144,10 @@ class Collision:
         """
 
         #
-        p_np = p.clone()
-        a_np = t.p1.clone()
-        b_np = t.p2.clone()
-        c_np = t.p3.clone()
+        p_np: NDArray[np.float32] = p.data
+        a_np: NDArray[np.float32] = t.p1.data
+        b_np: NDArray[np.float32] = t.p2.data
+        c_np: NDArray[np.float32] = t.p3.data
 
         #
         ### Check if the point is coplanar with the triangle first (optional but good practice) ###
@@ -234,10 +234,10 @@ class Collision:
         #
         ### Find the closest point on the rectangle to the sphere's center. ###
         #
-        center_np = s.center.clone()
+        center_np: NDArray[np.float32] = s.center.data
 
         #
-        closest_np = np.copy(center_np)
+        closest_np: NDArray[np.float32] = np.copy(center_np)
         #
         closest_np[0] = max(r.min_x, min(center_np[0], r.max_x))
         closest_np[1] = max(r.min_y, min(center_np[1], r.max_y))
@@ -251,7 +251,7 @@ class Collision:
         #
         ### Intersection occurs if the distance squared is less than or equal to the radius squared. ###
         #
-        return dist_sq <= s.radius**2 + EPSILON
+        return bool(dist_sq <= s.radius**2 + EPSILON)
 
     #
     ### --- Sphere Intersections --- ###
@@ -286,9 +286,9 @@ class Collision:
         ### Based on algorithm to find closest point on line to point, and check if it's on segment ###
         ### Then check distance. If closest point not on segment, check segment endpoints. ###
         #
-        center_np = s.center.clone()
-        a_np = segment.p1.clone()
-        b_np = segment.p2.clone()
+        center_np: NDArray[np.float32] = s.center.data
+        a_np: NDArray[np.float32] = segment.p1.data
+        b_np: NDArray[np.float32] = segment.p2.data
 
         #
         ### Vector representing the segment. ###
@@ -350,10 +350,10 @@ class Collision:
         """
 
         #
-        p1 = seg1.p1.clone()
-        q1 = seg1.p2.clone()
-        p2 = seg2.p1.clone()
-        q2 = seg2.p2.clone()
+        p1: NDArray[np.float32] = seg1.p1.data
+        q1: NDArray[np.float32] = seg1.p2.data
+        p2: NDArray[np.float32] = seg2.p1.data
+        q2: NDArray[np.float32] = seg2.p2.data
 
         #
         ### Direction vector for seg1. ###
@@ -1283,7 +1283,7 @@ class ND_Circle_3D:
         #
         ### Ensure normal is non-zero and normalized. ###
         #
-        normal_np = normal.clone()
+        normal_np: NDArray[np.float32] = normal.data
         normal_magnitude = np.linalg.norm(normal_np)
         #
         if normal_magnitude < EPSILON:
@@ -1425,8 +1425,8 @@ class ND_Triangle_3D:
         #
         ### Basic check for degeneracy (collinearity) - cross product of two edges should be non-zero. ###
         #
-        v1 = (p2 - p1).clone()
-        v2 = (p3 - p1).clone()
+        v1: NDArray[np.float32] = (p2 - p1).data
+        v2: NDArray[np.float32] = (p3 - p1).data
         #
         if np.linalg.norm(np.cross(v1, v2)) < EPSILON:
             #
@@ -1584,10 +1584,10 @@ class ND_Polygon_3D:
                 #
                 ### Get two vectors along edges from the first vertex. ###
                 #
-                v1 = (vertices[1] - vertices[0]).clone()
-                v2 = (vertices[2] - vertices[0]).clone()
+                v1: NDArray[np.float32] = (vertices[1] - vertices[0]).data
+                v2: NDArray[np.float32] = (vertices[2] - vertices[0]).data
                 #
-                cross_prod = np.cross(v1, v2)
+                cross_prod: NDArray[np.float32] = np.cross(v1, v2)
                 magnitude = np.linalg.norm(cross_prod)
                 #
                 if magnitude > EPSILON:
