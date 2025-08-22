@@ -12,6 +12,8 @@ _summary_
 #
 from typing import Optional, Union, Any
 #
+from copy import deepcopy
+#
 import numpy as np
 from numpy.typing import NDArray
 
@@ -654,14 +656,14 @@ class ND_Point_3D:
         return (self.x, self.y, self.z)
 
     #
-    def clone(self) -> np.ndarray[Any, Any]:
+    def clone(self) -> 'ND_Point_3D':
 
         """
         Converts the ND_Point_3D instance to a NumPy array.
         """
 
         #
-        return np.copy( self.data )
+        return deepcopy( self )
 
     #
     ### --- Intersection Methods for Point --- ###

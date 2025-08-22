@@ -13,9 +13,12 @@ from typing import Optional, Any
 #
 from math import floor, ceil
 #
+import numpy as np
+from numpy.typing import NDArray
+#
 from lib_nadisplay_position import ND_Position
 from lib_nadisplay_core import ND_Window, ND_Elt, ND_EventsHandler_Elts
-from lib_nadisplay_point_3d import ND_Point_3D
+from lib_nadisplay_point_3d import ND_Point_3D, EPSILON
 
 
 #
@@ -45,10 +48,59 @@ def apply_point_transformation(
     #
     ### Apply rotation (in degrees) and scaling relative to the element origin. ###
     #
-    # TODO
+    point = point_to_transform.clone() - elt3d_origin
 
     #
-    return ND_Point_3D()
+    # Apply scaling component-wise.
+    #
+    point.data *= np.array([elt3d_scale.x, elt3d_scale.y, elt3d_scale.z])
+
+    #
+    # Apply rotation using Euler angles in XYZ order.
+    #
+    rx: float = np.deg2rad(elt3d_rotation.x)
+    ry: float = np.deg2rad(elt3d_rotation.y)
+    rz: float = np.deg2rad(elt3d_rotation.z)
+
+    #
+    rot_x_lst: list[list[float]] = [
+        [1, 0, 0],
+        [0, np.cos(rx), -np.sin(rx)],
+        [0, np.sin(rx), np.cos(rx)]
+    ]
+
+    #
+    rot_y_lst: list[list[float]] = [
+        [np.cos(ry), 0, np.sin(ry)],
+        [0, 1, 0],
+        [-np.sin(ry), 0, np.cos(ry)]
+    ]
+
+    #
+    rot_z_lst: list[list[float]] = [
+        [np.cos(rz), -np.sin(rz), 0],
+        [np.sin(rz), np.cos(rz), 0],
+        [0, 0, 1]
+    ]
+
+
+    #
+    rot_x: NDArray[np.float32] = np.array(rot_x_lst)
+    rot_y: NDArray[np.float32] = np.array(rot_y_lst)
+    rot_z: NDArray[np.float32] = np.array(rot_z_lst)
+
+    #
+    R = rot_z @ rot_y @ rot_x
+    #
+    point.data = (R @ point.data).astype(dtype=np.float32)
+
+    #
+    ### Apply translation by origin. ###
+    #
+    point += elt3d_origin
+
+    #
+    return point
 
 
 #
@@ -62,10 +114,84 @@ def project_3d_point_global_space_to_camera_space_view(
     #
     ### Project a point to the 2d camera space. Returns a 2d point in a 3d point container with z=0 ###
     #
-    pass
+    world_up = ND_Point_3D(x=0, y=1, z=0)
 
     #
-    return ND_Point_3D()
+    ### Normalize camera direction to get forward vector. ###
+    #
+    forward: ND_Point_3D = cam_direction.clone()
+    #
+    norm: float = float( np.linalg.norm(forward.data) )
+    #
+    if norm > EPSILON:
+        #
+        forward.data /= norm
+    #
+    else:
+        #
+        ### Degenerate case: invalid direction, return origin. ###
+        #
+        return ND_Point_3D()
+
+    #
+    ### Compute right vector: cross(world_up, forward). ###
+    #
+    right_data: NDArray[np.float32] = np.cross(world_up.data, forward.data)
+    right: ND_Point_3D = ND_Point_3D(from_data=right_data)
+    #
+    norm: float = float( np.linalg.norm(right.data) )
+    #
+    if norm > EPSILON:
+        #
+        right.data /= norm
+    #
+    else:
+        #
+        ### Gimbal lock or degenerate: fallback to arbitrary right. ###
+        #
+        right = ND_Point_3D(x=1, y=0, z=0)
+
+    #
+    ### Compute up vector: cross(forward, right). ###
+    #
+    up_data: NDArray[np.float32] = np.cross(forward.data, right.data)
+    up: ND_Point_3D = ND_Point_3D(from_data=up_data)
+    norm: float = float( np.linalg.norm(up.data) )
+    #
+    if norm > EPSILON:
+        #
+        up.data /= norm
+
+    #
+    ### Build view rotation matrix (transpose of basis). ###
+    #
+    basis: NDArray[np.float32] = np.column_stack((right.data, up.data, forward.data))
+    R_view: NDArray[np.float32] = basis.T
+
+    #
+    ### Transform to camera space. ###
+    #
+    point_cam_data: NDArray[np.float32] = ( R_view @ (point_in_global_coords.data - cam_origin.data) ).astype(dtype=np.float32)
+    point_cam: ND_Point_3D = ND_Point_3D(from_data=point_cam_data)
+
+    #
+    ### Perspective projection to normalized [-1, 1]. ###
+    #
+    rad_fov: float = np.deg2rad(cam_fov)
+    tan_half_fov: float = np.tan(rad_fov / 2)
+    #
+    if abs(point_cam.z) < EPSILON:
+        #
+        ### Avoid division by zero: treat as at infinity or clip. ###
+        #
+        return ND_Point_3D()
+
+    #
+    x_proj: float = point_cam.x / (point_cam.z * tan_half_fov)
+    y_proj: float = point_cam.y / (point_cam.z * tan_half_fov)
+
+    #
+    return ND_Point_3D(x=x_proj, y=y_proj, z=0)
 
 
 #
